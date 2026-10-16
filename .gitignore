@@ -1,0 +1,20 @@
+*.iml
+.gradle/
+.kotlin/
+.idea/
+.DS_Store
+build/
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+/app/release
+*.hprof
+
+# Editoren
+.vscode/
+
+# Signing-Schlüssel und Secrets
+*.jks
+*.keystore
+keystore.properties

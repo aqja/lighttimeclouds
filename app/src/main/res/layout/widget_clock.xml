@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The place name above or below the clock is optional (LabelPosition); both labels start hidden. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/widget_label_above"
+        style="@style/WidgetPlaceLabel"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/widget_clock_image"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:contentDescription="@string/widget_content_description"
+        android:scaleType="fitCenter" />
+
+    <TextView
+        android:id="@+id/widget_label_below"
+        style="@style/WidgetPlaceLabel"
+        android:visibility="gone" />
+
+</LinearLayout>
