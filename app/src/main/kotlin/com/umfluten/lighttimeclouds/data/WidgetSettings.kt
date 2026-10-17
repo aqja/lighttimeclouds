@@ -52,6 +52,8 @@ data class WidgetSettings(
     val showSolarMarks: Boolean = true,
     val showSunriseSunsetMarks: Boolean = true,
     val showMoon: Boolean = true,
+    /** Red tick at the next alarm (the only one Android exposes), if it falls into the shown time span. */
+    val showNextAlarm: Boolean = false,
     /** Weather ring from an online forecast; off by default so nothing is fetched without the user opting in. */
     val showWeather: Boolean = false,
     val weatherRingPosition: WeatherRingPosition = WeatherRingPosition.INSIDE,

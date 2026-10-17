@@ -1,5 +1,6 @@
 package com.umfluten.lighttimeclouds.widget
 
+import android.app.AlarmManager
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
@@ -14,6 +15,7 @@ import com.umfluten.lighttimeclouds.data.WidgetSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 class ClockWidgetProvider : AppWidgetProvider() {
 
@@ -90,6 +92,14 @@ class ClockWidgetProvider : AppWidgetProvider() {
             WidgetIds.activeWidgetIds(context).forEach { id -> updateWidget(context, appWidgetManager, id) }
         }
 
+        /**
+         * The next alarm clock set by any app (e.g. the system clock); Android exposes only this one,
+         * not the full list of alarms. Needs no permission.
+         */
+        private fun nextAlarm(context: Context): Instant? =
+            (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).nextAlarmClock
+                ?.triggerTime?.let(Instant::ofEpochMilli)
+
         /** Settings [appWidgetId] is drawn with: its own, or the template while it has never been saved. */
         suspend fun effectiveSettings(context: Context, appWidgetId: Int): WidgetSettings {
             val repo = WidgetPrefsRepository(context)
@@ -105,7 +115,8 @@ class ClockWidgetProvider : AppWidgetProvider() {
             val weather = if (settings.showWeather) WeatherRepository(context).cached(settings.place) else null
 
             val sizePx = WidgetSizing.currentSizePx(context, appWidgetManager, appWidgetId)
-            val bitmap = ClockFaceRenderer.render(context, sizePx, settings, weather)
+            val nextAlarm = if (settings.showNextAlarm) nextAlarm(context) else null
+            val bitmap = ClockFaceRenderer.render(context, sizePx, settings, weather, nextAlarm = nextAlarm)
 
             val views = RemoteViews(context.packageName, R.layout.widget_clock)
             views.setImageViewBitmap(R.id.widget_clock_image, bitmap)

@@ -128,7 +128,8 @@ object ClockFaceRenderer {
      * Draws the clock for [now], which defaults to the current time in the time zone of the widget's
      * place. With [WidgetSettings.showWeather] the dial makes room for the weather ring (and the
      * hourly temperatures, if enabled), which show [weather] where it covers the shown time span
-     * (nothing while there is no forecast yet).
+     * (nothing while there is no forecast yet). With [WidgetSettings.showNextAlarm], [nextAlarm] is
+     * marked if it falls into the shown time span.
      */
     fun render(
         context: Context,
@@ -136,6 +137,7 @@ object ClockFaceRenderer {
         settings: WidgetSettings,
         weather: WeatherForecast? = null,
         now: ZonedDateTime = ZonedDateTime.now(settings.place.zone),
+        nextAlarm: Instant? = null,
     ): Bitmap {
         val size = sizePx.coerceAtLeast(1)
         val bitmap = createBitmap(size, size)
@@ -172,6 +174,9 @@ object ClockFaceRenderer {
             drawWeatherRing(canvas, cx, cy, radius, bands, settings, now, weather, dark)
         }
         drawTicksAndNumerals(canvas, cx, cy, radius, settings, layout, chromeColor)
+        if (settings.showNextAlarm && nextAlarm != null) {
+            drawAlarmTick(canvas, cx, cy, radius, settings, layout, now, nextAlarm)
+        }
         if (temperatureKind != null && weather != null) {
             drawTemperatures(
                 canvas, cx, cy, settings, now, weather, temperatureKind, chromeColor,
@@ -624,11 +629,7 @@ object ClockFaceRenderer {
         layout: DialLayout,
         color: Int,
     ) {
-        val tickPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            this.color = color
-            strokeWidth = radius * 0.02f
-            strokeCap = Paint.Cap.ROUND
-        }
+        val tickPaint = hourTickPaint(radius, color)
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             this.color = color
             textSize = radius * layout.numeralSize
@@ -656,6 +657,37 @@ object ClockFaceRenderer {
         if (settings.showMinuteTicks) {
             drawMinuteTicks(canvas, cx, cy, radius, layout, color)
         }
+    }
+
+    /** Signal red, clearly apart from the chrome and the weather colors on light and dark backgrounds. */
+    private val ALARM_COLOR = Color.rgb(225, 45, 45)
+
+    /** Stroke of the hour ticks; the alarm tick uses the same, only in [ALARM_COLOR]. */
+    private fun hourTickPaint(radius: Float, color: Int) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        this.color = color
+        strokeWidth = radius * 0.02f
+        strokeCap = Paint.Cap.ROUND
+    }
+
+    /** A tick identical to an hour tick except for its red color, at [alarm] if it lies in the shown time span. */
+    private fun drawAlarmTick(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        settings: WidgetSettings,
+        layout: DialLayout,
+        now: ZonedDateTime,
+        alarm: Instant,
+    ) {
+        val angle = visibleAngleFor(alarm, settings, now) ?: return
+        val paint = hourTickPaint(radius, ALARM_COLOR)
+        val rad = Math.toRadians(angle - 90.0)
+        val dx = cos(rad).toFloat()
+        val dy = sin(rad).toFloat()
+        val inner = radius * layout.hourTickInner
+        val outer = radius * layout.tickOuter
+        canvas.drawLine(cx + dx * inner, cy + dy * inner, cx + dx * outer, cy + dy * outer, paint)
     }
 
     /** 60 short ticks for the minute hand; every fifth is skipped since hour ticks (both modes) sit on multiples of 30°. */

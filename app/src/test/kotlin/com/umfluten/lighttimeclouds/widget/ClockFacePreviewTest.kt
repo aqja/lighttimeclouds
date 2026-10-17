@@ -82,9 +82,10 @@ class ClockFacePreviewTest {
         weather: WeatherForecast?,
         darkBackground: Boolean,
         at: ZonedDateTime = now,
+        alarm: ZonedDateTime? = null,
     ) {
         val context = RuntimeEnvironment.getApplication()
-        val clock = ClockFaceRenderer.render(context, 600, settings, weather, at)
+        val clock = ClockFaceRenderer.render(context, 600, settings, weather, at, alarm?.toInstant())
         val sheet = createBitmap(clock.width, clock.height)
         Canvas(sheet).apply {
             drawColor(if (darkBackground) Color.rgb(32, 33, 36) else Color.rgb(236, 236, 232))
@@ -127,6 +128,26 @@ class ClockFacePreviewTest {
             mixedForecast(),
             darkBackground = true,
         )
+    }
+
+    @Test
+    fun alarmPreviews() {
+        val plain = WidgetSettings(widgetId = 1, colorMode = ColorMode.DARK, showNextAlarm = true)
+        val evening = ZonedDateTime.of(2026, 10, 17, 19, 10, 0, 0, Place.DEFAULT.zone)
+        // 12h, window 18:00-06:00: an alarm at 05:45 the next morning is shown.
+        render("alarm_12h_evening", plain, null, darkBackground = true, at = evening, alarm = evening.plusDays(1).withHour(5).withMinute(45))
+        // 24h: an alarm later today is shown.
+        render(
+            "alarm_24h",
+            plain.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR, colorMode = ColorMode.LIGHT),
+            null,
+            darkBackground = false,
+            alarm = now.withHour(16).withMinute(0),
+        )
+        // 12h, window 06:00-18:00: an alarm at 06:30 tomorrow is outside and must not appear.
+        render("alarm_12h_outside", plain, null, darkBackground = true, alarm = now.plusDays(1).withHour(6).withMinute(30))
+        // With weather and temperatures between the numerals.
+        render("alarm_12h_weather", weatherSettings.copy(colorMode = ColorMode.DARK, showNextAlarm = true), mixedForecast(), darkBackground = true, alarm = now.withHour(17).withMinute(15))
     }
 
     @Test

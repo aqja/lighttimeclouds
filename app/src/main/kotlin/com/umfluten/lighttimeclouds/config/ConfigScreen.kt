@@ -235,6 +235,19 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             checked = settings.showMoon,
             onCheckedChange = { viewModel.update { s -> s.copy(showMoon = it) } },
         )
+        SwitchRow(
+            label = "Nächsten Wecker markieren",
+            checked = settings.showNextAlarm,
+            onCheckedChange = { viewModel.update { s -> s.copy(showNextAlarm = it) } },
+        )
+        if (settings.showNextAlarm) {
+            Text(
+                "Roter Strich, sobald der nächste Wecker im angezeigten Zeitraum liegt. Android verrät anderen " +
+                    "Apps nur den jeweils nächsten Wecker, nicht alle gestellten.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         WeatherSetting(settings, viewModel)
     }
 
