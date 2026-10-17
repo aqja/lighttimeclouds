@@ -51,9 +51,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.data.ColorMode
 import com.umfluten.lighttimeclouds.data.DisplayMode
 import com.umfluten.lighttimeclouds.data.RingStyle
@@ -65,7 +68,6 @@ import com.umfluten.lighttimeclouds.data.TemperaturePosition
 import com.umfluten.lighttimeclouds.data.WeatherRingPosition
 import com.umfluten.lighttimeclouds.data.WidgetPrefsRepository
 import com.umfluten.lighttimeclouds.data.WidgetSettings
-import com.umfluten.lighttimeclouds.weather.OpenMeteo
 import com.umfluten.lighttimeclouds.widget.WidgetIds
 
 /**
@@ -103,15 +105,17 @@ private fun WidgetPickerScreen(widgetIds: List<Int>, onPicked: (Int) -> Unit) {
         val repository = WidgetPrefsRepository(context)
         settingsById = widgetIds.associateWith { repository.load(it) }
     }
-    ConfigScaffold(subtitle = "Welches Widget möchtest du bearbeiten?") { padding ->
+    ConfigScaffold(subtitle = stringResource(R.string.picker_subtitle)) { padding ->
         LazyColumn(contentPadding = padding) {
             items(widgetIds) { id ->
                 val settings = settingsById[id]
                 ListItem(
-                    headlineContent = { Text(settings?.place?.name ?: "Widget #$id") },
+                    headlineContent = { Text(settings?.place?.name ?: stringResource(R.string.picker_widget_fallback, id)) },
                     supportingContent = settings?.let { s ->
                         {
-                            val mode = if (s.displayMode == DisplayMode.TWELVE_HOUR) "12 h" else "24 h"
+                            val mode = stringResource(
+                                if (s.displayMode == DisplayMode.TWELVE_HOUR) R.string.picker_display_mode_12h else R.string.picker_display_mode_24h,
+                            )
                             Text("${s.place.zone.id} · $mode")
                         }
                     },
@@ -129,7 +133,9 @@ private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
     val viewModel: ConfigViewModel = viewModel(factory = ConfigViewModel.Factory(application, widgetId))
     val loaded by viewModel.settings.collectAsState()
     val settings = loaded
-    val subtitle = if (widgetId == WidgetSettings.DEFAULT_WIDGET_ID) "Vorlage für neue Widgets" else "Widget-Einstellungen"
+    val subtitle = stringResource(
+        if (widgetId == WidgetSettings.DEFAULT_WIDGET_ID) R.string.editor_subtitle_template else R.string.editor_subtitle_widget,
+    )
 
     if (settings == null) {
         ConfigScaffold(subtitle = subtitle) { padding ->
@@ -145,8 +151,8 @@ private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
         subtitle = subtitle,
         tabs = {
             PrimaryTabRow(selectedTabIndex = selectedTab) {
-                Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text("Einstellungen") })
-                Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text("Zeiten") })
+                Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text(stringResource(R.string.tab_settings)) })
+                Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text(stringResource(R.string.tab_times)) })
             }
         },
         bottomBar = {
@@ -159,7 +165,7 @@ private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
                             .navigationBarsPadding()
                             .padding(horizontal = 16.dp, vertical = 12.dp),
                     ) {
-                        Text("Speichern")
+                        Text(stringResource(R.string.action_save))
                     }
                 }
             }
@@ -187,7 +193,7 @@ private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
 private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: ConfigViewModel) {
     if (widgetId == WidgetSettings.DEFAULT_WIDGET_ID) {
         Text(
-            "Noch kein Widget auf dem Startbildschirm. Diese Einstellungen gelten für neu platzierte Widgets.",
+            stringResource(R.string.template_hint),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -195,55 +201,58 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
 
     LocationSection(settings, viewModel)
 
-    Section("Zifferblatt") {
+    Section(stringResource(R.string.section_dial)) {
         SegmentedChoice(
-            options = listOf(DisplayMode.TWELVE_HOUR to "12 Stunden", DisplayMode.TWENTY_FOUR_HOUR to "24 Stunden"),
+            options = listOf(DisplayMode.TWELVE_HOUR to R.string.display_mode_12h, DisplayMode.TWENTY_FOUR_HOUR to R.string.display_mode_24h),
             selected = settings.displayMode,
             onSelect = { viewModel.update { s -> s.copy(displayMode = it) } },
         )
-        Text("Tag/Nacht-Ring", style = MaterialTheme.typography.labelLarge)
+        Text(stringResource(R.string.ring_style_label), style = MaterialTheme.typography.labelLarge)
         SegmentedChoice(
-            options = listOf(RingStyle.SKY to "Himmel", RingStyle.GRADIENT to "Verlauf", RingStyle.BANDS to "Feste Farben"),
+            options = listOf(
+                RingStyle.SKY to R.string.ring_style_sky,
+                RingStyle.GRADIENT to R.string.ring_style_gradient,
+                RingStyle.BANDS to R.string.ring_style_bands,
+            ),
             selected = settings.ringStyle,
             onSelect = { viewModel.update { s -> s.copy(ringStyle = it) } },
         )
         if (settings.ringStyle == RingStyle.SKY) {
-            Text("Horizont im Ring", style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.sky_horizon_label), style = MaterialTheme.typography.labelLarge)
             SegmentedChoice(
-                options = listOf(SkyHorizon.INNER to "Innen", SkyHorizon.OUTER to "Außen"),
+                options = listOf(SkyHorizon.INNER to R.string.sky_horizon_inner, SkyHorizon.OUTER to R.string.sky_horizon_outer),
                 selected = settings.skyHorizon,
                 onSelect = { viewModel.update { s -> s.copy(skyHorizon = it) } },
             )
         }
         SwitchRow(
-            label = "Minutenstriche",
+            label = stringResource(R.string.show_minute_ticks),
             checked = settings.showMinuteTicks,
             onCheckedChange = { viewModel.update { s -> s.copy(showMinuteTicks = it) } },
         )
         SwitchRow(
-            label = "Sonnenmittag und -mitternacht",
+            label = stringResource(R.string.show_solar_marks),
             checked = settings.showSolarMarks,
             onCheckedChange = { viewModel.update { s -> s.copy(showSolarMarks = it) } },
         )
         SwitchRow(
-            label = "Sonnenauf- und -untergang",
+            label = stringResource(R.string.show_sunrise_sunset_marks),
             checked = settings.showSunriseSunsetMarks,
             onCheckedChange = { viewModel.update { s -> s.copy(showSunriseSunsetMarks = it) } },
         )
         SwitchRow(
-            label = "Mond mit Bahn",
+            label = stringResource(R.string.show_moon),
             checked = settings.showMoon,
             onCheckedChange = { viewModel.update { s -> s.copy(showMoon = it) } },
         )
         SwitchRow(
-            label = "Nächsten Wecker markieren",
+            label = stringResource(R.string.show_next_alarm),
             checked = settings.showNextAlarm,
             onCheckedChange = { viewModel.update { s -> s.copy(showNextAlarm = it) } },
         )
         if (settings.showNextAlarm) {
             Text(
-                "Roter Strich, sobald der nächste Wecker im angezeigten Zeitraum liegt. Android verrät anderen " +
-                    "Apps nur den jeweils nächsten Wecker, nicht alle gestellten.",
+                stringResource(R.string.next_alarm_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -255,33 +264,33 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
         DayNightSwitchSection(settings, viewModel)
     }
 
-    Section("Farbmodus") {
+    Section(stringResource(R.string.section_color_mode)) {
         Text(
-            "Ziffern und Zeiger in den Systemfarben deines Hintergrundbilds, für einen hellen oder dunklen Hintergrund.",
+            stringResource(R.string.color_mode_hint),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         SegmentedChoice(
             options = listOf(
-                ColorMode.AUTO to "Automatisch",
-                ColorMode.LIGHT to "Hell",
-                ColorMode.DARK to "Dunkel",
+                ColorMode.AUTO to R.string.color_mode_auto,
+                ColorMode.LIGHT to R.string.color_mode_light,
+                ColorMode.DARK to R.string.color_mode_dark,
             ),
             selected = settings.colorMode,
             onSelect = { viewModel.update { s -> s.copy(colorMode = it) } },
         )
         if (settings.colorMode == ColorMode.AUTO) {
             Text(
-                "Folgt dem Dunkelmodus des Systems.",
+                stringResource(R.string.color_mode_auto_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
 
-    Section("Antippen öffnet") {
+    Section(stringResource(R.string.section_tap_action)) {
         SegmentedChoice(
-            options = listOf(TapAction.SYSTEM_CLOCK to "Uhr-App", TapAction.OWN_APP to "Diese App"),
+            options = listOf(TapAction.SYSTEM_CLOCK to R.string.tap_action_system_clock, TapAction.OWN_APP to R.string.tap_action_own_app),
             selected = settings.tapAction,
             onSelect = { viewModel.update { s -> s.copy(tapAction = it) } },
         )
@@ -306,7 +315,7 @@ private fun WeatherSetting(settings: WidgetSettings, viewModel: ConfigViewModel)
     }
 
     SwitchRow(
-        label = "Wetter (Bewölkung und Niederschlag)",
+        label = stringResource(R.string.show_weather),
         checked = settings.showWeather,
         onCheckedChange = { on ->
             viewModel.update { s -> s.copy(showWeather = on) }
@@ -315,29 +324,25 @@ private fun WeatherSetting(settings: WidgetSettings, viewModel: ConfigViewModel)
     )
     if (!settings.showWeather) return
     Text(
-        "Zusätzlicher Ring: grau je nach Bewölkung, bei klarem Himmel durchsichtig. " +
-            "Niederschlag in Blau (Schnee violett), je dunkler, desto mehr; je deckender, desto wahrscheinlicher. " +
-            "Die Vorhersage wird etwa alle zwei Stunden aus dem Internet geladen; dazu werden die Koordinaten des Orts " +
-            "an open-meteo.com übertragen. " +
-            OpenMeteo.ATTRIBUTION + ".",
+        stringResource(R.string.weather_hint, stringResource(R.string.weather_attribution)),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Text("Position des Wetterrings", style = MaterialTheme.typography.labelLarge)
+    Text(stringResource(R.string.weather_ring_position_label), style = MaterialTheme.typography.labelLarge)
     SegmentedChoice(
         options = listOf(
-            WeatherRingPosition.INSIDE to "Innerhalb",
-            WeatherRingPosition.OUTSIDE to "Ganz außen",
+            WeatherRingPosition.INSIDE to R.string.weather_ring_inside,
+            WeatherRingPosition.OUTSIDE to R.string.weather_ring_outside,
         ),
         selected = settings.weatherRingPosition,
         onSelect = { viewModel.update { s -> s.copy(weatherRingPosition = it) } },
     )
-    Text("Temperatur je Stunde", style = MaterialTheme.typography.labelLarge)
+    Text(stringResource(R.string.temperature_label), style = MaterialTheme.typography.labelLarge)
     SegmentedChoice(
         options = listOf(
-            TemperatureDisplay.NONE to "Aus",
-            TemperatureDisplay.AIR to "Luft",
-            TemperatureDisplay.APPARENT to "Gefühlt",
+            TemperatureDisplay.NONE to R.string.temperature_none,
+            TemperatureDisplay.AIR to R.string.temperature_air,
+            TemperatureDisplay.APPARENT to R.string.temperature_apparent,
         ),
         selected = settings.temperatureDisplay,
         onSelect = { viewModel.update { s -> s.copy(temperatureDisplay = it) } },
@@ -345,8 +350,8 @@ private fun WeatherSetting(settings: WidgetSettings, viewModel: ConfigViewModel)
     if (settings.temperatureDisplay != TemperatureDisplay.NONE) {
         SegmentedChoice(
             options = listOf(
-                TemperaturePosition.BETWEEN_NUMERALS to "Zwischen Ziffern",
-                TemperaturePosition.OUTSIDE to "Außen",
+                TemperaturePosition.BETWEEN_NUMERALS to R.string.temperature_between_numerals,
+                TemperaturePosition.OUTSIDE to R.string.temperature_outside,
             ),
             selected = settings.temperaturePosition,
             onSelect = { viewModel.update { s -> s.copy(temperaturePosition = it) } },
@@ -354,7 +359,7 @@ private fun WeatherSetting(settings: WidgetSettings, viewModel: ConfigViewModel)
     }
     if (!networkAllowed) {
         Text(
-            "Die App hat keinen Netzwerkzugriff, daher kann keine Vorhersage geladen werden.",
+            stringResource(R.string.no_network_access),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.error,
         )
@@ -362,7 +367,7 @@ private fun WeatherSetting(settings: WidgetSettings, viewModel: ConfigViewModel)
             context.startActivity(
                 Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)),
             )
-        }) { Text("Berechtigungen öffnen") }
+        }) { Text(stringResource(R.string.open_permissions)) }
     }
 }
 
@@ -371,11 +376,11 @@ private fun hasNetworkPermission(context: Context): Boolean =
 
 @Composable
 private fun DayNightSwitchSection(settings: WidgetSettings, viewModel: ConfigViewModel) {
-    Section("Tag/Nacht-Umschaltung") {
+    Section(stringResource(R.string.section_day_night_switch)) {
         SegmentedChoice(
             options = listOf(
-                SwitchStrategyType.FIXED_TIMES to "Feste Zeiten",
-                SwitchStrategyType.TRAILING_OFFSET to "Mitlaufend",
+                SwitchStrategyType.FIXED_TIMES to R.string.switch_fixed_times,
+                SwitchStrategyType.TRAILING_OFFSET to R.string.switch_trailing,
             ),
             selected = settings.switchStrategyType,
             onSelect = { viewModel.update { s -> s.copy(switchStrategyType = it) } },
@@ -383,18 +388,19 @@ private fun DayNightSwitchSection(settings: WidgetSettings, viewModel: ConfigVie
         when (settings.switchStrategyType) {
             SwitchStrategyType.FIXED_TIMES -> {
                 SwitchTimeRow(
-                    label = "Umschaltzeit 1",
+                    label = stringResource(R.string.switch_time_1),
                     minutesOfDay = settings.switchTime1Minutes,
                     onPicked = { m -> viewModel.update { s -> s.copy(switchTime1Minutes = m) } },
                 )
                 SwitchTimeRow(
-                    label = "Umschaltzeit 2",
+                    label = stringResource(R.string.switch_time_2),
                     minutesOfDay = settings.switchTime2Minutes,
                     onPicked = { m -> viewModel.update { s -> s.copy(switchTime2Minutes = m) } },
                 )
             }
             SwitchStrategyType.TRAILING_OFFSET -> {
-                Text("Vorlauf: ${settings.trailingOffsetMinutes} Minuten", style = MaterialTheme.typography.bodyLarge)
+                val minutes = settings.trailingOffsetMinutes
+                Text(pluralStringResource(R.plurals.trailing_offset, minutes, minutes), style = MaterialTheme.typography.bodyLarge)
                 Slider(
                     value = settings.trailingOffsetMinutes.toFloat(),
                     onValueChange = { v -> viewModel.update { s -> s.copy(trailingOffsetMinutes = v.toInt()) } },
@@ -406,14 +412,15 @@ private fun DayNightSwitchSection(settings: WidgetSettings, viewModel: ConfigVie
     }
 }
 
-/** Shows a switch time; tapping it opens a 24h time picker dialog. */
+/** Shows a switch time; tapping it opens a time picker dialog in the device's 12/24-hour format. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SwitchTimeRow(label: String, minutesOfDay: Int, onPicked: (Int) -> Unit) {
     var showPicker by remember { mutableStateOf(false) }
+    val formats = rememberUiFormats()
     ListItem(
         headlineContent = { Text(label) },
-        trailingContent = { Text(formatMinutes(minutesOfDay), style = MaterialTheme.typography.titleMedium) },
+        trailingContent = { Text(formats.timeOfDay(minutesOfDay), style = MaterialTheme.typography.titleMedium) },
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         modifier = Modifier.clickable { showPicker = true },
     )
@@ -421,7 +428,7 @@ private fun SwitchTimeRow(label: String, minutesOfDay: Int, onPicked: (Int) -> U
         val state = rememberTimePickerState(
             initialHour = minutesOfDay / 60,
             initialMinute = minutesOfDay % 60,
-            is24Hour = true,
+            is24Hour = formats.is24Hour,
         )
         AlertDialog(
             onDismissRequest = { showPicker = false },
@@ -431,17 +438,11 @@ private fun SwitchTimeRow(label: String, minutesOfDay: Int, onPicked: (Int) -> U
                 TextButton(onClick = {
                     onPicked(state.hour * 60 + state.minute)
                     showPicker = false
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.action_ok)) }
             },
             dismissButton = {
-                TextButton(onClick = { showPicker = false }) { Text("Abbrechen") }
+                TextButton(onClick = { showPicker = false }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
-}
-
-private fun formatMinutes(minutesOfDay: Int): String {
-    val h = (minutesOfDay / 60).coerceIn(0, 23)
-    val m = (minutesOfDay % 60).coerceIn(0, 59)
-    return "%02d:%02d".format(h, m)
 }

@@ -34,21 +34,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.data.LabelPosition
 import com.umfluten.lighttimeclouds.data.Place
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
-import java.util.Locale
 
 /**
- * Shows the widget's place and where its name appears in the widget; "Ändern" opens the list of
+ * Shows the widget's place and where its name appears in the widget; "Change" opens the list of
  * saved places, from which places can also be created, edited or deleted. Places are only ever
  * deleted from that list on purpose, never as a side effect of removing a widget. Choosing a place
- * is part of the widget settings (saved with "Speichern"); saving a place's details applies to all
+ * is part of the widget settings (saved with "Save"); saving a place's details applies to all
  * widgets using it right away.
  */
 @Composable
@@ -61,17 +62,22 @@ internal fun LocationSection(settings: WidgetSettings, viewModel: ConfigViewMode
     // A place in use by a saved widget, the template, or this (unsaved) selection must stay, as must the last one.
     fun isInUse(place: Place) = place.id in placesInUse || place.id == settings.place.id
     fun canDelete(place: Place) = places.size > 1 && !isInUse(place)
+    val formats = rememberUiFormats()
 
-    Section("Standort") {
+    Section(stringResource(R.string.section_location)) {
         ListItem(
             headlineContent = { Text(settings.place.name) },
-            supportingContent = { Text(placeDetails(settings.place)) },
-            trailingContent = { TextButton(onClick = { showPicker = true }) { Text("Ändern") } },
+            supportingContent = { Text(placeDetails(settings.place, formats)) },
+            trailingContent = { TextButton(onClick = { showPicker = true }) { Text(stringResource(R.string.action_change)) } },
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         )
-        Text("Ortsname im Widget", style = MaterialTheme.typography.labelLarge)
+        Text(stringResource(R.string.label_position_label), style = MaterialTheme.typography.labelLarge)
         SegmentedChoice(
-            options = listOf(LabelPosition.NONE to "Aus", LabelPosition.ABOVE to "Oben", LabelPosition.BELOW to "Unten"),
+            options = listOf(
+                LabelPosition.NONE to R.string.label_position_none,
+                LabelPosition.ABOVE to R.string.label_position_above,
+                LabelPosition.BELOW to R.string.label_position_below,
+            ),
             selected = settings.labelPosition,
             onSelect = { viewModel.update { s -> s.copy(labelPosition = it) } },
         )
@@ -96,15 +102,15 @@ internal fun LocationSection(settings: WidgetSettings, viewModel: ConfigViewMode
     deleting?.let { place ->
         AlertDialog(
             onDismissRequest = { deleting = null },
-            title = { Text("Ort löschen?") },
-            text = { Text("„${place.name}“ wird aus der Liste der gespeicherten Orte entfernt.") },
+            title = { Text(stringResource(R.string.place_delete_title)) },
+            text = { Text(stringResource(R.string.place_delete_text, place.name)) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deletePlace(place)
                     deleting = null
-                }) { Text("Löschen") }
+                }) { Text(stringResource(R.string.action_delete)) }
             },
-            dismissButton = { TextButton(onClick = { deleting = null }) { Text("Abbrechen") } },
+            dismissButton = { TextButton(onClick = { deleting = null }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
     editing?.let { place ->
@@ -134,9 +140,10 @@ private fun PlacePickerDialog(
     onNew: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val formats = rememberUiFormats()
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Gespeicherte Orte") },
+        title = { Text(stringResource(R.string.places_title)) },
         text = {
             LazyColumn(Modifier.heightIn(max = 400.dp)) {
                 items(places, key = { it.id }) { place ->
@@ -145,17 +152,17 @@ private fun PlacePickerDialog(
                         headlineContent = { Text(place.name) },
                         supportingContent = {
                             Column {
-                                Text(placeDetails(place))
-                                if (isInUse(place)) Text("Wird verwendet", style = MaterialTheme.typography.labelSmall)
+                                Text(placeDetails(place, formats))
+                                if (isInUse(place)) Text(stringResource(R.string.place_in_use), style = MaterialTheme.typography.labelSmall)
                             }
                         },
                         trailingContent = {
                             Row {
                                 IconButton(onClick = { onEdit(place) }) {
-                                    Icon(Icons.Outlined.Edit, contentDescription = "Bearbeiten")
+                                    Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.action_edit))
                                 }
                                 IconButton(onClick = { onDelete(place) }, enabled = canDelete(place)) {
-                                    Icon(Icons.Outlined.Delete, contentDescription = "Löschen")
+                                    Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.action_delete))
                                 }
                             }
                         },
@@ -165,8 +172,8 @@ private fun PlacePickerDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onNew) { Text("Neuer Ort") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Schließen") } },
+        confirmButton = { TextButton(onClick = onNew) { Text(stringResource(R.string.place_new)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close)) } },
     )
 }
 
@@ -188,23 +195,23 @@ private fun PlaceEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (isNew) "Neuer Ort" else "Ort bearbeiten") },
+        title = { Text(stringResource(if (isNew) R.string.place_new else R.string.place_edit)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name") },
+                    label = { Text(stringResource(R.string.place_name)) },
                     isError = name.isBlank(),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                CoordinateField(latText, "Breitengrad", LATITUDE_RANGE, onValueChange = { latText = it })
-                CoordinateField(lonText, "Längengrad", LONGITUDE_RANGE, onValueChange = { lonText = it })
+                CoordinateField(latText, stringResource(R.string.place_latitude), LATITUDE_RANGE, onValueChange = { latText = it })
+                CoordinateField(lonText, stringResource(R.string.place_longitude), LONGITUDE_RANGE, onValueChange = { lonText = it })
                 ListItem(
-                    headlineContent = { Text("Zeitzone") },
+                    headlineContent = { Text(stringResource(R.string.place_time_zone)) },
                     supportingContent = { Text(zoneLabel(zone)) },
-                    trailingContent = { TextButton(onClick = { showZonePicker = true }) { Text("Ändern") } },
+                    trailingContent = { TextButton(onClick = { showZonePicker = true }) { Text(stringResource(R.string.action_change)) } },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
@@ -213,9 +220,9 @@ private fun PlaceEditorDialog(
             TextButton(
                 enabled = valid,
                 onClick = { onSave(place.copy(name = name.trim(), latitude = latitude!!, longitude = longitude!!, zone = zone)) },
-            ) { Text("Speichern") }
+            ) { Text(stringResource(R.string.action_save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Abbrechen") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 
     if (showZonePicker) {
@@ -251,13 +258,13 @@ private fun ZonePickerDialog(selected: ZoneId, onSelect: (ZoneId) -> Unit, onDis
     }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Zeitzone") },
+        title = { Text(stringResource(R.string.place_time_zone)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = query,
                     onValueChange = { query = it },
-                    label = { Text("Suchen") },
+                    label = { Text(stringResource(R.string.zone_search)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -275,7 +282,7 @@ private fun ZonePickerDialog(selected: ZoneId, onSelect: (ZoneId) -> Unit, onDis
             }
         },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Abbrechen") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
@@ -297,7 +304,7 @@ private fun selectableZones(now: Instant, include: ZoneId): List<ZoneId> =
 private val LATITUDE_RANGE = -90.0..90.0
 private val LONGITUDE_RANGE = -180.0..180.0
 
-/** Accepts both "." and "," (German keyboards); null if not a number within [range]. */
+/** Accepts both "." and "," (decimal comma keyboards); null if not a number within [range]. */
 private fun parseCoordinate(text: String, range: ClosedFloatingPointRange<Double>): Double? =
     text.replace(',', '.').toDoubleOrNull()?.takeIf { it in range }
 
@@ -314,15 +321,15 @@ private fun CoordinateField(
         onValueChange = onValueChange,
         label = { Text(label) },
         isError = isError,
-        supportingText = if (isError) ({ Text("Ungültiger Wert") }) else null,
+        supportingText = if (isError) ({ Text(stringResource(R.string.place_invalid_value)) }) else null,
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         modifier = Modifier.fillMaxWidth(),
     )
 }
 
-private fun placeDetails(place: Place): String =
-    "%.4f°, %.4f° · %s".format(Locale.GERMAN, place.latitude, place.longitude, zoneLabel(place.zone))
+private fun placeDetails(place: Place, formats: UiFormats): String =
+    formats.coordinates(place.latitude, place.longitude) + " · " + zoneLabel(place.zone)
 
 /** Zone id with its current UTC offset, e.g. "Europe/Berlin (UTC+02:00)". */
 private fun zoneLabel(zone: ZoneId): String = "${zone.id} (UTC${offsetText(zone)})"

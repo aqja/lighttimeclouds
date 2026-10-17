@@ -1,5 +1,140 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">LightTimeClouds</string>
-    <string name="widget_content_description">Sonnen- und Monduhr</string>
+    <string name="app_name" translatable="false">LightTimeClouds</string>
+    <string name="widget_content_description">Sun and moon clock</string>
+
+    <!-- Common actions -->
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_ok">OK</string>
+    <string name="action_change">Change</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_close">Close</string>
+
+    <!-- Widget picker and editor -->
+    <string name="picker_subtitle">Which widget do you want to edit?</string>
+    <string name="picker_widget_fallback">Widget #%1$d</string>
+    <string name="picker_display_mode_12h">12 h</string>
+    <string name="picker_display_mode_24h">24 h</string>
+    <string name="editor_subtitle_template">Template for new widgets</string>
+    <string name="editor_subtitle_widget">Widget settings</string>
+    <string name="tab_settings">Settings</string>
+    <string name="tab_times">Times</string>
+    <string name="template_hint">No widget on the home screen yet. These settings apply to newly placed widgets.</string>
+
+    <!-- Clock face -->
+    <string name="section_dial">Clock face</string>
+    <string name="display_mode_12h">12 hours</string>
+    <string name="display_mode_24h">24 hours</string>
+    <string name="ring_style_label">Day/night ring</string>
+    <string name="ring_style_sky">Sky</string>
+    <string name="ring_style_gradient">Gradient</string>
+    <string name="ring_style_bands">Fixed colors</string>
+    <string name="sky_horizon_label">Horizon in the ring</string>
+    <string name="sky_horizon_inner">Inside</string>
+    <string name="sky_horizon_outer">Outside</string>
+    <string name="show_minute_ticks">Minute ticks</string>
+    <string name="show_solar_marks">Solar noon and midnight</string>
+    <string name="show_sunrise_sunset_marks">Sunrise and sunset</string>
+    <string name="show_moon">Moon and its path</string>
+    <string name="show_next_alarm">Mark next alarm</string>
+    <string name="next_alarm_hint">A red tick as soon as the next alarm falls within the displayed period. Android only reveals the next alarm to other apps, not all alarms that are set.</string>
+
+    <!-- Weather -->
+    <string name="show_weather">Weather (clouds and precipitation)</string>
+    <string name="weather_hint">Additional ring: gray depending on cloud cover, transparent when the sky is clear. Precipitation in blue (snow in violet): the darker, the more; the more opaque, the more likely. The forecast is downloaded about every two hours; for this, the place\'s coordinates are sent to open-meteo.com. %1$s.</string>
+    <string name="weather_attribution">Weather data by Open-Meteo.com (CC BY 4.0)</string>
+    <string name="weather_ring_position_label">Weather ring position</string>
+    <string name="weather_ring_inside">Inside</string>
+    <string name="weather_ring_outside">Outermost</string>
+    <string name="temperature_label">Hourly temperature</string>
+    <string name="temperature_none">Off</string>
+    <string name="temperature_air">Air</string>
+    <string name="temperature_apparent">Feels like</string>
+    <string name="temperature_between_numerals">Between numerals</string>
+    <string name="temperature_outside">Outside</string>
+    <string name="no_network_access">The app has no network access, so no forecast can be loaded.</string>
+    <string name="open_permissions">Open permissions</string>
+
+    <!-- Day/night switch (12-hour dial) -->
+    <string name="section_day_night_switch">Day/night switch</string>
+    <string name="switch_fixed_times">Fixed times</string>
+    <string name="switch_trailing">Trailing</string>
+    <string name="switch_time_1">Switch time 1</string>
+    <string name="switch_time_2">Switch time 2</string>
+    <plurals name="trailing_offset">
+        <item quantity="one">Lead: %1$d minute</item>
+        <item quantity="other">Lead: %1$d minutes</item>
+    </plurals>
+
+    <!-- Color mode and tap action -->
+    <string name="section_color_mode">Color mode</string>
+    <string name="color_mode_hint">Numerals and hands in your wallpaper\'s system colors, for a light or dark background.</string>
+    <string name="color_mode_auto">Automatic</string>
+    <string name="color_mode_light">Light</string>
+    <string name="color_mode_dark">Dark</string>
+    <string name="color_mode_auto_hint">Follows the system dark mode.</string>
+    <string name="section_tap_action">Tapping opens</string>
+    <string name="tap_action_system_clock">Clock app</string>
+    <string name="tap_action_own_app">This app</string>
+
+    <!-- Places -->
+    <string name="section_location">Location</string>
+    <string name="label_position_label">Place name in widget</string>
+    <string name="label_position_none">Off</string>
+    <string name="label_position_above">Top</string>
+    <string name="label_position_below">Bottom</string>
+    <string name="place_delete_title">Delete place?</string>
+    <string name="place_delete_text">“%1$s” will be removed from the saved places.</string>
+    <string name="places_title">Saved places</string>
+    <string name="place_in_use">In use</string>
+    <string name="place_new">New place</string>
+    <string name="place_edit">Edit place</string>
+    <string name="place_name">Name</string>
+    <string name="place_latitude">Latitude</string>
+    <string name="place_longitude">Longitude</string>
+    <string name="place_time_zone">Time zone</string>
+    <string name="place_invalid_value">Invalid value</string>
+    <string name="zone_search">Search</string>
+
+    <!-- Times tab -->
+    <string name="times_intro">Solar day from solar midnight to solar midnight. The list switches over at solar midnight.</string>
+    <string name="event_does_not_occur">does not occur on this day</string>
+    <string name="date_time">%1$s, %2$s</string>
+    <string name="moon_title">Moon</string>
+    <string name="moon_phase">Moon phase</string>
+    <string name="moon_illuminated">%1$d%% illuminated</string>
+    <string name="moon_no_events">No moonrise or moonset on this solar day</string>
+    <string name="moon_stays_up">The moon stays above the horizon.</string>
+    <string name="moon_stays_down">The moon stays below the horizon.</string>
+    <string name="moonrise">Moonrise</string>
+    <string name="moonset">Moonset</string>
+    <string name="weather_title">Weather</string>
+    <string name="forecast_loaded">Forecast loaded</string>
+    <string name="forecast_not_yet">not yet</string>
+
+    <string name="moon_phase_new">New moon</string>
+    <string name="moon_phase_waxing_crescent">Waxing crescent</string>
+    <string name="moon_phase_first_quarter">First quarter</string>
+    <string name="moon_phase_waxing_gibbous">Waxing gibbous</string>
+    <string name="moon_phase_full">Full moon</string>
+    <string name="moon_phase_waning_gibbous">Waning gibbous</string>
+    <string name="moon_phase_last_quarter">Last quarter</string>
+    <string name="moon_phase_waning_crescent">Waning crescent</string>
+
+    <string name="solar_midnight">Solar midnight</string>
+    <string name="astronomical_dawn">Astronomical dawn</string>
+    <string name="nautical_dawn">Nautical dawn</string>
+    <string name="civil_dawn">Civil dawn</string>
+    <string name="sunrise">Sunrise</string>
+    <string name="sunrise_end">End of sunrise</string>
+    <string name="golden_hour_end">End of golden hour</string>
+    <string name="solar_noon">Solar noon</string>
+    <string name="golden_hour_start">Start of golden hour</string>
+    <string name="sunset_start">Start of sunset</string>
+    <string name="sunset">Sunset</string>
+    <string name="civil_dusk">Civil dusk</string>
+    <string name="nautical_dusk">Nautical dusk</string>
+    <string name="astronomical_dusk">Astronomical dusk</string>
 </resources>

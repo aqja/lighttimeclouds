@@ -29,8 +29,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.umfluten.lighttimeclouds.R
 
 /** Follows the system's light/dark setting and, from Android 12 on, the wallpaper-derived system colors. */
 @Composable
@@ -63,7 +65,7 @@ internal fun ConfigScaffold(
                 TopAppBar(
                     title = {
                         Column {
-                            Text("LightTimeClouds")
+                            Text(stringResource(R.string.app_name))
                             if (subtitle != null) {
                                 Text(
                                     subtitle,
@@ -94,9 +96,10 @@ internal fun Section(title: String, content: @Composable () -> Unit) {
     }
 }
 
+/** Single-choice buttons; each option pairs a value with the string resource of its label. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun <T> SegmentedChoice(options: List<Pair<T, String>>, selected: T, onSelect: (T) -> Unit) {
+internal fun <T> SegmentedChoice(options: List<Pair<T, Int>>, selected: T, onSelect: (T) -> Unit) {
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
         options.forEachIndexed { index, (value, label) ->
             SegmentedButton(
@@ -104,7 +107,7 @@ internal fun <T> SegmentedChoice(options: List<Pair<T, String>>, selected: T, on
                 onClick = { onSelect(value) },
                 shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
             ) {
-                Text(label)
+                Text(stringResource(label))
             }
         }
     }

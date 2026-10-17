@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_content_description">Sonnen- und Monduhr</string>
+
+    <!-- Common actions -->
+    <string name="action_save">Speichern</string>
+    <string name="action_cancel">Abbrechen</string>
+    <string name="action_ok">OK</string>
+    <string name="action_change">Ändern</string>
+    <string name="action_edit">Bearbeiten</string>
+    <string name="action_delete">Löschen</string>
+    <string name="action_close">Schließen</string>
+
+    <!-- Widget picker and editor -->
+    <string name="picker_subtitle">Welches Widget möchtest du bearbeiten?</string>
+    <string name="picker_widget_fallback">Widget #%1$d</string>
+    <string name="picker_display_mode_12h">12 h</string>
+    <string name="picker_display_mode_24h">24 h</string>
+    <string name="editor_subtitle_template">Vorlage für neue Widgets</string>
+    <string name="editor_subtitle_widget">Widget-Einstellungen</string>
+    <string name="tab_settings">Einstellungen</string>
+    <string name="tab_times">Zeiten</string>
+    <string name="template_hint">Noch kein Widget auf dem Startbildschirm. Diese Einstellungen gelten für neu platzierte Widgets.</string>
+
+    <!-- Clock face -->
+    <string name="section_dial">Zifferblatt</string>
+    <string name="display_mode_12h">12 Stunden</string>
+    <string name="display_mode_24h">24 Stunden</string>
+    <string name="ring_style_label">Tag/Nacht-Ring</string>
+    <string name="ring_style_sky">Himmel</string>
+    <string name="ring_style_gradient">Verlauf</string>
+    <string name="ring_style_bands">Feste Farben</string>
+    <string name="sky_horizon_label">Horizont im Ring</string>
+    <string name="sky_horizon_inner">Innen</string>
+    <string name="sky_horizon_outer">Außen</string>
+    <string name="show_minute_ticks">Minutenstriche</string>
+    <string name="show_solar_marks">Sonnenmittag und -mitternacht</string>
+    <string name="show_sunrise_sunset_marks">Sonnenauf- und -untergang</string>
+    <string name="show_moon">Mond mit Bahn</string>
+    <string name="show_next_alarm">Nächsten Wecker markieren</string>
+    <string name="next_alarm_hint">Roter Strich, sobald der nächste Wecker im angezeigten Zeitraum liegt. Android verrät anderen Apps nur den jeweils nächsten Wecker, nicht alle gestellten.</string>
+
+    <!-- Weather -->
+    <string name="show_weather">Wetter (Bewölkung und Niederschlag)</string>
+    <string name="weather_hint">Zusätzlicher Ring: grau je nach Bewölkung, bei klarem Himmel durchsichtig. Niederschlag in Blau (Schnee violett), je dunkler, desto mehr; je deckender, desto wahrscheinlicher. Die Vorhersage wird etwa alle zwei Stunden aus dem Internet geladen; dazu werden die Koordinaten des Orts an open-meteo.com übertragen. %1$s.</string>
+    <string name="weather_attribution">Wetterdaten von Open-Meteo.com (CC BY 4.0)</string>
+    <string name="weather_ring_position_label">Position des Wetterrings</string>
+    <string name="weather_ring_inside">Innerhalb</string>
+    <string name="weather_ring_outside">Ganz außen</string>
+    <string name="temperature_label">Temperatur je Stunde</string>
+    <string name="temperature_none">Aus</string>
+    <string name="temperature_air">Luft</string>
+    <string name="temperature_apparent">Gefühlt</string>
+    <string name="temperature_between_numerals">Zwischen Ziffern</string>
+    <string name="temperature_outside">Außen</string>
+    <string name="no_network_access">Die App hat keinen Netzwerkzugriff, daher kann keine Vorhersage geladen werden.</string>
+    <string name="open_permissions">Berechtigungen öffnen</string>
+
+    <!-- Day/night switch (12-hour dial) -->
+    <string name="section_day_night_switch">Tag/Nacht-Umschaltung</string>
+    <string name="switch_fixed_times">Feste Zeiten</string>
+    <string name="switch_trailing">Mitlaufend</string>
+    <string name="switch_time_1">Umschaltzeit 1</string>
+    <string name="switch_time_2">Umschaltzeit 2</string>
+    <plurals name="trailing_offset">
+        <item quantity="one">Vorlauf: %1$d Minute</item>
+        <item quantity="other">Vorlauf: %1$d Minuten</item>
+    </plurals>
+
+    <!-- Color mode and tap action -->
+    <string name="section_color_mode">Farbmodus</string>
+    <string name="color_mode_hint">Ziffern und Zeiger in den Systemfarben deines Hintergrundbilds, für einen hellen oder dunklen Hintergrund.</string>
+    <string name="color_mode_auto">Automatisch</string>
+    <string name="color_mode_light">Hell</string>
+    <string name="color_mode_dark">Dunkel</string>
+    <string name="color_mode_auto_hint">Folgt dem Dunkelmodus des Systems.</string>
+    <string name="section_tap_action">Antippen öffnet</string>
+    <string name="tap_action_system_clock">Uhr-App</string>
+    <string name="tap_action_own_app">Diese App</string>
+
+    <!-- Places -->
+    <string name="section_location">Standort</string>
+    <string name="label_position_label">Ortsname im Widget</string>
+    <string name="label_position_none">Aus</string>
+    <string name="label_position_above">Oben</string>
+    <string name="label_position_below">Unten</string>
+    <string name="place_delete_title">Ort löschen?</string>
+    <string name="place_delete_text">„%1$s“ wird aus der Liste der gespeicherten Orte entfernt.</string>
+    <string name="places_title">Gespeicherte Orte</string>
+    <string name="place_in_use">Wird verwendet</string>
+    <string name="place_new">Neuer Ort</string>
+    <string name="place_edit">Ort bearbeiten</string>
+    <string name="place_name">Name</string>
+    <string name="place_latitude">Breitengrad</string>
+    <string name="place_longitude">Längengrad</string>
+    <string name="place_time_zone">Zeitzone</string>
+    <string name="place_invalid_value">Ungültiger Wert</string>
+    <string name="zone_search">Suchen</string>
+
+    <!-- Times tab -->
+    <string name="times_intro">Sonnentag von Sonnenmitternacht bis Sonnenmitternacht. Die Liste wechselt zu Sonnenmitternacht.</string>
+    <string name="event_does_not_occur">tritt an diesem Tag nicht ein</string>
+    <string name="date_time">%1$s, %2$s</string>
+    <string name="moon_title">Mond</string>
+    <string name="moon_phase">Mondphase</string>
+    <string name="moon_illuminated">%1$d %% beleuchtet</string>
+    <string name="moon_no_events">Kein Mondauf- oder -untergang an diesem Sonnentag</string>
+    <string name="moon_stays_up">Der Mond bleibt über dem Horizont.</string>
+    <string name="moon_stays_down">Der Mond bleibt unter dem Horizont.</string>
+    <string name="moonrise">Mondaufgang</string>
+    <string name="moonset">Monduntergang</string>
+    <string name="weather_title">Wetter</string>
+    <string name="forecast_loaded">Vorhersage geladen</string>
+    <string name="forecast_not_yet">noch nicht</string>
+
+    <string name="moon_phase_new">Neumond</string>
+    <string name="moon_phase_waxing_crescent">Zunehmende Sichel</string>
+    <string name="moon_phase_first_quarter">Erstes Viertel (zunehmender Halbmond)</string>
+    <string name="moon_phase_waxing_gibbous">Zunehmender Mond</string>
+    <string name="moon_phase_full">Vollmond</string>
+    <string name="moon_phase_waning_gibbous">Abnehmender Mond</string>
+    <string name="moon_phase_last_quarter">Letztes Viertel (abnehmender Halbmond)</string>
+    <string name="moon_phase_waning_crescent">Abnehmende Sichel</string>
+
+    <string name="solar_midnight">Sonnenmitternacht</string>
+    <string name="astronomical_dawn">Beginn astronomische Dämmerung</string>
+    <string name="nautical_dawn">Beginn nautische Dämmerung</string>
+    <string name="civil_dawn">Beginn bürgerliche Dämmerung</string>
+    <string name="sunrise">Sonnenaufgang</string>
+    <string name="sunrise_end">Ende Sonnenaufgang</string>
+    <string name="golden_hour_end">Ende goldene Stunde</string>
+    <string name="solar_noon">Sonnenmittag</string>
+    <string name="golden_hour_start">Beginn goldene Stunde</string>
+    <string name="sunset_start">Beginn Sonnenuntergang</string>
+    <string name="sunset">Sonnenuntergang</string>
+    <string name="civil_dusk">Ende bürgerliche Dämmerung</string>
+    <string name="nautical_dusk">Ende nautische Dämmerung</string>
+    <string name="astronomical_dusk">Ende astronomische Dämmerung</string>
+</resources>

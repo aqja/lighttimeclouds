@@ -1,5 +1,6 @@
 package com.umfluten.lighttimeclouds.config
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -23,25 +24,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.astro.MoonEventType
 import com.umfluten.lighttimeclouds.astro.SolarDay
 import com.umfluten.lighttimeclouds.astro.SolarEventType
 import com.umfluten.lighttimeclouds.astro.SunMoonCalculator
 import com.umfluten.lighttimeclouds.data.WeatherRepository
 import com.umfluten.lighttimeclouds.data.WidgetSettings
-import com.umfluten.lighttimeclouds.weather.OpenMeteo
 import com.umfluten.lighttimeclouds.weather.WeatherForecast
 import com.umfluten.lighttimeclouds.widget.ClockFaceRenderer
 import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
-
-private val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm zzz", Locale.GERMAN)
-private val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE, d. MMM", Locale.GERMAN)
 
 /**
  * All sun events of the current solar day at the widget's (possibly not yet saved) place, in that
@@ -75,6 +72,7 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
     val nextIndex = events.indexOfFirst { it.instant?.isAfter(now.toInstant()) == true }
     val nextMoonIndex = moonEvents.indexOfFirst { it.instant.isAfter(now.toInstant()) }
     val context = LocalContext.current
+    val formats = rememberUiFormats()
     var forecast by remember(place) { mutableStateOf<WeatherForecast?>(null) }
     LaunchedEffect(place, settings.showWeather, now) {
         forecast = if (settings.showWeather) WeatherRepository(context).cached(place) else null
@@ -85,11 +83,11 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(place.name, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "%.4f°, %.4f° · %s".format(Locale.GERMAN, place.latitude, place.longitude, place.zone.id),
+                    formats.coordinates(place.latitude, place.longitude) + " · " + place.zone.id,
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
-                    "Sonnentag von Sonnenmitternacht bis Sonnenmitternacht. Die Liste wechselt zu Sonnenmitternacht.",
+                    stringResource(R.string.times_intro),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -103,9 +101,10 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
                 Color(ClockFaceRenderer.ringColor(altitude, settings))
             }
             EventRow(
-                label = solarEventLabel(event.type),
+                label = stringResource(solarEventLabel(event.type)),
                 instant = event.instant,
                 now = now,
+                formats = formats,
                 isNext = index == nextIndex,
                 showDate = event.instant?.atZone(now.zone)?.toLocalDate() != firstDate,
                 dotColor = dotColor,
@@ -115,7 +114,7 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
         item {
             HorizontalDivider(Modifier.padding(top = 8.dp))
             Text(
-                "Mond",
+                stringResource(R.string.moon_title),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
             )
@@ -123,18 +122,18 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
         item {
             val illumination = SunMoonCalculator.moonIllumination(now.toInstant())
             ListItem(
-                headlineContent = { Text("Mondphase") },
-                supportingContent = { Text(moonPhaseLabel(SunMoonCalculator.moonPhaseOf(illumination.phase))) },
-                trailingContent = { Text("%d %% beleuchtet".format((illumination.fraction * 100).toInt())) },
+                headlineContent = { Text(stringResource(R.string.moon_phase)) },
+                supportingContent = { Text(stringResource(moonPhaseLabel(SunMoonCalculator.moonPhaseOf(illumination.phase)))) },
+                trailingContent = { Text(stringResource(R.string.moon_illuminated, (illumination.fraction * 100).toInt())) },
             )
         }
         if (moonEvents.isEmpty()) {
             item {
                 ListItem(
-                    headlineContent = { Text("Kein Mondauf- oder -untergang an diesem Sonnentag") },
+                    headlineContent = { Text(stringResource(R.string.moon_no_events)) },
                     supportingContent = {
                         val up = SunMoonCalculator.moonAltitudeDegrees(now.toInstant(), place.latitude, place.longitude) > 0
-                        Text(if (up) "Der Mond bleibt über dem Horizont." else "Der Mond bleibt unter dem Horizont.")
+                        Text(stringResource(if (up) R.string.moon_stays_up else R.string.moon_stays_down))
                     },
                 )
             }
@@ -142,9 +141,10 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
         items(moonEvents.size) { index ->
             val event = moonEvents[index]
             EventRow(
-                label = if (event.type == MoonEventType.MOONRISE) "Mondaufgang" else "Monduntergang",
+                label = stringResource(if (event.type == MoonEventType.MOONRISE) R.string.moonrise else R.string.moonset),
                 instant = event.instant,
                 now = now,
+                formats = formats,
                 isNext = index == nextMoonIndex,
                 showDate = event.instant.atZone(now.zone).toLocalDate() != firstDate,
                 dotColor = Color(ClockFaceRenderer.MARK_COLOR),
@@ -155,7 +155,7 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
             item {
                 HorizontalDivider(Modifier.padding(top = 8.dp))
                 Text(
-                    "Wetter",
+                    stringResource(R.string.weather_title),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
                 )
@@ -163,13 +163,13 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
             item {
                 val fetched = forecast?.fetchedAt?.atZone(now.zone)
                 ListItem(
-                    headlineContent = { Text("Vorhersage geladen") },
-                    supportingContent = { Text(OpenMeteo.ATTRIBUTION) },
+                    headlineContent = { Text(stringResource(R.string.forecast_loaded)) },
+                    supportingContent = { Text(stringResource(R.string.weather_attribution)) },
                     trailingContent = {
                         val label = when {
-                            fetched == null -> "noch nicht"
-                            fetched.toLocalDate() == now.toLocalDate() -> fetched.format(TIME_FORMAT)
-                            else -> fetched.format(DATE_FORMAT) + ", " + fetched.format(TIME_FORMAT)
+                            fetched == null -> stringResource(R.string.forecast_not_yet)
+                            fetched.toLocalDate() == now.toLocalDate() -> formats.time(fetched)
+                            else -> stringResource(R.string.date_time, formats.date(fetched), formats.time(fetched))
                         }
                         Text(label)
                     },
@@ -185,6 +185,7 @@ private fun EventRow(
     label: String,
     instant: Instant?,
     now: ZonedDateTime,
+    formats: UiFormats,
     isNext: Boolean,
     showDate: Boolean,
     dotColor: Color?,
@@ -208,38 +209,40 @@ private fun EventRow(
         },
         headlineContent = { Text(label, color = contentColor, fontWeight = weight) },
         supportingContent = when {
-            local == null -> ({ Text("tritt an diesem Tag nicht ein", color = contentColor) })
-            showDate -> ({ Text(local.format(DATE_FORMAT), color = contentColor) })
+            local == null -> ({ Text(stringResource(R.string.event_does_not_occur), color = contentColor) })
+            showDate -> ({ Text(formats.date(local), color = contentColor) })
             else -> null
         },
-        trailingContent = { Text(local?.format(TIME_FORMAT) ?: "–", color = contentColor, fontWeight = weight) },
+        trailingContent = { Text(local?.let(formats::time) ?: "–", color = contentColor, fontWeight = weight) },
     )
 }
 
-private fun moonPhaseLabel(phase: SunMoonCalculator.MoonPhase): String = when (phase) {
-    SunMoonCalculator.MoonPhase.NEW_MOON -> "Neumond"
-    SunMoonCalculator.MoonPhase.WAXING_CRESCENT -> "Zunehmende Sichel"
-    SunMoonCalculator.MoonPhase.FIRST_QUARTER -> "Erstes Viertel (zunehmender Halbmond)"
-    SunMoonCalculator.MoonPhase.WAXING_GIBBOUS -> "Zunehmender Mond"
-    SunMoonCalculator.MoonPhase.FULL_MOON -> "Vollmond"
-    SunMoonCalculator.MoonPhase.WANING_GIBBOUS -> "Abnehmender Mond"
-    SunMoonCalculator.MoonPhase.LAST_QUARTER -> "Letztes Viertel (abnehmender Halbmond)"
-    SunMoonCalculator.MoonPhase.WANING_CRESCENT -> "Abnehmende Sichel"
+@StringRes
+private fun moonPhaseLabel(phase: SunMoonCalculator.MoonPhase): Int = when (phase) {
+    SunMoonCalculator.MoonPhase.NEW_MOON -> R.string.moon_phase_new
+    SunMoonCalculator.MoonPhase.WAXING_CRESCENT -> R.string.moon_phase_waxing_crescent
+    SunMoonCalculator.MoonPhase.FIRST_QUARTER -> R.string.moon_phase_first_quarter
+    SunMoonCalculator.MoonPhase.WAXING_GIBBOUS -> R.string.moon_phase_waxing_gibbous
+    SunMoonCalculator.MoonPhase.FULL_MOON -> R.string.moon_phase_full
+    SunMoonCalculator.MoonPhase.WANING_GIBBOUS -> R.string.moon_phase_waning_gibbous
+    SunMoonCalculator.MoonPhase.LAST_QUARTER -> R.string.moon_phase_last_quarter
+    SunMoonCalculator.MoonPhase.WANING_CRESCENT -> R.string.moon_phase_waning_crescent
 }
 
-private fun solarEventLabel(type: SolarEventType): String = when (type) {
-    SolarEventType.SOLAR_MIDNIGHT -> "Sonnenmitternacht"
-    SolarEventType.ASTRONOMICAL_DAWN -> "Beginn astronomische Dämmerung"
-    SolarEventType.NAUTICAL_DAWN -> "Beginn nautische Dämmerung"
-    SolarEventType.CIVIL_DAWN -> "Beginn bürgerliche Dämmerung"
-    SolarEventType.SUNRISE -> "Sonnenaufgang"
-    SolarEventType.SUNRISE_END -> "Ende Sonnenaufgang"
-    SolarEventType.GOLDEN_HOUR_END -> "Ende goldene Stunde"
-    SolarEventType.SOLAR_NOON -> "Sonnenmittag"
-    SolarEventType.GOLDEN_HOUR_START -> "Beginn goldene Stunde"
-    SolarEventType.SUNSET_START -> "Beginn Sonnenuntergang"
-    SolarEventType.SUNSET -> "Sonnenuntergang"
-    SolarEventType.CIVIL_DUSK -> "Ende bürgerliche Dämmerung"
-    SolarEventType.NAUTICAL_DUSK -> "Ende nautische Dämmerung"
-    SolarEventType.ASTRONOMICAL_DUSK -> "Ende astronomische Dämmerung"
+@StringRes
+private fun solarEventLabel(type: SolarEventType): Int = when (type) {
+    SolarEventType.SOLAR_MIDNIGHT -> R.string.solar_midnight
+    SolarEventType.ASTRONOMICAL_DAWN -> R.string.astronomical_dawn
+    SolarEventType.NAUTICAL_DAWN -> R.string.nautical_dawn
+    SolarEventType.CIVIL_DAWN -> R.string.civil_dawn
+    SolarEventType.SUNRISE -> R.string.sunrise
+    SolarEventType.SUNRISE_END -> R.string.sunrise_end
+    SolarEventType.GOLDEN_HOUR_END -> R.string.golden_hour_end
+    SolarEventType.SOLAR_NOON -> R.string.solar_noon
+    SolarEventType.GOLDEN_HOUR_START -> R.string.golden_hour_start
+    SolarEventType.SUNSET_START -> R.string.sunset_start
+    SolarEventType.SUNSET -> R.string.sunset
+    SolarEventType.CIVIL_DUSK -> R.string.civil_dusk
+    SolarEventType.NAUTICAL_DUSK -> R.string.nautical_dusk
+    SolarEventType.ASTRONOMICAL_DUSK -> R.string.astronomical_dusk
 }

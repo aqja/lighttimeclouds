@@ -31,6 +31,11 @@ android {
         compose = true
     }
 
+    androidResources {
+        // Lists the translations (values-xx) for the per-app language setting from Android 13 on.
+        generateLocaleConfig = true
+    }
+
     testOptions {
         unitTests.isIncludeAndroidResources = true
         unitTests.all {

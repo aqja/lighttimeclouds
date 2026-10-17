@@ -17,11 +17,10 @@ import java.util.Locale
 /**
  * Request URL and response parsing for the Open-Meteo forecast API (https://open-meteo.com),
  * plus the cache format. Open-Meteo is free without API key for non-commercial use and returns
- * model data for any coordinates worldwide; its data is licensed CC BY 4.0, see [ATTRIBUTION].
+ * model data for any coordinates worldwide; its data is licensed CC BY 4.0,
+ * so the app has to credit Open-Meteo wherever it shows or explains the forecast.
  */
 object OpenMeteo {
-
-    const val ATTRIBUTION = "Wetterdaten von Open-Meteo.com (CC BY 4.0)"
 
     /**
      * Hourly cloud cover, precipitation (amount, snow, probability) and air/apparent temperature

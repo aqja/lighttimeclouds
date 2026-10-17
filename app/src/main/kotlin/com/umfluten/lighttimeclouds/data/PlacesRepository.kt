@@ -8,8 +8,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.first
+import java.text.Collator
 import java.time.ZoneId
-import java.util.Locale
 
 /**
  * Saved places, kept in the same DataStore as the widget settings (keys prefixed "place_<id>_")
@@ -20,7 +20,7 @@ class PlacesRepository(private val context: Context) {
     suspend fun all(): List<Place> {
         ensureInitialized()
         val prefs = context.settingsDataStore.data.first()
-        return prefs.placeIds().mapNotNull { readPlace(prefs, it) }.sortedBy { it.name.lowercase(Locale.GERMAN) }
+        return prefs.placeIds().mapNotNull { readPlace(prefs, it) }.sortedWith(byName())
     }
 
     suspend fun save(place: Place) {
@@ -68,7 +68,7 @@ class PlacesRepository(private val context: Context) {
                 val place = existing ?: when {
                     label.isBlank() && lat == Place.DEFAULT.latitude && lon == Place.DEFAULT.longitude -> Place.DEFAULT
                     else -> Place.new(
-                        name = label.ifBlank { "%.4f°, %.4f°".format(Locale.GERMAN, lat, lon) },
+                        name = label.ifBlank { "%.4f°, %.4f°".format(lat, lon) },
                         latitude = lat,
                         longitude = lon,
                     )
@@ -88,6 +88,9 @@ class PlacesRepository(private val context: Context) {
         private val LEGACY_LAT = Regex("""w(\d+)_lat""")
 
         private fun placePrefix(id: String) = "place_${id}_"
+
+        /** Alphabetical by name following the device language's rules (e.g. "Ä" next to "A"; case only breaks ties). */
+        private fun byName(): Comparator<Place> = compareBy(Collator.getInstance()) { it.name }
         private fun nameKey(id: String) = stringPreferencesKey(placePrefix(id) + "name")
         private fun latKey(id: String) = doublePreferencesKey(placePrefix(id) + "lat")
         private fun lonKey(id: String) = doublePreferencesKey(placePrefix(id) + "lon")
@@ -113,7 +116,7 @@ class PlacesRepository(private val context: Context) {
 
         /** First saved place by name, for widgets whose place is missing. */
         internal fun fallbackPlace(prefs: Preferences): Place =
-            prefs.placeIds().mapNotNull { readPlace(prefs, it) }.minByOrNull { it.name.lowercase(Locale.GERMAN) }
+            prefs.placeIds().mapNotNull { readPlace(prefs, it) }.minWithOrNull(byName())
                 ?: Place.DEFAULT
 
         private fun writePlace(prefs: MutablePreferences, place: Place) {
