@@ -1,0 +1,1 @@
+First release: analog sun and moon clock widget with sky ring, moon, optional weather ring, temperatures and next-alarm mark.

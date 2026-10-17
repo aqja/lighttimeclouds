@@ -4,7 +4,6 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 class SkyModelTest {
 
@@ -27,16 +26,9 @@ class SkyModelTest {
         }
     }
 
-    /**
-     * Checks every 12th row (computing the whole table takes several seconds). Set
-     * REGENERATE_SKY_TABLE=1 to rewrite the resource after changing the model or table layout.
-     */
+    /** Checks every 12th row of the table generated at build time (computing all of it takes seconds). */
     @Test
     fun `bundled table matches the model`() {
-        if (System.getenv("REGENERATE_SKY_TABLE") != null) {
-            File("src/main/resources" + SkyGradientTable.RESOURCE).apply { parentFile.mkdirs() }
-                .writeBytes(SkyGradientTable.compute())
-        }
         val rows = (0 until SkyGradientTable.ROWS step 12)
         val computed = SkyGradientTable.compute(rows)
         val bundled = SkyGradientTable::class.java.getResourceAsStream(SkyGradientTable.RESOURCE)!!.use { it.readBytes() }

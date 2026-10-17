@@ -1,0 +1,15 @@
+<p>LightTimeClouds ist ein Widget für den Startbildschirm: ein gewöhnliches analoges Zifferblatt mit einem Ring, der den Tagesverlauf an deinem Ort zeigt, von der Nacht über Dämmerung und Tag bis zum Abend, dazu den Mond mit seiner aktuellen Phase. Inspiriert von sunclock.net, aber standardmäßig mit einem normalen <b>12-Stunden-Zifferblatt</b> (24 Stunden wählbar).</p>
+
+<ul>
+<li><b>Himmelsring:</b> Jeder Abschnitt des Rings zeigt den Himmel vom Horizont nach oben zu dieser Tageszeit. Tag, Morgen- und Abendrot stammen aus einem physikalischen Streuungsmodell, dazu kommen die blaue Stunde und das Nachtlila der Dämmerung. Alternativ ein einfacher Verlauf oder feste Farben je Phase.</li>
+<li><b>Mond:</b> Mondzeiger mit Phase; der Abstand zur Mitte zeigt die Höhe des Mondes, dazu seine Tagesbahn.</li>
+<li><b>Optionaler Wetterring</b> (Vorhersage von Open-Meteo): Bewölkung als Grau, Niederschlag in Blau (Schnee violett), je dunkler, desto mehr, je deckender, desto wahrscheinlicher. Optional Luft- oder gefühlte Temperatur zwischen den Ziffern oder als Skala um den Rand.</li>
+<li>Markierungen für Sonnenmittag und -mitternacht, Sonnenauf- und -untergang sowie optional den nächsten Wecker.</li>
+<li>Gespeicherte Orte mit eigener Zeitzone: Mehrere Widgets ergeben eine Weltuhr.</li>
+<li>Tab „Zeiten“ in der App mit allen Sonnenereignissen des Tages, Mondphase, Mondauf- und -untergang.</li>
+<li>Farbmodus hell, dunkel oder automatisch, Ziffern und Zeiger in deinen Material-You-Farben. Frei skalierbar, mehrere Widgets mit eigenen Einstellungen.</li>
+</ul>
+
+<p><b>Datenschutz:</b> kein Tracking, keine Werbung, keine Standort-Berechtigung (Orte werden von Hand eingetragen). Ins Internet geht die App nur für den optionalen Wetterring: Etwa alle zwei Stunden sendet sie die Koordinaten deiner Orte an open-meteo.com, um die Vorhersage zu laden.</p>
+
+<p>Wetterdaten von Open-Meteo.com (CC BY 4.0). Sonnen- und Mondberechnung nach SunCalc (BSD-2-Clause), Himmelsfarben nach Horizon (MIT).</p>

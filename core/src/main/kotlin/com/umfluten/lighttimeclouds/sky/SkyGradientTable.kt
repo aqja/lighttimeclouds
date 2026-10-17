@@ -6,8 +6,8 @@ import kotlin.math.roundToInt
 /**
  * Precomputed [SkyModel.averagedGradient] gradients for sun altitudes from [MIN_ALTITUDE] to 90° in
  * [ALTITUDE_STEP] steps, [STOPS] colors each (horizon first), so drawing the ring needs no
- * scattering integration. Stored as the resource [RESOURCE] (rows × stops × RGB bytes); a unit
- * test checks it against the model and can regenerate it.
+ * scattering integration. Stored as the resource [RESOURCE] (rows × stops × RGB bytes), which
+ * [main] in SkyTableGenerator.kt writes at build time.
  */
 object SkyGradientTable {
     const val MIN_ALTITUDE = -18.0

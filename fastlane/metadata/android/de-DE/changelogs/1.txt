@@ -1,0 +1,1 @@
+Erste Veröffentlichung: analoge Sonnen- und Monduhr mit Himmelsring, Mond, optionalem Wetterring, Temperaturen und Markierung des nächsten Weckers.

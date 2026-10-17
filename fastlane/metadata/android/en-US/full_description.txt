@@ -1,0 +1,15 @@
+<p>LightTimeClouds is a home screen widget: an ordinary analog clock face with a ring around it that shows the course of the day at your place, from night through dawn and daylight to dusk, plus the moon with its current phase. Inspired by sunclock.net, but with a normal <b>12-hour dial</b> by default (24 hours optional).</p>
+
+<ul>
+<li><b>Sky ring:</b> each section of the ring shows the sky from the horizon upward at that time of day. Daylight, sunrise and sunset come from a physical light scattering model, plus the blue hour and the night purple of twilight. Alternatively a simple gradient or fixed colors per phase.</li>
+<li><b>Moon:</b> moon hand with phase; its distance from the center shows the moon's altitude, with the moon's daily path.</li>
+<li><b>Optional weather ring</b> (forecast by Open-Meteo): cloud cover as grey, precipitation in blue (snow violet), darker with the amount and more opaque with the probability. Optional air or apparent temperature between the numerals or as a scale around the rim.</li>
+<li>Marks for solar noon and midnight, sunrise and sunset, and optionally the next alarm.</li>
+<li>Saved places with their own time zone: several widgets make a world clock.</li>
+<li>"Times" tab in the app with all sun events of the day, moon phase, moonrise and moonset.</li>
+<li>Light, dark or automatic color mode, numerals and hands in your Material You colors. Freely resizable, several widgets with their own settings.</li>
+</ul>
+
+<p><b>Privacy:</b> no tracking, no ads, no location permission (places are entered by hand). The app only goes online for the optional weather ring: about every two hours it sends the coordinates of your places to open-meteo.com to fetch the forecast.</p>
+
+<p>Weather data by Open-Meteo.com (CC BY 4.0). Sun and moon calculation ported from SunCalc (BSD-2-Clause), sky colors ported from Horizon (MIT).</p>

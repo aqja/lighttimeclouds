@@ -31,6 +31,13 @@ android {
         compose = true
     }
 
+    // No encrypted dependency metadata in the APK signing block: F-Droid cannot verify it and
+    // rejects builds that contain it.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
     androidResources {
         // Lists the translations (values-xx) for the per-app language setting from Android 13 on.
         generateLocaleConfig = true

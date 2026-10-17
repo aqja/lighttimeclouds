@@ -50,7 +50,7 @@ Voraussetzungen:
 ./gradlew installDebug      # direkt auf ein per adb verbundenes Gerät
 ```
 
-Die Himmelsfarben liegen vorberechnet in `core/src/main/resources/.../sky/sky_gradients.bin`. Nach Änderungen am Modell neu erzeugen mit `REGENERATE_SKY_TABLE=1 ./gradlew :core:test`.
+Die Himmelsfarben werden beim Build aus `core/.../sky/SkyModel.kt` als Tabelle vorberechnet (Gradle-Task `:core:generateSkyTable`); im Repo liegt keine Binärdatei.
 
 Zum manuellen Testen: Widget auf den Homescreen ziehen, über das Launcher-Icon „LightTimeClouds“ konfigurieren; Logs per `adb logcat`.
 
