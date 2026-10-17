@@ -12,8 +12,24 @@ enum class SwitchStrategyType { FIXED_TIMES, TRAILING_OFFSET }
 /** Where the place name is shown in the widget, if at all. */
 enum class LabelPosition { NONE, ABOVE, BELOW }
 
-/** How the day/night ring is colored: a smooth gradient over the sun altitude, or one fixed color per sky phase. */
-enum class RingStyle { GRADIENT, BANDS }
+/**
+ * How the day/night ring is colored: [SKY] shows the modeled sky from the horizon upward across
+ * the ring's width (see [SkyHorizon]); [GRADIENT] one color per sun altitude; [BANDS] one fixed
+ * color per sky phase.
+ */
+enum class RingStyle { SKY, GRADIENT, BANDS }
+
+/** For [RingStyle.SKY]: whether the horizon is at the inner or the outer edge of the ring. */
+enum class SkyHorizon { INNER, OUTER }
+
+/** Where the weather ring sits: just inside the day/night ring, or outermost around it. */
+enum class WeatherRingPosition { INSIDE, OUTSIDE }
+
+/** Where the temperature labels sit: between the hour numerals, or as a scale around the outermost ring. */
+enum class TemperaturePosition { BETWEEN_NUMERALS, OUTSIDE }
+
+/** Hourly temperature labels around the dial (only with the weather ring): none, air or apparent ("feels like") temperature. */
+enum class TemperatureDisplay { NONE, AIR, APPARENT }
 
 /**
  * All per-widget-instance configuration. [widgetId] is the real AppWidget id,
@@ -30,11 +46,17 @@ data class WidgetSettings(
     val switchTime1Minutes: Int = 6 * 60,
     val switchTime2Minutes: Int = 18 * 60,
     val trailingOffsetMinutes: Int = 30,
-    val ringStyle: RingStyle = RingStyle.GRADIENT,
+    val ringStyle: RingStyle = RingStyle.SKY,
+    val skyHorizon: SkyHorizon = SkyHorizon.INNER,
     val showMinuteTicks: Boolean = false,
     val showSolarMarks: Boolean = true,
     val showSunriseSunsetMarks: Boolean = true,
     val showMoon: Boolean = true,
+    /** Weather ring from an online forecast; off by default so nothing is fetched without the user opting in. */
+    val showWeather: Boolean = false,
+    val weatherRingPosition: WeatherRingPosition = WeatherRingPosition.INSIDE,
+    val temperatureDisplay: TemperatureDisplay = TemperatureDisplay.NONE,
+    val temperaturePosition: TemperaturePosition = TemperaturePosition.BETWEEN_NUMERALS,
     val labelPosition: LabelPosition = LabelPosition.NONE,
 ) {
     companion object {

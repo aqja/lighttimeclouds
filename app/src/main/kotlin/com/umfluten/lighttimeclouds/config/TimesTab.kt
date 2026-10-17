@@ -22,13 +22,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.umfluten.lighttimeclouds.astro.MoonEventType
 import com.umfluten.lighttimeclouds.astro.SolarDay
 import com.umfluten.lighttimeclouds.astro.SolarEventType
 import com.umfluten.lighttimeclouds.astro.SunMoonCalculator
+import com.umfluten.lighttimeclouds.data.WeatherRepository
 import com.umfluten.lighttimeclouds.data.WidgetSettings
+import com.umfluten.lighttimeclouds.weather.OpenMeteo
+import com.umfluten.lighttimeclouds.weather.WeatherForecast
 import com.umfluten.lighttimeclouds.widget.ClockFaceRenderer
 import kotlinx.coroutines.delay
 import java.time.Instant
@@ -42,7 +46,8 @@ private val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE, d
 /**
  * All sun events of the current solar day at the widget's (possibly not yet saved) place, in that
  * place's time zone, followed by the moon's phase, rise and set.
- * Past events are dimmed, the next one is highlighted; refreshes every minute.
+ * Past events are dimmed, the next one is highlighted; refreshes every minute. With the weather
+ * ring enabled, the age of the cached forecast follows.
  */
 @Composable
 internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
@@ -69,6 +74,11 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
     val firstDate = events.first().instant?.atZone(now.zone)?.toLocalDate()
     val nextIndex = events.indexOfFirst { it.instant?.isAfter(now.toInstant()) == true }
     val nextMoonIndex = moonEvents.indexOfFirst { it.instant.isAfter(now.toInstant()) }
+    val context = LocalContext.current
+    var forecast by remember(place) { mutableStateOf<WeatherForecast?>(null) }
+    LaunchedEffect(place, settings.showWeather, now) {
+        forecast = if (settings.showWeather) WeatherRepository(context).cached(place) else null
+    }
 
     LazyColumn(contentPadding = padding) {
         item {
@@ -139,6 +149,32 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
                 showDate = event.instant.atZone(now.zone).toLocalDate() != firstDate,
                 dotColor = Color(ClockFaceRenderer.MARK_COLOR),
             )
+        }
+
+        if (settings.showWeather) {
+            item {
+                HorizontalDivider(Modifier.padding(top = 8.dp))
+                Text(
+                    "Wetter",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+                )
+            }
+            item {
+                val fetched = forecast?.fetchedAt?.atZone(now.zone)
+                ListItem(
+                    headlineContent = { Text("Vorhersage geladen") },
+                    supportingContent = { Text(OpenMeteo.ATTRIBUTION) },
+                    trailingContent = {
+                        val label = when {
+                            fetched == null -> "noch nicht"
+                            fetched.toLocalDate() == now.toLocalDate() -> fetched.format(TIME_FORMAT)
+                            else -> fetched.format(DATE_FORMAT) + ", " + fetched.format(TIME_FORMAT)
+                        }
+                        Text(label)
+                    },
+                )
+            }
         }
     }
 }

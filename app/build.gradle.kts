@@ -30,6 +30,18 @@ android {
     buildFeatures {
         compose = true
     }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            // Robolectric reaches into JDK internals that newer JDKs no longer open by default.
+            it.jvmArgs(
+                "--add-exports=java.base/jdk.internal.access=ALL-UNNAMED",
+                "--add-opens=java.base/java.io=ALL-UNNAMED",
+                "--enable-native-access=ALL-UNNAMED",
+            )
+        }
+    }
 }
 
 dependencies {
@@ -45,6 +57,8 @@ dependencies {
     implementation(libs.androidx.material.icons.core)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.work.runtime.ktx)
 
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
 }

@@ -7,34 +7,113 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RadialGradient
 import android.graphics.Rect
 import android.graphics.RectF
+import android.graphics.Shader
 import android.os.Build
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withClip
+import androidx.core.graphics.withSave
 import com.umfluten.lighttimeclouds.astro.DialTimeMapper
 import com.umfluten.lighttimeclouds.astro.SunMoonCalculator
 import com.umfluten.lighttimeclouds.data.ColorMode
 import com.umfluten.lighttimeclouds.data.DisplayMode
 import com.umfluten.lighttimeclouds.data.RingStyle
+import com.umfluten.lighttimeclouds.data.SkyHorizon
 import com.umfluten.lighttimeclouds.data.SwitchStrategyType
+import com.umfluten.lighttimeclouds.data.TemperatureDisplay
+import com.umfluten.lighttimeclouds.data.TemperaturePosition
+import com.umfluten.lighttimeclouds.data.WeatherRingPosition
 import com.umfluten.lighttimeclouds.data.WidgetSettings
+import com.umfluten.lighttimeclouds.sky.SkyGradientTable
+import com.umfluten.lighttimeclouds.weather.TemperatureKind
+import com.umfluten.lighttimeclouds.weather.WeatherCondition
+import com.umfluten.lighttimeclouds.weather.WeatherForecast
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import kotlin.math.cos
 import kotlin.math.hypot
+import kotlin.math.roundToInt
 import kotlin.math.sin
 
-/** Renders the whole clock face (ring, sun marks, ticks, moon, hands) into a square [Bitmap]. */
+/** Renders the whole clock face (rings, sun marks, ticks, moon, hands) into a square [Bitmap]. */
 object ClockFaceRenderer {
 
     private const val RING_SAMPLES = 360
 
-    /** Day/night ring band and the tick area just inside it (fractions of the dial radius). */
-    private const val RING_INNER = 0.82f
-    private const val TICK_OUTER = 0.80f
+    /**
+     * Radial extent (fractions of the dial radius) of the day/night ring and the weather ring.
+     * Everything else lies inside 0.75, so the inner dial layout does not depend on these.
+     */
+    private class RingBands(val sunInner: Float, val sunOuter: Float, val weatherInner: Float, val weatherOuter: Float)
+
+    private val BANDS_WEATHER_INSIDE = RingBands(sunInner = 0.82f, sunOuter = 1f, weatherInner = 0.75f, weatherOuter = 0.81f)
+
+    /** Weather outermost: the day/night ring keeps its width and moves inward by the weather ring's width. */
+    private val BANDS_WEATHER_OUTSIDE = RingBands(sunInner = 0.75f, sunOuter = 0.93f, weatherInner = 0.94f, weatherOuter = 1f)
+
+    private fun ringBandsFor(settings: WidgetSettings): RingBands =
+        if (settings.showWeather && settings.weatherRingPosition == WeatherRingPosition.OUTSIDE) {
+            BANDS_WEATHER_OUTSIDE
+        } else {
+            BANDS_WEATHER_INSIDE
+        }
+
+    /**
+     * Temperature scale outside the rings: the whole dial shrinks to [OUTSIDE_TEMPERATURE_DIAL_SCALE]
+     * of its radius, and the labels run along the freed rim at [OUTSIDE_TEMPERATURE_RADIUS] (both
+     * fractions of the full radius).
+     */
+    private const val OUTSIDE_TEMPERATURE_DIAL_SCALE = 0.9f
+    private const val OUTSIDE_TEMPERATURE_RADIUS = 0.955f
+    private const val OUTSIDE_TEMPERATURE_SIZE = 0.075f
+
+    /** Weather ring opacity for hours already past, so the current moment stands out. */
+    private const val WEATHER_PAST_ALPHA = 0.5f
+
+    /** Radii (fractions of the dial radius) and sizes of everything inside the ring(s). */
+    private class DialLayout(
+        val tickOuter: Float,
+        val hourTickInner: Float,
+        val minuteTickInner: Float,
+        val temperatureRadius: Float,
+        val temperatureSize: Float,
+        val numeralRadius: Float,
+        val numeralSize: Float,
+        val hourHand: Float,
+        val minuteHand: Float,
+        val moonHorizon: Float,
+        val moonAmplitude: Float,
+    )
+
+    private val LAYOUT_PLAIN = DialLayout(
+        tickOuter = 0.80f, hourTickInner = 0.74f, minuteTickInner = 0.77f,
+        temperatureRadius = 0f, temperatureSize = 0f,
+        numeralRadius = 0.62f, numeralSize = 0.16f,
+        hourHand = 0.48f, minuteHand = 0.72f,
+        moonHorizon = 0.30f, moonAmplitude = 0.18f,
+    )
+
+    /** Everything moves inward to make room for the weather ring. */
+    private val LAYOUT_WEATHER = DialLayout(
+        tickOuter = 0.735f, hourTickInner = 0.68f, minuteTickInner = 0.71f,
+        temperatureRadius = 0f, temperatureSize = 0f,
+        numeralRadius = 0.575f, numeralSize = 0.15f,
+        hourHand = 0.46f, minuteHand = 0.66f,
+        moonHorizon = 0.30f, moonAmplitude = 0.18f,
+    )
+
+    /** Temperatures midway between the numerals, just outside their circle; numerals and moon orbit move further in. */
+    private val LAYOUT_TEMPERATURE = DialLayout(
+        tickOuter = 0.735f, hourTickInner = 0.68f, minuteTickInner = 0.71f,
+        temperatureRadius = 0.605f, temperatureSize = 0.082f,
+        numeralRadius = 0.50f, numeralSize = 0.135f,
+        hourHand = 0.40f, minuteHand = 0.62f,
+        moonHorizon = 0.26f, moonAmplitude = 0.15f,
+    )
 
     /**
      * Mid grey with near-equal WCAG contrast (~3.5:1) against both the daytime and nighttime
@@ -45,15 +124,17 @@ object ClockFaceRenderer {
 
     private const val MOON_PATH_SAMPLES = 144
 
-    /** Moon orbit (fractions of the dial radius): horizon circle, and the offset reached at ±90° altitude. */
-    private const val MOON_HORIZON_LINE = 0.30f
-    private const val MOON_ALTITUDE_AMPLITUDE = 0.18f
-
-    /** Draws the clock for [now], which defaults to the current time in the time zone of the widget's place. */
+    /**
+     * Draws the clock for [now], which defaults to the current time in the time zone of the widget's
+     * place. With [WidgetSettings.showWeather] the dial makes room for the weather ring (and the
+     * hourly temperatures, if enabled), which show [weather] where it covers the shown time span
+     * (nothing while there is no forecast yet).
+     */
     fun render(
         context: Context,
         sizePx: Int,
         settings: WidgetSettings,
+        weather: WeatherForecast? = null,
         now: ZonedDateTime = ZonedDateTime.now(settings.place.zone),
     ): Bitmap {
         val size = sizePx.coerceAtLeast(1)
@@ -62,19 +143,43 @@ object ClockFaceRenderer {
 
         val cx = size / 2f
         val cy = size / 2f
-        val radius = size / 2f * 0.96f
+        val fullRadius = size / 2f * 0.96f
         val dark = chromeIsDark(context, settings.colorMode)
         val chromeColor = chromeColor(context, dark)
+        val temperatureKind = temperatureKindFor(settings)
+        val temperaturesOutside = temperatureKind != null && settings.temperaturePosition == TemperaturePosition.OUTSIDE
+        // Everything but an outside temperature scale is drawn within this radius.
+        val radius = if (temperaturesOutside) fullRadius * OUTSIDE_TEMPERATURE_DIAL_SCALE else fullRadius
+        val layout = when {
+            temperatureKind != null && !temperaturesOutside -> LAYOUT_TEMPERATURE
+            settings.showWeather -> LAYOUT_WEATHER
+            else -> LAYOUT_PLAIN
+        }
 
-        drawDayNightRing(canvas, cx, cy, radius, settings, now)
+        val bands = ringBandsFor(settings)
+
+        drawDayNightRing(canvas, cx, cy, radius, bands, settings, now)
         if (settings.showSolarMarks || settings.showSunriseSunsetMarks) {
-            drawSolarMarks(canvas, cx, cy, radius, settings, now)
+            drawSolarMarks(canvas, cx, cy, radius, bands, settings, now)
         }
-        drawTicksAndNumerals(canvas, cx, cy, radius, settings, chromeColor)
+        if (settings.showWeather && weather != null) {
+            drawWeatherRing(canvas, cx, cy, radius, bands, settings, now, weather, dark)
+        }
+        drawTicksAndNumerals(canvas, cx, cy, radius, settings, layout, chromeColor)
+        if (temperatureKind != null && weather != null) {
+            drawTemperatures(
+                canvas, cx, cy, settings, now, weather, temperatureKind, chromeColor,
+                placement = if (temperaturesOutside) {
+                    TemperaturePlacement.Rim(fullRadius * OUTSIDE_TEMPERATURE_RADIUS, fullRadius * OUTSIDE_TEMPERATURE_SIZE)
+                } else {
+                    TemperaturePlacement.Upright(radius * layout.temperatureRadius, radius * layout.temperatureSize)
+                },
+            )
+        }
         if (settings.showMoon) {
-            drawMoon(canvas, cx, cy, radius, settings, now, dark)
+            drawMoon(canvas, cx, cy, radius, settings, layout, now, dark)
         }
-        drawHands(canvas, cx, cy, radius, settings, now, chromeColor)
+        drawHands(canvas, cx, cy, radius, settings, layout, now, chromeColor)
         drawCenterPin(canvas, cx, cy, radius, chromeColor)
 
         return bitmap
@@ -87,16 +192,22 @@ object ClockFaceRenderer {
         cx: Float,
         cy: Float,
         radius: Float,
+        bands: RingBands,
         settings: WidgetSettings,
         now: ZonedDateTime,
     ) {
-        val ringOuter = radius
-        val ringInner = radius * RING_INNER
+        val ringOuter = radius * bands.sunOuter
+        val ringInner = radius * bands.sunInner
         val ringMid = (ringOuter + ringInner) / 2f
         val rect = RectF(cx - ringMid, cy - ringMid, cx + ringMid, cy + ringMid)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
             strokeWidth = ringOuter - ringInner
+        }
+        // Sky style: per sample a radial gradient from the horizon colors to the upper sky (inner to
+        // outer edge, or reversed per [WidgetSettings.skyHorizon]), stops spread evenly across the band.
+        val skyPositions = FloatArray(SkyGradientTable.STOPS) { k ->
+            (ringInner + (ringOuter - ringInner) * k / (SkyGradientTable.STOPS - 1)) / ringOuter
         }
         for (i in 0 until RING_SAMPLES) {
             val a0 = 360.0 * i / RING_SAMPLES
@@ -104,9 +215,59 @@ object ClockFaceRenderer {
             val mid = (a0 + a1) / 2.0
             val instant = resolveInstantForAngle(mid, settings, now)
             val altitude = SunMoonCalculator.sunAltitudeDegrees(instant, settings.place.latitude, settings.place.longitude)
-            paint.color = ringColor(altitude, settings)
+            if (settings.ringStyle == RingStyle.SKY) {
+                val colors = skyColors(altitude).let { if (settings.skyHorizon == SkyHorizon.OUTER) it.reversedArray() else it }
+                paint.shader = RadialGradient(cx, cy, ringOuter, colors, skyPositions, Shader.TileMode.CLAMP)
+            } else {
+                paint.color = ringColor(altitude, settings)
+            }
             canvas.drawArc(rect, (a0 - 90.0).toFloat(), (a1 - a0).toFloat() + 0.75f, false, paint)
         }
+    }
+
+    /** Darkest sky tone: the night color of the other ring styles, so night is never pure black. */
+    private val SKY_NIGHT_FLOOR: Int get() = bandColor(SunMoonCalculator.SkyState.NIGHT)
+
+    /** Below this sun altitude the sky shows only [SKY_NIGHT_FLOOR] (end of astronomical twilight). */
+    private const val SKY_NIGHT_BELOW = -18.0
+
+    /** The twilight base tone follows [gradientColor] up to this sun altitude (the night purple). */
+    private const val SKY_BASE_TOP = -6.0
+
+    /** The twilight base tone fades out between these sun altitudes, leaving the modeled daylight. */
+    private const val SKY_BASE_FADE_START = -3.0
+    private const val SKY_BASE_FADE_END = 2.0
+
+    /** Twilight base: horizon tone as the sky [SKY_TWILIGHT_SPREAD]° higher, top tone as that much lower. */
+    private const val SKY_TWILIGHT_SPREAD = 3.0
+
+    /**
+     * Sky colors for [altitudeDeg] as opaque ARGB, horizon first, as two layers combined with a
+     * "screen" blend:
+     * - the light of the physical model ([SkyGradientTable]: averaged all around, capped eye
+     *   adaptation), which supplies daylight and the red/golden glow from about -6° upward;
+     * - a twilight base tone from [gradientColor] (from [SKY_NIGHT_FLOOR] through the blue to the
+     *   night purple at [SKY_BASE_TOP]), standing in for the blue of the blue hour, which comes from
+     *   ozone absorption and multiple scattering that the single-scattering model barely captures.
+     *   It fades out around sunrise/sunset.
+     * Below [SKY_NIGHT_BELOW] only the night color remains.
+     */
+    internal fun skyColors(altitudeDeg: Double): IntArray {
+        val light = SkyGradientTable.colors(altitudeDeg)
+        val t = ((altitudeDeg - SKY_BASE_FADE_START) / (SKY_BASE_FADE_END - SKY_BASE_FADE_START)).coerceIn(0.0, 1.0)
+        val baseStrength = 1.0 - t * t * (3 - 2 * t)
+        val last = SkyGradientTable.STOPS - 1
+        return IntArray(SkyGradientTable.STOPS) { k ->
+            val baseAltitude = (altitudeDeg + SKY_TWILIGHT_SPREAD * (1 - 2.0 * k / last)).coerceIn(SKY_NIGHT_BELOW, SKY_BASE_TOP)
+            val base = lerpColor(Color.BLACK, gradientColor(baseAltitude), baseStrength)
+            screenBlend(base, light[k] or (0xFF shl 24))
+        }
+    }
+
+    /** "Screen" blend of two opaque colors: 1 - (1 - a)(1 - b) per channel; never darker than either. */
+    private fun screenBlend(a: Int, b: Int): Int {
+        fun ch(x: Int, y: Int) = 255 - (255 - x) * (255 - y) / 255
+        return Color.rgb(ch(Color.red(a), Color.red(b)), ch(Color.green(a), Color.green(b)), ch(Color.blue(a), Color.blue(b)))
     }
 
     /**
@@ -114,14 +275,22 @@ object ClockFaceRenderer {
      * [MARK_COLOR]. In 12h mode every dial position stands for two times 12h apart, so only
      * events inside the currently shown 12h window are drawn.
      */
-    private fun drawSolarMarks(canvas: Canvas, cx: Float, cy: Float, radius: Float, settings: WidgetSettings, now: ZonedDateTime) {
+    private fun drawSolarMarks(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        bands: RingBands,
+        settings: WidgetSettings,
+        now: ZonedDateTime,
+    ) {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = MARK_COLOR
             strokeWidth = radius * 0.012f
             strokeCap = Paint.Cap.BUTT
         }
-        val inner = radius * RING_INNER
-        val outer = radius
+        val inner = radius * bands.sunInner
+        val outer = radius * bands.sunOuter
         for (dayOffset in -1L..1L) {
             val times = SunMoonCalculator.sunTimes(now.plusDays(dayOffset).toInstant(), settings.place.latitude, settings.place.longitude)
             val events = buildList {
@@ -175,6 +344,179 @@ object ClockFaceRenderer {
             switchTime2 = LocalTime.ofSecondOfDay((settings.switchTime2Minutes * 60L).coerceIn(0, 86399)),
         )
         SwitchStrategyType.TRAILING_OFFSET -> DialTimeMapper.TrailingOffset(settings.trailingOffsetMinutes)
+    }
+
+    // --- Weather ring ----------------------------------------------------------------
+
+    /**
+     * Cloud cover and precipitation of the shown time span, in hour-long segments, as two layers:
+     * clouds as grey that is transparent under a clear sky and grows opaque with cloud cover; on
+     * top, precipitation in blue (violet for snow) that darkens with the amount and is as opaque as
+     * it is likely. Past hours are dimmed, and the whole ring fades as the forecast ages
+     * ([WeatherForecast.freshnessAlpha]).
+     */
+    private fun drawWeatherRing(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        bands: RingBands,
+        settings: WidgetSettings,
+        now: ZonedDateTime,
+        forecast: WeatherForecast,
+        dark: Boolean,
+    ) {
+        val freshness = forecast.freshnessAlpha(now.toInstant())
+        if (freshness <= 0f) return
+
+        val clouds = IntArray(RING_SAMPLES)
+        val precipitation = IntArray(RING_SAMPLES)
+        for (i in 0 until RING_SAMPLES) {
+            val instant = resolveInstantForAngle(360.0 * (i + 0.5) / RING_SAMPLES, settings, now)
+            val condition = forecast.conditionAt(instant) ?: continue
+            val alpha = if (instant.isBefore(now.toInstant())) freshness * WEATHER_PAST_ALPHA else freshness
+            clouds[i] = withAlphaFactor(cloudColor(condition, dark), alpha)
+            precipitation[i] = withAlphaFactor(precipitationColor(condition), alpha)
+        }
+
+        val mid = radius * (bands.weatherOuter + bands.weatherInner) / 2f
+        val rect = RectF(cx - mid, cy - mid, cx + mid, cy + mid)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = radius * (bands.weatherOuter - bands.weatherInner)
+            strokeCap = Paint.Cap.BUTT
+        }
+        drawColorRuns(canvas, rect, paint, clouds)
+        drawColorRuns(canvas, rect, paint, precipitation)
+    }
+
+    /**
+     * One arc per run of equal color in [colors] (one entry per ring sample): unlike the opaque
+     * day/night ring, overlapping translucent arcs would show darker seams.
+     */
+    private fun drawColorRuns(canvas: Canvas, rect: RectF, paint: Paint, colors: IntArray) {
+        var runStart = 0
+        for (i in 1..colors.size) {
+            if (i < colors.size && colors[i] == colors[runStart]) continue
+            if (Color.alpha(colors[runStart]) > 0) {
+                paint.color = colors[runStart]
+                val start = 360f * runStart / colors.size
+                canvas.drawArc(rect, start - 90f, 360f * (i - runStart) / colors.size, false, paint)
+            }
+            runStart = i
+        }
+    }
+
+    private val CLOUD_ON_DARK = Color.rgb(205, 208, 215)
+    private val CLOUD_ON_LIGHT = Color.rgb(110, 115, 125)
+    private const val CLOUD_MAX_ALPHA = 230
+
+    /** Precipitation ramps over [WeatherCondition.precipitationLevel]: 0.1 mm/h (or only a chance), 1 mm/h, 10 mm/h. */
+    private val RAIN_RAMP = listOf(Color.rgb(150, 200, 250), Color.rgb(50, 120, 225), Color.rgb(15, 40, 150))
+    private val SNOW_RAMP = listOf(Color.rgb(215, 200, 250), Color.rgb(160, 135, 235), Color.rgb(105, 70, 195))
+
+    /** Cloud layer color; lighter on a [dark] background so clouds stay visible. */
+    private fun cloudColor(condition: WeatherCondition, dark: Boolean): Int {
+        val base = if (dark) CLOUD_ON_DARK else CLOUD_ON_LIGHT
+        val alpha = (condition.cloudCoverPercent.coerceIn(0.0, 100.0) / 100.0 * CLOUD_MAX_ALPHA).toInt()
+        return Color.argb(alpha, Color.red(base), Color.green(base), Color.blue(base))
+    }
+
+    /** Precipitation layer color: shade from the amount, opacity from the probability; transparent if dry. */
+    private fun precipitationColor(condition: WeatherCondition): Int {
+        if (!condition.hasPrecipitation) return Color.TRANSPARENT
+        val ramp = if (condition.isSnow) SNOW_RAMP else RAIN_RAMP
+        val level = condition.precipitationLevel * (ramp.size - 1)
+        val index = level.toInt().coerceAtMost(ramp.size - 2)
+        val color = lerpColor(ramp[index], ramp[index + 1], (level - index).toDouble())
+        return withAlphaFactor(color, condition.precipitationAlpha)
+    }
+
+    private fun withAlphaFactor(color: Int, factor: Float): Int =
+        Color.argb((Color.alpha(color) * factor).toInt().coerceIn(0, 255), Color.red(color), Color.green(color), Color.blue(color))
+
+    // --- Hourly temperatures ------------------------------------------------------------
+
+    private fun temperatureKindFor(settings: WidgetSettings): TemperatureKind? =
+        if (!settings.showWeather) null else when (settings.temperatureDisplay) {
+            TemperatureDisplay.NONE -> null
+            TemperatureDisplay.AIR -> TemperatureKind.AIR
+            TemperatureDisplay.APPARENT -> TemperatureKind.APPARENT
+        }
+
+    /** Where and how large ([textSize], px) the temperature labels are drawn, centered on a circle of [radius] px. */
+    private sealed class TemperaturePlacement(val radius: Float, val textSize: Float) {
+        /** Upright text, e.g. between the numerals. */
+        class Upright(radius: Float, textSize: Float) : TemperaturePlacement(radius, textSize)
+
+        /** Text along the circle like a watch bezel, turned in the lower half so it never stands on its head. */
+        class Rim(radius: Float, textSize: Float) : TemperaturePlacement(radius, textSize)
+    }
+
+    /**
+     * Midway between each pair of neighboring numerals, the rounded mean temperature of the time
+     * span between them: one hour in 12h mode, two hours in 24h mode (numerals every second hour).
+     * Like the weather ring, labels for past spans are dimmed and all fade as the forecast ages.
+     */
+    private fun drawTemperatures(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        settings: WidgetSettings,
+        now: ZonedDateTime,
+        forecast: WeatherForecast,
+        kind: TemperatureKind,
+        color: Int,
+        placement: TemperaturePlacement,
+    ) {
+        val freshness = forecast.freshnessAlpha(now.toInstant())
+        if (freshness <= 0f) return
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            textSize = placement.textSize
+            textAlign = Paint.Align.CENTER
+        }
+        // Centered on the digits' height, so labels with and without minus sign line up.
+        val bounds = Rect().also { paint.getTextBounds("0", 0, 1, it) }
+        val halfHeight = bounds.height() / 2f
+        val span = when (settings.displayMode) {
+            DisplayMode.TWELVE_HOUR -> Duration.ofHours(1)
+            DisplayMode.TWENTY_FOUR_HOUR -> Duration.ofHours(2)
+        }
+        // Numerals sit every 30° in both modes.
+        for (step in 0 until 12) {
+            val start = resolveInstantForAngle(step * 30.0, settings, now)
+            val temperature = forecast.meanTemperature(start, start.plus(span), kind) ?: continue
+            val angle = step * 30.0 + 15.0
+            val past = start.plus(span.dividedBy(2)).isBefore(now.toInstant())
+            paint.color = withAlphaFactor(color, if (past) freshness * WEATHER_PAST_ALPHA else freshness)
+            val label = formatTemperature(temperature)
+            when (placement) {
+                is TemperaturePlacement.Upright -> {
+                    val rad = Math.toRadians(angle - 90.0)
+                    val x = cx + (cos(rad) * placement.radius).toFloat()
+                    val y = cy + (sin(rad) * placement.radius).toFloat() + halfHeight
+                    canvas.drawText(label, x, y, paint)
+                }
+                is TemperaturePlacement.Rim -> {
+                    val lowerHalf = angle > 90.0 && angle < 270.0
+                    canvas.withSave {
+                        if (lowerHalf) {
+                            rotate((angle - 180.0).toFloat(), cx, cy)
+                            drawText(label, cx, cy + placement.radius + halfHeight, paint)
+                        } else {
+                            rotate(angle.toFloat(), cx, cy)
+                            drawText(label, cx, cy - placement.radius + halfHeight, paint)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /** Whole degrees with a real minus sign; "-0" becomes "0". */
+    private fun formatTemperature(celsius: Double): String {
+        val rounded = celsius.roundToInt()
+        return if (rounded < 0) "\u2212${-rounded}°" else "$rounded°"
     }
 
     // --- Color handling ------------------------------------------------------------
@@ -232,15 +574,17 @@ object ClockFaceRenderer {
      * the ring); also used by the config app's time list.
      */
     fun ringColor(altitudeDeg: Double, settings: WidgetSettings): Int = when (settings.ringStyle) {
+        // A single representative color: the sky about halfway up the band.
+        RingStyle.SKY -> skyColors(altitudeDeg)[SkyGradientTable.STOPS / 2]
         RingStyle.GRADIENT -> gradientColor(altitudeDeg)
         RingStyle.BANDS -> bandColor(SunMoonCalculator.classify(altitudeDeg))
     }
 
-    /** True when the widget sits on a dark background, so the chrome must be light. [ColorMode.AUTO] follows the system dark mode. */
     /** Color of numerals, ticks and hands under [settings]; also used for the place name next to the clock. */
     fun chromeColor(context: Context, settings: WidgetSettings): Int =
         chromeColor(context, chromeIsDark(context, settings.colorMode))
 
+    /** True when the widget sits on a dark background, so the chrome must be light. [ColorMode.AUTO] follows the system dark mode. */
     private fun chromeIsDark(context: Context, mode: ColorMode): Boolean = when (mode) {
         ColorMode.DARK -> true
         ColorMode.LIGHT -> false
@@ -264,7 +608,15 @@ object ClockFaceRenderer {
 
     // --- Ticks & numerals ------------------------------------------------------------
 
-    private fun drawTicksAndNumerals(canvas: Canvas, cx: Float, cy: Float, radius: Float, settings: WidgetSettings, color: Int) {
+    private fun drawTicksAndNumerals(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        settings: WidgetSettings,
+        layout: DialLayout,
+        color: Int,
+    ) {
         val tickPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             this.color = color
             strokeWidth = radius * 0.02f
@@ -272,12 +624,12 @@ object ClockFaceRenderer {
         }
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             this.color = color
-            textSize = radius * 0.16f
+            textSize = radius * layout.numeralSize
             textAlign = Paint.Align.CENTER
         }
-        val tickOuter = radius * TICK_OUTER
-        val tickInner = radius * 0.74f
-        val numeralRadius = radius * 0.62f
+        val tickOuter = radius * layout.tickOuter
+        val tickInner = radius * layout.hourTickInner
+        val numeralRadius = radius * layout.numeralRadius
         val bounds = Rect()
 
         val labels: List<Pair<Double, String>> = when (settings.displayMode) {
@@ -295,19 +647,19 @@ object ClockFaceRenderer {
         }
 
         if (settings.showMinuteTicks) {
-            drawMinuteTicks(canvas, cx, cy, radius, color)
+            drawMinuteTicks(canvas, cx, cy, radius, layout, color)
         }
     }
 
     /** 60 short ticks for the minute hand; every fifth is skipped since hour ticks (both modes) sit on multiples of 30°. */
-    private fun drawMinuteTicks(canvas: Canvas, cx: Float, cy: Float, radius: Float, color: Int) {
+    private fun drawMinuteTicks(canvas: Canvas, cx: Float, cy: Float, radius: Float, layout: DialLayout, color: Int) {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             this.color = color
             strokeWidth = radius * 0.01f
             strokeCap = Paint.Cap.ROUND
         }
-        val outer = radius * TICK_OUTER
-        val inner = radius * 0.77f
+        val outer = radius * layout.tickOuter
+        val inner = radius * layout.minuteTickInner
         for (minute in 0 until 60) {
             if (minute % 5 == 0) continue
             val rad = Math.toRadians(minute * 6.0 - 90.0)
@@ -327,12 +679,21 @@ object ClockFaceRenderer {
      * covers the same time window as the day/night ring (12h mode: the active window, flipping with it; 24h mode:
      * today), so it always contains the current point, where the phase disc sits.
      */
-    private fun drawMoon(canvas: Canvas, cx: Float, cy: Float, radius: Float, settings: WidgetSettings, now: ZonedDateTime, dark: Boolean) {
+    private fun drawMoon(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        settings: WidgetSettings,
+        layout: DialLayout,
+        now: ZonedDateTime,
+        dark: Boolean,
+    ) {
         fun pointAt(time: ZonedDateTime): Triple<Float, Float, Boolean> {
             val lagSeconds = (SunMoonCalculator.moonLagHours(time.toInstant()) * 3600.0).toLong()
             val angle = dialAngle(time.minusSeconds(lagSeconds), settings.displayMode)
             val altitude = SunMoonCalculator.moonAltitudeDegrees(time.toInstant(), settings.place.latitude, settings.place.longitude)
-            val r = radius * moonOrbitRadiusFactor(altitude)
+            val r = radius * moonOrbitRadiusFactor(altitude, layout)
             val rad = Math.toRadians(angle - 90.0)
             return Triple(cx + (cos(rad) * r).toFloat(), cy + (sin(rad) * r).toFloat(), altitude > 0.0)
         }
@@ -352,7 +713,7 @@ object ClockFaceRenderer {
             style = Paint.Style.STROKE
             strokeWidth = radius * 0.006f
         }
-        canvas.drawCircle(cx, cy, radius * MOON_HORIZON_LINE, horizonPaint)
+        canvas.drawCircle(cx, cy, radius * layout.moonHorizon, horizonPaint)
 
         val pathPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = MARK_COLOR
@@ -392,8 +753,8 @@ object ClockFaceRenderer {
     }
 
     /** Moon distance from the center, as a fraction of the dial radius: the horizon circle offset by sin(altitude), outward above and inward below. */
-    private fun moonOrbitRadiusFactor(altitudeDeg: Double): Float =
-        MOON_HORIZON_LINE + MOON_ALTITUDE_AMPLITUDE * sin(Math.toRadians(altitudeDeg.coerceIn(-90.0, 90.0))).toFloat()
+    private fun moonOrbitRadiusFactor(altitudeDeg: Double, layout: DialLayout): Float =
+        layout.moonHorizon + layout.moonAmplitude * sin(Math.toRadians(altitudeDeg.coerceIn(-90.0, 90.0))).toFloat()
 
     /** Dial angle (0..360, 0 = top) at which [time] appears on the dial. */
     private fun dialAngle(time: ZonedDateTime, mode: DisplayMode): Double {
@@ -441,7 +802,16 @@ object ClockFaceRenderer {
 
     // --- Hands ------------------------------------------------------------
 
-    private fun drawHands(canvas: Canvas, cx: Float, cy: Float, radius: Float, settings: WidgetSettings, now: ZonedDateTime, color: Int) {
+    private fun drawHands(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        settings: WidgetSettings,
+        layout: DialLayout,
+        now: ZonedDateTime,
+        color: Int,
+    ) {
         val hourAngle = dialAngle(now.withSecond(0), settings.displayMode)
         val minuteAngle = now.minute * 6.0
 
@@ -456,8 +826,8 @@ object ClockFaceRenderer {
             strokeCap = Paint.Cap.ROUND
         }
 
-        drawHand(canvas, cx, cy, hourAngle, radius * 0.48f, hourPaint)
-        drawHand(canvas, cx, cy, minuteAngle, radius * 0.72f, minutePaint)
+        drawHand(canvas, cx, cy, hourAngle, radius * layout.hourHand, hourPaint)
+        drawHand(canvas, cx, cy, minuteAngle, radius * layout.minuteHand, minutePaint)
     }
 
     private fun drawHand(canvas: Canvas, cx: Float, cy: Float, angleDeg: Double, length: Float, paint: Paint) {

@@ -1,6 +1,14 @@
 package com.umfluten.lighttimeclouds.config
 
+import android.Manifest
 import android.app.Application
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -43,14 +52,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.umfluten.lighttimeclouds.data.ColorMode
 import com.umfluten.lighttimeclouds.data.DisplayMode
 import com.umfluten.lighttimeclouds.data.RingStyle
+import com.umfluten.lighttimeclouds.data.SkyHorizon
 import com.umfluten.lighttimeclouds.data.SwitchStrategyType
 import com.umfluten.lighttimeclouds.data.TapAction
+import com.umfluten.lighttimeclouds.data.TemperatureDisplay
+import com.umfluten.lighttimeclouds.data.TemperaturePosition
+import com.umfluten.lighttimeclouds.data.WeatherRingPosition
 import com.umfluten.lighttimeclouds.data.WidgetPrefsRepository
 import com.umfluten.lighttimeclouds.data.WidgetSettings
+import com.umfluten.lighttimeclouds.weather.OpenMeteo
 import com.umfluten.lighttimeclouds.widget.WidgetIds
 
 /**
@@ -125,7 +140,7 @@ private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
         return
     }
 
-    var selectedTab by rememberSaveable { mutableStateOf(0) }
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     ConfigScaffold(
         subtitle = subtitle,
         tabs = {
@@ -188,10 +203,18 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
         )
         Text("Tag/Nacht-Ring", style = MaterialTheme.typography.labelLarge)
         SegmentedChoice(
-            options = listOf(RingStyle.GRADIENT to "Verlauf", RingStyle.BANDS to "Feste Farben"),
+            options = listOf(RingStyle.SKY to "Himmel", RingStyle.GRADIENT to "Verlauf", RingStyle.BANDS to "Feste Farben"),
             selected = settings.ringStyle,
             onSelect = { viewModel.update { s -> s.copy(ringStyle = it) } },
         )
+        if (settings.ringStyle == RingStyle.SKY) {
+            Text("Horizont im Ring", style = MaterialTheme.typography.labelLarge)
+            SegmentedChoice(
+                options = listOf(SkyHorizon.INNER to "Innen", SkyHorizon.OUTER to "Außen"),
+                selected = settings.skyHorizon,
+                onSelect = { viewModel.update { s -> s.copy(skyHorizon = it) } },
+            )
+        }
         SwitchRow(
             label = "Minutenstriche",
             checked = settings.showMinuteTicks,
@@ -212,6 +235,7 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             checked = settings.showMoon,
             onCheckedChange = { viewModel.update { s -> s.copy(showMoon = it) } },
         )
+        WeatherSetting(settings, viewModel)
     }
 
     if (settings.displayMode == DisplayMode.TWELVE_HOUR) {
@@ -250,6 +274,87 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
         )
     }
 }
+
+/**
+ * Weather ring switch. Some systems let the user withhold network access per app, so switching the
+ * ring on asks for it where needed; while it is missing, a hint links to the app's system settings.
+ */
+@Composable
+private fun WeatherSetting(settings: WidgetSettings, viewModel: ConfigViewModel) {
+    val context = LocalContext.current
+    var networkAllowed by remember { mutableStateOf(hasNetworkPermission(context)) }
+    // Re-checked on return from the system settings.
+    LifecycleResumeEffect(Unit) {
+        networkAllowed = hasNetworkPermission(context)
+        onPauseOrDispose {}
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        networkAllowed = granted
+    }
+
+    SwitchRow(
+        label = "Wetter (Bewölkung und Niederschlag)",
+        checked = settings.showWeather,
+        onCheckedChange = { on ->
+            viewModel.update { s -> s.copy(showWeather = on) }
+            if (on && !networkAllowed) permissionLauncher.launch(Manifest.permission.INTERNET)
+        },
+    )
+    if (!settings.showWeather) return
+    Text(
+        "Zusätzlicher Ring: grau je nach Bewölkung, bei klarem Himmel durchsichtig. " +
+            "Niederschlag in Blau (Schnee violett), je dunkler, desto mehr; je deckender, desto wahrscheinlicher. " +
+            "Die Vorhersage wird etwa stündlich aus dem Internet geladen; dazu werden die Koordinaten des Orts " +
+            "an open-meteo.com übertragen. " +
+            OpenMeteo.ATTRIBUTION + ".",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Text("Position des Wetterrings", style = MaterialTheme.typography.labelLarge)
+    SegmentedChoice(
+        options = listOf(
+            WeatherRingPosition.INSIDE to "Innerhalb",
+            WeatherRingPosition.OUTSIDE to "Ganz außen",
+        ),
+        selected = settings.weatherRingPosition,
+        onSelect = { viewModel.update { s -> s.copy(weatherRingPosition = it) } },
+    )
+    Text("Temperatur je Stunde", style = MaterialTheme.typography.labelLarge)
+    SegmentedChoice(
+        options = listOf(
+            TemperatureDisplay.NONE to "Aus",
+            TemperatureDisplay.AIR to "Luft",
+            TemperatureDisplay.APPARENT to "Gefühlt",
+        ),
+        selected = settings.temperatureDisplay,
+        onSelect = { viewModel.update { s -> s.copy(temperatureDisplay = it) } },
+    )
+    if (settings.temperatureDisplay != TemperatureDisplay.NONE) {
+        SegmentedChoice(
+            options = listOf(
+                TemperaturePosition.BETWEEN_NUMERALS to "Zwischen Ziffern",
+                TemperaturePosition.OUTSIDE to "Außen",
+            ),
+            selected = settings.temperaturePosition,
+            onSelect = { viewModel.update { s -> s.copy(temperaturePosition = it) } },
+        )
+    }
+    if (!networkAllowed) {
+        Text(
+            "Die App hat keinen Netzwerkzugriff, daher kann keine Vorhersage geladen werden.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error,
+        )
+        TextButton(onClick = {
+            context.startActivity(
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)),
+            )
+        }) { Text("Berechtigungen öffnen") }
+    }
+}
+
+private fun hasNetworkPermission(context: Context): Boolean =
+    context.checkSelfPermission(Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED
 
 @Composable
 private fun DayNightSwitchSection(settings: WidgetSettings, viewModel: ConfigViewModel) {

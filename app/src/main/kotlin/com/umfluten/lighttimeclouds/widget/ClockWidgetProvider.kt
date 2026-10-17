@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.RemoteViews
 import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.data.LabelPosition
+import com.umfluten.lighttimeclouds.data.WeatherRepository
 import com.umfluten.lighttimeclouds.data.WidgetPrefsRepository
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +22,8 @@ class ClockWidgetProvider : AppWidgetProvider() {
         CoroutineScope(Dispatchers.Default).launch {
             try {
                 appWidgetIds.forEach { id -> updateWidget(context, appWidgetManager, id) }
+                // A newly placed widget may show weather via the template; a recent cache is reused.
+                WeatherSync.update(context, refreshNow = true)
             } finally {
                 pending.finish()
             }
@@ -50,6 +53,7 @@ class ClockWidgetProvider : AppWidgetProvider() {
 
     override fun onDisabled(context: Context) {
         ClockAlarmScheduler.cancel(context)
+        WeatherSync.cancel(context)
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
@@ -58,6 +62,8 @@ class ClockWidgetProvider : AppWidgetProvider() {
         CoroutineScope(Dispatchers.Default).launch {
             try {
                 appWidgetIds.forEach { repo.delete(it) }
+                // Stops the hourly forecast job once no remaining widget shows weather.
+                WeatherSync.update(context, refreshNow = false)
             } finally {
                 pending.finish()
             }
@@ -84,16 +90,22 @@ class ClockWidgetProvider : AppWidgetProvider() {
             WidgetIds.activeWidgetIds(context).forEach { id -> updateWidget(context, appWidgetManager, id) }
         }
 
+        /** Settings [appWidgetId] is drawn with: its own, or the template while it has never been saved. */
+        suspend fun effectiveSettings(context: Context, appWidgetId: Int): WidgetSettings {
+            val repo = WidgetPrefsRepository(context)
+            if (!repo.isConfigured(appWidgetId) && repo.isConfigured(WidgetSettings.DEFAULT_WIDGET_ID)) {
+                return repo.load(WidgetSettings.DEFAULT_WIDGET_ID).copy(widgetId = appWidgetId)
+            }
+            return repo.load(appWidgetId)
+        }
+
         /** Renders and pushes one widget; a freshly placed, never-saved widget uses the template settings. */
         suspend fun updateWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
-            val repo = WidgetPrefsRepository(context)
-            var settings = repo.load(appWidgetId)
-            if (!repo.isConfigured(appWidgetId) && repo.isConfigured(WidgetSettings.DEFAULT_WIDGET_ID)) {
-                settings = repo.load(WidgetSettings.DEFAULT_WIDGET_ID).copy(widgetId = appWidgetId)
-            }
+            val settings = effectiveSettings(context, appWidgetId)
+            val weather = if (settings.showWeather) WeatherRepository(context).cached(settings.place) else null
 
             val sizePx = WidgetSizing.currentSizePx(context, appWidgetManager, appWidgetId)
-            val bitmap = ClockFaceRenderer.render(context, sizePx, settings)
+            val bitmap = ClockFaceRenderer.render(context, sizePx, settings, weather)
 
             val views = RemoteViews(context.packageName, R.layout.widget_clock)
             views.setImageViewBitmap(R.id.widget_clock_image, bitmap)

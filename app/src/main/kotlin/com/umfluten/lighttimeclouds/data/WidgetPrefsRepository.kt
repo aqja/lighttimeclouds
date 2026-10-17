@@ -27,10 +27,15 @@ class WidgetPrefsRepository(private val context: Context) {
         val switchTime2 = intPreferencesKey(prefix + "switch_t2")
         val trailingOffset = intPreferencesKey(prefix + "trailing_offset")
         val ringStyle = stringPreferencesKey(prefix + "ring_style")
+        val skyHorizon = stringPreferencesKey(prefix + "sky_horizon")
+        val weatherRingPosition = stringPreferencesKey(prefix + "weather_ring_position")
         val minuteTicks = booleanPreferencesKey(prefix + "minute_ticks")
         val solarMarks = booleanPreferencesKey(prefix + "solar_marks")
         val sunriseMarks = booleanPreferencesKey(prefix + "sunrise_marks")
         val showMoon = booleanPreferencesKey(prefix + "show_moon")
+        val showWeather = booleanPreferencesKey(prefix + "show_weather")
+        val temperatureDisplay = stringPreferencesKey(prefix + "temperature_display")
+        val temperaturePosition = stringPreferencesKey(prefix + "temperature_position")
         val labelPosition = stringPreferencesKey(prefix + "label_position")
         val configured = booleanPreferencesKey(prefix + "configured")
     }
@@ -51,10 +56,15 @@ class WidgetPrefsRepository(private val context: Context) {
             switchTime2Minutes = prefs[k.switchTime2] ?: d.switchTime2Minutes,
             trailingOffsetMinutes = prefs[k.trailingOffset] ?: d.trailingOffsetMinutes,
             ringStyle = prefs.enumOr(k.ringStyle, d.ringStyle),
+            skyHorizon = prefs.enumOr(k.skyHorizon, d.skyHorizon),
+            weatherRingPosition = prefs.enumOr(k.weatherRingPosition, d.weatherRingPosition),
             showMinuteTicks = prefs[k.minuteTicks] ?: d.showMinuteTicks,
             showSolarMarks = prefs[k.solarMarks] ?: d.showSolarMarks,
             showSunriseSunsetMarks = prefs[k.sunriseMarks] ?: d.showSunriseSunsetMarks,
             showMoon = prefs[k.showMoon] ?: d.showMoon,
+            showWeather = prefs[k.showWeather] ?: d.showWeather,
+            temperatureDisplay = prefs.enumOr(k.temperatureDisplay, d.temperatureDisplay),
+            temperaturePosition = prefs.enumOr(k.temperaturePosition, d.temperaturePosition),
             labelPosition = prefs.enumOr(k.labelPosition, d.labelPosition),
         )
     }
@@ -71,10 +81,15 @@ class WidgetPrefsRepository(private val context: Context) {
             prefs[k.switchTime2] = settings.switchTime2Minutes
             prefs[k.trailingOffset] = settings.trailingOffsetMinutes
             prefs[k.ringStyle] = settings.ringStyle.name
+            prefs[k.skyHorizon] = settings.skyHorizon.name
+            prefs[k.weatherRingPosition] = settings.weatherRingPosition.name
             prefs[k.minuteTicks] = settings.showMinuteTicks
             prefs[k.solarMarks] = settings.showSolarMarks
             prefs[k.sunriseMarks] = settings.showSunriseSunsetMarks
             prefs[k.showMoon] = settings.showMoon
+            prefs[k.showWeather] = settings.showWeather
+            prefs[k.temperatureDisplay] = settings.temperatureDisplay.name
+            prefs[k.temperaturePosition] = settings.temperaturePosition.name
             prefs[k.labelPosition] = settings.labelPosition.name
             prefs[k.configured] = true
         }

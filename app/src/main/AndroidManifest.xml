@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Weather ring only: fetches the Open-Meteo forecast, and only while a widget has it enabled. -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Package visibility (API 30+): needed so TapActionResolver can resolve the system clock app. -->
     <queries>

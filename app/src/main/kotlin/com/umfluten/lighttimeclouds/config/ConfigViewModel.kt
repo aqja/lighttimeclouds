@@ -10,6 +10,7 @@ import com.umfluten.lighttimeclouds.data.PlacesRepository
 import com.umfluten.lighttimeclouds.data.WidgetPrefsRepository
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.widget.ClockWidgetProvider
+import com.umfluten.lighttimeclouds.widget.WeatherSync
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -53,6 +54,7 @@ class ConfigViewModel(application: Application, private val widgetId: Int) : And
                 // The most recently saved settings become the template for newly placed widgets.
                 repository.save(current.copy(widgetId = WidgetSettings.DEFAULT_WIDGET_ID))
             }
+            WeatherSync.update(getApplication(), refreshNow = current.showWeather)
             onSaved()
         }
     }
@@ -64,6 +66,8 @@ class ConfigViewModel(application: Application, private val widgetId: Int) : And
             update { it.copy(place = place) }
             refreshPlaces()
             ClockWidgetProvider.updateAll(getApplication())
+            // New coordinates invalidate the place's cached forecast.
+            WeatherSync.update(getApplication(), refreshNow = true)
         }
     }
 
