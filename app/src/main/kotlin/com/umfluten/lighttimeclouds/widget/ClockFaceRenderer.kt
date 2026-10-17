@@ -484,10 +484,48 @@ object ClockFaceRenderer {
         return (abs(sin(rad)) * paint.measureText(label) / 2 + abs(cos(rad)) * digitHeight(paint) / 2).toFloat()
     }
 
+    /** Time span a temperature label stands for: [mid] is the time shown at the label's position. */
+    internal class LabelSpan(val angle: Double, val mid: Instant, val from: Instant, val to: Instant)
+
     /**
-     * Midway between each pair of neighboring numerals, the rounded mean temperature of the time
-     * span between them: one hour in 12h mode, two hours in 24h mode (numerals every second hour).
-     * Like the weather ring, labels for past spans are dimmed and all fade as the forecast ages.
+     * For each label position (midway between two numerals), the time shown there and the span the
+     * label averages: the numerals' spacing (1 h in 12h mode, 2 h in 24h mode) centered on that
+     * time, cut to the shown window. The cut matters where the window's seam (oldest next to newest
+     * time) lies between two numerals, as in the trailing 12h mode: the label then covers only the
+     * side of the seam it sits on, matching the ring below it.
+     */
+    internal fun temperatureLabelSpans(settings: WidgetSettings, now: ZonedDateTime): List<LabelSpan> {
+        val spacing = when (settings.displayMode) {
+            DisplayMode.TWELVE_HOUR -> Duration.ofHours(1)
+            DisplayMode.TWENTY_FOUR_HOUR -> Duration.ofHours(2)
+        }
+        val (windowStart, windowEnd) = shownWindow(settings, now)
+        return TEMPERATURE_ANGLES.map { angle ->
+            val mid = resolveInstantForAngle(angle, settings, now)
+            val half = spacing.dividedBy(2)
+            val from = maxOf(mid.minus(half), windowStart)
+            val to = minOf(mid.plus(half), windowEnd)
+            LabelSpan(angle, mid, from, to)
+        }
+    }
+
+    /** The time span the dial currently shows: the active 12h window, or today in 24h mode. */
+    private fun shownWindow(settings: WidgetSettings, now: ZonedDateTime): Pair<Instant, Instant> =
+        when (settings.displayMode) {
+            DisplayMode.TWELVE_HOUR -> {
+                val start = mapperFor(settings).windowStart(now)
+                start.toInstant() to start.plusHours(12).toInstant()
+            }
+            DisplayMode.TWENTY_FOUR_HOUR -> {
+                val start = now.toLocalDate().atStartOfDay(now.zone)
+                start.toInstant() to start.plusDays(1).toInstant()
+            }
+        }
+
+    /**
+     * The rounded mean temperature of each [temperatureLabelSpans] span, midway between the
+     * numerals. Like the weather ring, labels for past times are dimmed and all fade as the
+     * forecast ages.
      */
     private fun drawTemperatures(
         canvas: Canvas,
@@ -504,14 +542,11 @@ object ClockFaceRenderer {
         if (freshness <= 0f) return
         val paint = temperaturePaint(placement.textSize)
         val halfHeight = digitHeight(paint) / 2f
-        val span = when (settings.displayMode) {
-            DisplayMode.TWELVE_HOUR -> Duration.ofHours(1)
-            DisplayMode.TWENTY_FOUR_HOUR -> Duration.ofHours(2)
-        }
-        TEMPERATURE_ANGLES.forEachIndexed { step, angle ->
-            val start = resolveInstantForAngle(step * 30.0, settings, now)
-            val temperature = forecast.meanTemperature(start, start.plus(span), kind) ?: return@forEachIndexed
-            val past = start.plus(span.dividedBy(2)).isBefore(now.toInstant())
+        for (span in temperatureLabelSpans(settings, now)) {
+            if (!span.to.isAfter(span.from)) continue
+            val angle = span.angle
+            val temperature = forecast.meanTemperature(span.from, span.to, kind) ?: continue
+            val past = span.mid.isBefore(now.toInstant())
             paint.color = withAlphaFactor(color, if (past) freshness * WEATHER_PAST_ALPHA else freshness)
             val label = formatTemperature(temperature)
             val distance = when (placement) {

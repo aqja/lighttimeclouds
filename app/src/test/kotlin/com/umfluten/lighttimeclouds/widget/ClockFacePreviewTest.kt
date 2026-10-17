@@ -9,6 +9,7 @@ import com.umfluten.lighttimeclouds.data.DisplayMode
 import com.umfluten.lighttimeclouds.data.Place
 import com.umfluten.lighttimeclouds.data.RingStyle
 import com.umfluten.lighttimeclouds.data.SkyHorizon
+import com.umfluten.lighttimeclouds.data.SwitchStrategyType
 import com.umfluten.lighttimeclouds.data.TemperatureDisplay
 import com.umfluten.lighttimeclouds.data.TemperaturePosition
 import com.umfluten.lighttimeclouds.data.WeatherRingPosition
@@ -119,6 +120,14 @@ class ClockFacePreviewTest {
         render("temperature_scale_outside_weather", scale.copy(weatherRingPosition = WeatherRingPosition.OUTSIDE), mixedForecast(), darkBackground = true)
         render("temperature_scale_light_snow", scale.copy(colorMode = ColorMode.LIGHT), snowForecast(), darkBackground = false)
         render("temperature_scale_24h", scale.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR), mixedForecast(), darkBackground = true)
+        // Trailing window with its seam just before a label (14:40, offset 30 min: seam at "2:10").
+        render(
+            "temperature_trailing_seam",
+            weatherSettings.copy(colorMode = ColorMode.DARK, switchStrategyType = SwitchStrategyType.TRAILING_OFFSET),
+            mixedForecast(),
+            darkBackground = true,
+            at = now.withMinute(40),
+        )
         // Widest labels: two-digit frost all around.
         val frost = mixedForecast().let { f -> f.copy(hours = f.hours.map { it.copy(temperatureC = it.temperatureC!! - 25.0) }) }
         render("temperature_scale_frost", scale.copy(weatherRingPosition = WeatherRingPosition.OUTSIDE), frost, darkBackground = true)
