@@ -14,7 +14,6 @@ import android.graphics.Shader
 import android.os.Build
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withClip
-import androidx.core.graphics.withSave
 import com.umfluten.lighttimeclouds.astro.DialTimeMapper
 import com.umfluten.lighttimeclouds.astro.SunMoonCalculator
 import com.umfluten.lighttimeclouds.data.ColorMode
@@ -34,6 +33,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZonedDateTime
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.roundToInt
@@ -63,13 +63,13 @@ object ClockFaceRenderer {
         }
 
     /**
-     * Temperature scale outside the rings: the whole dial shrinks to [OUTSIDE_TEMPERATURE_DIAL_SCALE]
-     * of its radius, and the labels run along the freed rim at [OUTSIDE_TEMPERATURE_RADIUS] (both
-     * fractions of the full radius).
+     * Temperature scale outside the rings: upright labels of [OUTSIDE_TEMPERATURE_SIZE] (fraction of
+     * the full radius), [OUTSIDE_TEMPERATURE_GAP] away from the outermost ring. The dial shrinks just
+     * enough for the widest possible label ([OUTSIDE_TEMPERATURE_WIDEST]) to fit at every position.
      */
-    private const val OUTSIDE_TEMPERATURE_DIAL_SCALE = 0.9f
-    private const val OUTSIDE_TEMPERATURE_RADIUS = 0.955f
     private const val OUTSIDE_TEMPERATURE_SIZE = 0.075f
+    private const val OUTSIDE_TEMPERATURE_GAP = 0.015f
+    private const val OUTSIDE_TEMPERATURE_WIDEST = "\u221288°"
 
     /** Weather ring opacity for hours already past, so the current moment stands out. */
     private const val WEATHER_PAST_ALPHA = 0.5f
@@ -148,8 +148,14 @@ object ClockFaceRenderer {
         val chromeColor = chromeColor(context, dark)
         val temperatureKind = temperatureKindFor(settings)
         val temperaturesOutside = temperatureKind != null && settings.temperaturePosition == TemperaturePosition.OUTSIDE
+        val outsidePaint = temperaturePaint(fullRadius * OUTSIDE_TEMPERATURE_SIZE)
+        val gap = fullRadius * OUTSIDE_TEMPERATURE_GAP
         // Everything but an outside temperature scale is drawn within this radius.
-        val radius = if (temperaturesOutside) fullRadius * OUTSIDE_TEMPERATURE_DIAL_SCALE else fullRadius
+        val radius = if (temperaturesOutside) {
+            size / 2f - gap - 2f * TEMPERATURE_ANGLES.maxOf { labelExtent(outsidePaint, OUTSIDE_TEMPERATURE_WIDEST, it) }
+        } else {
+            fullRadius
+        }
         val layout = when {
             temperatureKind != null && !temperaturesOutside -> LAYOUT_TEMPERATURE
             settings.showWeather -> LAYOUT_WEATHER
@@ -170,9 +176,9 @@ object ClockFaceRenderer {
             drawTemperatures(
                 canvas, cx, cy, settings, now, weather, temperatureKind, chromeColor,
                 placement = if (temperaturesOutside) {
-                    TemperaturePlacement.Rim(fullRadius * OUTSIDE_TEMPERATURE_RADIUS, fullRadius * OUTSIDE_TEMPERATURE_SIZE)
+                    TemperaturePlacement.Outside(radius + gap, outsidePaint.textSize)
                 } else {
-                    TemperaturePlacement.Upright(radius * layout.temperatureRadius, radius * layout.temperatureSize)
+                    TemperaturePlacement.Between(radius * layout.temperatureRadius, radius * layout.temperatureSize)
                 },
             )
         }
@@ -444,13 +450,33 @@ object ClockFaceRenderer {
             TemperatureDisplay.APPARENT -> TemperatureKind.APPARENT
         }
 
-    /** Where and how large ([textSize], px) the temperature labels are drawn, centered on a circle of [radius] px. */
-    private sealed class TemperaturePlacement(val radius: Float, val textSize: Float) {
-        /** Upright text, e.g. between the numerals. */
-        class Upright(radius: Float, textSize: Float) : TemperaturePlacement(radius, textSize)
+    /** Labels sit midway between the numerals, which are every 30° in both modes. */
+    private val TEMPERATURE_ANGLES = List(12) { it * 30.0 + 15.0 }
 
-        /** Text along the circle like a watch bezel, turned in the lower half so it never stands on its head. */
-        class Rim(radius: Float, textSize: Float) : TemperaturePlacement(radius, textSize)
+    /** Where and how large ([textSize], px) the upright temperature labels are drawn. */
+    private sealed class TemperaturePlacement(val textSize: Float) {
+        /** Centered on a circle of [radius] px, between the numerals. */
+        class Between(val radius: Float, textSize: Float) : TemperaturePlacement(textSize)
+
+        /** Just outside the circle of [edge] px (the outermost ring), each label as close as its width allows. */
+        class Outside(val edge: Float, textSize: Float) : TemperaturePlacement(textSize)
+    }
+
+    private fun temperaturePaint(textSize: Float) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        this.textSize = textSize
+        textAlign = Paint.Align.CENTER
+    }
+
+    /** Height of the digits, used to center labels with and without minus sign alike. */
+    private fun digitHeight(paint: Paint): Float = Rect().also { paint.getTextBounds("0", 0, 1, it) }.height().toFloat()
+
+    /**
+     * How far an upright [label] reaches from its center towards the dial center when placed at
+     * [angleDeg]: half its width sideways, half its height at top and bottom, mixed in between.
+     */
+    private fun labelExtent(paint: Paint, label: String, angleDeg: Double): Float {
+        val rad = Math.toRadians(angleDeg)
+        return (abs(sin(rad)) * paint.measureText(label) / 2 + abs(cos(rad)) * digitHeight(paint) / 2).toFloat()
     }
 
     /**
@@ -471,45 +497,26 @@ object ClockFaceRenderer {
     ) {
         val freshness = forecast.freshnessAlpha(now.toInstant())
         if (freshness <= 0f) return
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            textSize = placement.textSize
-            textAlign = Paint.Align.CENTER
-        }
-        // Centered on the digits' height, so labels with and without minus sign line up.
-        val bounds = Rect().also { paint.getTextBounds("0", 0, 1, it) }
-        val halfHeight = bounds.height() / 2f
+        val paint = temperaturePaint(placement.textSize)
+        val halfHeight = digitHeight(paint) / 2f
         val span = when (settings.displayMode) {
             DisplayMode.TWELVE_HOUR -> Duration.ofHours(1)
             DisplayMode.TWENTY_FOUR_HOUR -> Duration.ofHours(2)
         }
-        // Numerals sit every 30° in both modes.
-        for (step in 0 until 12) {
+        TEMPERATURE_ANGLES.forEachIndexed { step, angle ->
             val start = resolveInstantForAngle(step * 30.0, settings, now)
-            val temperature = forecast.meanTemperature(start, start.plus(span), kind) ?: continue
-            val angle = step * 30.0 + 15.0
+            val temperature = forecast.meanTemperature(start, start.plus(span), kind) ?: return@forEachIndexed
             val past = start.plus(span.dividedBy(2)).isBefore(now.toInstant())
             paint.color = withAlphaFactor(color, if (past) freshness * WEATHER_PAST_ALPHA else freshness)
             val label = formatTemperature(temperature)
-            when (placement) {
-                is TemperaturePlacement.Upright -> {
-                    val rad = Math.toRadians(angle - 90.0)
-                    val x = cx + (cos(rad) * placement.radius).toFloat()
-                    val y = cy + (sin(rad) * placement.radius).toFloat() + halfHeight
-                    canvas.drawText(label, x, y, paint)
-                }
-                is TemperaturePlacement.Rim -> {
-                    val lowerHalf = angle > 90.0 && angle < 270.0
-                    canvas.withSave {
-                        if (lowerHalf) {
-                            rotate((angle - 180.0).toFloat(), cx, cy)
-                            drawText(label, cx, cy + placement.radius + halfHeight, paint)
-                        } else {
-                            rotate(angle.toFloat(), cx, cy)
-                            drawText(label, cx, cy - placement.radius + halfHeight, paint)
-                        }
-                    }
-                }
+            val distance = when (placement) {
+                is TemperaturePlacement.Between -> placement.radius
+                is TemperaturePlacement.Outside -> placement.edge + labelExtent(paint, label, angle)
             }
+            val rad = Math.toRadians(angle - 90.0)
+            val x = cx + (cos(rad) * distance).toFloat()
+            val y = cy + (sin(rad) * distance).toFloat() + halfHeight
+            canvas.drawText(label, x, y, paint)
         }
     }
 

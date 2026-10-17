@@ -118,6 +118,9 @@ class ClockFacePreviewTest {
         render("temperature_scale_outside_weather", scale.copy(weatherRingPosition = WeatherRingPosition.OUTSIDE), mixedForecast(), darkBackground = true)
         render("temperature_scale_light_snow", scale.copy(colorMode = ColorMode.LIGHT), snowForecast(), darkBackground = false)
         render("temperature_scale_24h", scale.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR), mixedForecast(), darkBackground = true)
+        // Widest labels: two-digit frost all around.
+        val frost = mixedForecast().let { f -> f.copy(hours = f.hours.map { it.copy(temperatureC = it.temperatureC!! - 25.0) }) }
+        render("temperature_scale_frost", scale.copy(weatherRingPosition = WeatherRingPosition.OUTSIDE), frost, darkBackground = true)
         render(
             "weather_outside_24h_horizon_outer",
             outside.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR, skyHorizon = SkyHorizon.OUTER),
