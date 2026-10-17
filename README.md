@@ -65,3 +65,7 @@ Die Sonnen-/Mondberechnung in `core/.../astro/SunMoonCalculator.kt` ist eine Por
 Die Himmelsfarben des Rings (Darstellung „Himmel“) berechnet `core/.../sky/SkyModel.kt`, eine Portierung von [Horizon](https://github.com/dnlzro/horizon) von Daniel Lazaro (MIT-Lizenz, Lizenztext in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)).
 
 Die Wetterdaten stammen von [Open-Meteo.com](https://open-meteo.com/) (Lizenz CC BY 4.0).
+
+## Lizenz
+
+LightTimeClouds steht unter der [MIT-Lizenz](LICENSE). Portierte Teile fremder Projekte (SunCalc, Horizon) behalten ihre eigenen Lizenzen, siehe [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
