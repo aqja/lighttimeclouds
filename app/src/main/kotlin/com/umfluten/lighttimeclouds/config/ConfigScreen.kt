@@ -317,7 +317,7 @@ private fun WeatherSetting(settings: WidgetSettings, viewModel: ConfigViewModel)
     Text(
         "Zusätzlicher Ring: grau je nach Bewölkung, bei klarem Himmel durchsichtig. " +
             "Niederschlag in Blau (Schnee violett), je dunkler, desto mehr; je deckender, desto wahrscheinlicher. " +
-            "Die Vorhersage wird etwa stündlich aus dem Internet geladen; dazu werden die Koordinaten des Orts " +
+            "Die Vorhersage wird etwa alle zwei Stunden aus dem Internet geladen; dazu werden die Koordinaten des Orts " +
             "an open-meteo.com übertragen. " +
             OpenMeteo.ATTRIBUTION + ".",
         style = MaterialTheme.typography.bodySmall,

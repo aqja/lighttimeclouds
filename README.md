@@ -18,7 +18,7 @@ Ein Ring um ein gewöhnliches Zifferblatt zeigt den Tagesverlauf von Nacht über
 - Eigenes Launcher-Icon für die Konfiguration, unabhängig vom Widget
 - Frei skalierbares, quadratisches Widget (Standard 2×2), mehrere Instanzen mit eigenen Einstellungen möglich
 - Farbmodi Hell/Dunkel/Automatisch (folgt dem System-Dunkelmodus); Ziffern und Zeiger in Material-You-Akzentfarben
-- Optionaler Wetter-Ring innerhalb des Tag/Nacht-Rings oder ganz außen: Bewölkung als Grauton (bei klarem Himmel durchsichtig), darüber Niederschlag in Blau (Schnee violett) – je dunkler, desto mehr; je deckender, desto wahrscheinlicher. Vergangene Stunden abgeschwächt. Vorhersage von Open-Meteo, etwa stündlich im Hintergrund geladen, nur wenn ein Widget den Ring nutzt; dafür werden die Koordinaten des Orts an open-meteo.com übertragen
+- Optionaler Wetter-Ring innerhalb des Tag/Nacht-Rings oder ganz außen: Bewölkung als Grauton (bei klarem Himmel durchsichtig), darüber Niederschlag in Blau (Schnee violett) – je dunkler, desto mehr; je deckender, desto wahrscheinlicher. Vergangene Stunden abgeschwächt. Vorhersage von Open-Meteo, etwa alle zwei Stunden im Hintergrund geladen (nicht bei niedrigem Akkustand), nur wenn ein Widget den Ring nutzt; dafür werden die Koordinaten des Orts an open-meteo.com übertragen
 - Optional Luft- oder gefühlte Temperatur (Mittelwert je Abschnitt) zwischen den Stundenziffern oder als Skala um den äußersten Ring
 - Geplant: genauere Astronomie nach Meeus
 

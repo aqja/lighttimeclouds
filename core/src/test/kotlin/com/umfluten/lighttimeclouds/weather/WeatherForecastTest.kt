@@ -138,11 +138,11 @@ class WeatherForecastTest {
     }
 
     @Test
-    fun `freshness fades after three hours and hides after twelve`() {
+    fun `freshness fades after four hours and hides after twelve`() {
         val f = forecast(fetchedAt = t0)
 
-        assertEquals(1f, f.freshnessAlpha(t0.plus(Duration.ofHours(3))), 1e-6f)
-        val mid = f.freshnessAlpha(t0.plus(Duration.ofMinutes(450)))
+        assertEquals(1f, f.freshnessAlpha(t0.plus(Duration.ofHours(4))), 1e-6f)
+        val mid = f.freshnessAlpha(t0.plus(Duration.ofHours(8)))
         assertTrue("was $mid", mid in 0.6f..0.8f)
         assertEquals(0.4f, f.freshnessAlpha(t0.plus(Duration.ofHours(12))), 1e-6f)
         assertEquals(0f, f.freshnessAlpha(t0.plus(Duration.ofHours(12)).plusSeconds(1)), 1e-6f)

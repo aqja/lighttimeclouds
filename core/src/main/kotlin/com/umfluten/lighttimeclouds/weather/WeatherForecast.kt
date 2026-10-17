@@ -149,8 +149,8 @@ data class WeatherForecast(
     }
 
     /**
-     * Opacity for drawing this forecast at [now]: full while fresh, fading once a few refreshes
-     * were missed, and 0 (hidden) once it is too old to trust.
+     * Opacity for drawing this forecast at [now]: full while fresh, fading once a refresh (every two
+     * hours) was missed, and 0 (hidden) once it is too old to trust.
      */
     fun freshnessAlpha(now: Instant): Float {
         val age = Duration.between(fetchedAt, now)
@@ -181,7 +181,7 @@ data class WeatherForecast(
 
     companion object {
         private val STEP: Duration = Duration.ofHours(1)
-        private val FRESH: Duration = Duration.ofHours(3)
+        private val FRESH: Duration = Duration.ofHours(4)
         private val EXPIRED: Duration = Duration.ofHours(12)
         private const val STALE_ALPHA = 0.4f
 
