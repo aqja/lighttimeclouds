@@ -104,6 +104,9 @@ class ClockFacePreviewTest {
         val fullDay = plain.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR)
         render("sky_24h", fullDay, null, darkBackground = true)
         render("sky_24h_old_gradient", fullDay.copy(ringStyle = RingStyle.GRADIENT), null, darkBackground = true)
+        // Late evening with the seam trailing the hour hand: tomorrow's sunrise already shows ahead of it.
+        val lateEvening = ZonedDateTime.of(2026, 10, 17, 22, 0, 0, 0, Place.DEFAULT.zone)
+        render("sky_24h_trailing", fullDay.copy(switchStrategyType = SwitchStrategyType.TRAILING_OFFSET), null, darkBackground = true, at = lateEvening)
         // Evening in the 18:00-06:00 window: sunset around 18:30 with the twilight right after.
         val evening = ZonedDateTime.of(2026, 10, 17, 19, 10, 0, 0, Place.DEFAULT.zone)
         render("sky_12h_evening", plain, null, darkBackground = true, at = evening)

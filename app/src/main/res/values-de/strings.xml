@@ -57,10 +57,12 @@
     <string name="no_network_access">Die App hat keinen Netzwerkzugriff, daher kann keine Vorhersage geladen werden.</string>
     <string name="open_permissions">Berechtigungen öffnen</string>
 
-    <!-- Day/night switch (12-hour dial) -->
-    <string name="section_day_night_switch">Tag/Nacht-Umschaltung</string>
+    <!-- Ring switch: where the shown 12h or 24h window begins -->
+    <string name="day_night_switch_label">Tag/Nacht-Umschaltung</string>
+    <string name="day_change_label">Tageswechsel</string>
     <string name="switch_fixed_times">Feste Zeiten</string>
     <string name="switch_trailing">Mitlaufend</string>
+    <string name="switch_time">Umschaltzeit</string>
     <string name="switch_time_1">Umschaltzeit 1</string>
     <string name="switch_time_2">Umschaltzeit 2</string>
     <plurals name="trailing_offset">

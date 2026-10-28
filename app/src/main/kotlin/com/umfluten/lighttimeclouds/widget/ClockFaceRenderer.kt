@@ -327,34 +327,30 @@ object ClockFaceRenderer {
 
     /** Dial angle at which [instant] appears on the ring right now, or null if it is outside the shown window. */
     private fun visibleAngleFor(instant: Instant, settings: WidgetSettings, now: ZonedDateTime): Double? {
-        val local = instant.atZone(now.zone)
-        val angle = dialAngle(local, settings.displayMode)
-        return when (settings.displayMode) {
-            DisplayMode.TWENTY_FOUR_HOUR ->
-                if (local.toLocalDate() == now.toLocalDate()) angle else null
-            DisplayMode.TWELVE_HOUR -> {
-                val shown = mapperFor(settings).resolve(now, angle).toInstant()
-                if (Duration.between(shown, instant).abs() < Duration.ofMinutes(2)) angle else null
-            }
-        }
+        val angle = dialAngle(instant.atZone(now.zone), settings.displayMode)
+        val shown = resolveInstantForAngle(angle, settings, now)
+        return if (Duration.between(shown, instant).abs() < Duration.ofMinutes(2)) angle else null
     }
 
-    /** Maps a dial angle to the real instant whose sun state should color that position, per [WidgetSettings.displayMode]. */
+    /** Maps a dial angle to the real instant whose sun state should color that position: the one inside the shown window. */
     private fun resolveInstantForAngle(angleDegrees: Double, settings: WidgetSettings, now: ZonedDateTime): Instant =
-        when (settings.displayMode) {
-            DisplayMode.TWENTY_FOUR_HOUR -> {
-                val hourOfDay = angleDegrees / 15.0
-                now.toLocalDate().atStartOfDay(now.zone).plusSeconds((hourOfDay * 3600.0).toLong()).toInstant()
-            }
-            DisplayMode.TWELVE_HOUR -> mapperFor(settings).resolve(now, angleDegrees).toInstant()
-        }
+        mapperFor(settings).resolve(now, angleDegrees).toInstant()
 
-    private fun mapperFor(settings: WidgetSettings): DialTimeMapper = when (settings.switchStrategyType) {
-        SwitchStrategyType.FIXED_TIMES -> DialTimeMapper.FixedTimes(
-            switchTime1 = LocalTime.ofSecondOfDay((settings.switchTime1Minutes * 60L).coerceIn(0, 86399)),
-            switchTime2 = LocalTime.ofSecondOfDay((settings.switchTime2Minutes * 60L).coerceIn(0, 86399)),
-        )
-        SwitchStrategyType.TRAILING_OFFSET -> DialTimeMapper.TrailingOffset(settings.trailingOffsetMinutes)
+    private fun mapperFor(settings: WidgetSettings): DialTimeMapper {
+        val dialHours = when (settings.displayMode) {
+            DisplayMode.TWELVE_HOUR -> 12
+            DisplayMode.TWENTY_FOUR_HOUR -> 24
+        }
+        return when (settings.switchStrategyType) {
+            SwitchStrategyType.FIXED_TIMES -> {
+                val minutes = when (settings.displayMode) {
+                    DisplayMode.TWELVE_HOUR -> listOf(settings.switchTime1Minutes, settings.switchTime2Minutes)
+                    DisplayMode.TWENTY_FOUR_HOUR -> listOf(settings.switchTime24hMinutes)
+                }
+                DialTimeMapper.FixedTimes(minutes.map { LocalTime.ofSecondOfDay((it * 60L).coerceIn(0, 86399)) }, dialHours)
+            }
+            SwitchStrategyType.TRAILING_OFFSET -> DialTimeMapper.TrailingOffset(settings.trailingOffsetMinutes, dialHours)
+        }
     }
 
     // --- Weather ring ----------------------------------------------------------------
@@ -491,7 +487,7 @@ object ClockFaceRenderer {
      * For each label position (midway between two numerals), the time shown there and the span the
      * label averages: the numerals' spacing (1 h in 12h mode, 2 h in 24h mode) centered on that
      * time, cut to the shown window. The cut matters where the window's seam (oldest next to newest
-     * time) lies between two numerals, as in the trailing 12h mode: the label then covers only the
+     * time) lies between two numerals, as in the trailing mode: the label then covers only the
      * side of the seam it sits on, matching the ring below it.
      */
     internal fun temperatureLabelSpans(settings: WidgetSettings, now: ZonedDateTime): List<LabelSpan> {
@@ -509,18 +505,11 @@ object ClockFaceRenderer {
         }
     }
 
-    /** The time span the dial currently shows: the active 12h window, or today in 24h mode. */
-    private fun shownWindow(settings: WidgetSettings, now: ZonedDateTime): Pair<Instant, Instant> =
-        when (settings.displayMode) {
-            DisplayMode.TWELVE_HOUR -> {
-                val start = mapperFor(settings).windowStart(now)
-                start.toInstant() to start.plusHours(12).toInstant()
-            }
-            DisplayMode.TWENTY_FOUR_HOUR -> {
-                val start = now.toLocalDate().atStartOfDay(now.zone)
-                start.toInstant() to start.plusDays(1).toInstant()
-            }
-        }
+    /** The time span the dial currently shows: the active 12h or 24h window (an hour more or less across a DST change). */
+    private fun shownWindow(settings: WidgetSettings, now: ZonedDateTime): Pair<Instant, Instant> {
+        val mapper = mapperFor(settings)
+        return mapper.windowStart(now).toInstant() to mapper.windowEnd(now).toInstant()
+    }
 
     /**
      * The rounded mean temperature of each [temperatureLabelSpans] span, midway between the
@@ -750,8 +739,8 @@ object ClockFaceRenderer {
      * the dial time "t minus [SunMoonCalculator.moonLagHours]", the same way the hour hand stands
      * for the sun. The distance from the center shows the moon's altitude: a faint circle marks the
      * horizon, above it the moon climbs outward, below it sinks inward (drawn faded). The path
-     * covers the same time window as the day/night ring (12h mode: the active window, flipping with it; 24h mode:
-     * today), so it always contains the current point, where the phase disc sits.
+     * covers the same time window as the day/night ring (the active 12h or 24h window, moving with
+     * it), so it always contains the current point, where the phase disc sits.
      */
     private fun drawMoon(
         canvas: Canvas,
@@ -772,15 +761,9 @@ object ClockFaceRenderer {
             return Triple(cx + (cos(rad) * r).toFloat(), cy + (sin(rad) * r).toFloat(), altitude > 0.0)
         }
 
-        val pathStart = when (settings.displayMode) {
-            DisplayMode.TWELVE_HOUR -> mapperFor(settings).windowStart(now)
-            DisplayMode.TWENTY_FOUR_HOUR -> now.toLocalDate().atStartOfDay(now.zone)
-        }
-        val spanMinutes = when (settings.displayMode) {
-            DisplayMode.TWELVE_HOUR -> 12 * 60L
-            // Not always 24h: DST change days are 23h or 25h long.
-            DisplayMode.TWENTY_FOUR_HOUR -> Duration.between(pathStart, pathStart.plusDays(1)).toMinutes()
-        }
+        val mapper = mapperFor(settings)
+        val pathStart = mapper.windowStart(now)
+        val spanMinutes = Duration.between(pathStart, mapper.windowEnd(now)).toMinutes()
         val horizonPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = MARK_COLOR
             alpha = 60

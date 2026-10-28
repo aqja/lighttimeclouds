@@ -8,7 +8,7 @@ Ein Ring um ein gewöhnliches Zifferblatt zeigt den Tagesverlauf von Nacht über
 
 - Analoges 12h- oder 24h-Zifferblatt, minutengenau, ohne Sekundenzeiger, optional mit Minutenstrichen
 - Tag/Dämmerung/Nacht-Ring nach aktuellem Sonnenstand am konfigurierten Standort, wahlweise als „Himmel“ (Standard), Verlauf oder in festen Phasenfarben. „Himmel“ zeigt in jedem Ringabschnitt den Himmel vom Horizont nach oben (Horizont innen oder außen einstellbar): Tag und Morgen-/Abendrot aus einem physikalischen Streuungsmodell, dazu die blaue Stunde und das Nachtlila der Dämmerung
-- Konfigurierbare Umschalt-Strategie für den Ring im 12h-Modus: feste Uhrzeiten oder kontinuierlich hinter dem Zeiger herlaufend
+- Konfigurierbare Umschalt-Strategie für den Ring: feste Uhrzeiten (12h: zwei, Standard 6 und 18 Uhr; 24h: eine, Standard Mitternacht) oder kontinuierlich hinter dem Zeiger herlaufend
 - Optionale Markierungen für Sonnenmittag/-mitternacht und Sonnenauf-/untergang
 - Optional ein roter Stundenstrich beim nächsten Wecker, sobald er im angezeigten Zeitraum liegt (Android gibt nur den nächsten Wecker preis); folgt sofort jeder Änderung, beim Schlummern also der neuen Weckzeit, sofern die Wecker-App sie meldet
 - Mondzeiger mit Phase; Abstand zur Mitte zeigt die Mondhöhe, dazu Tagesbahn des Mondes und Horizontkreis (ausblendbar)

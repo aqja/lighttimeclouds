@@ -25,6 +25,7 @@ class WidgetPrefsRepository(private val context: Context) {
         val switchStrategy = stringPreferencesKey(prefix + "switch_strategy")
         val switchTime1 = intPreferencesKey(prefix + "switch_t1")
         val switchTime2 = intPreferencesKey(prefix + "switch_t2")
+        val switchTime24h = intPreferencesKey(prefix + "switch_t24h")
         val trailingOffset = intPreferencesKey(prefix + "trailing_offset")
         val ringStyle = stringPreferencesKey(prefix + "ring_style")
         val skyHorizon = stringPreferencesKey(prefix + "sky_horizon")
@@ -55,6 +56,7 @@ class WidgetPrefsRepository(private val context: Context) {
             switchStrategyType = prefs.enumOr(k.switchStrategy, d.switchStrategyType),
             switchTime1Minutes = prefs[k.switchTime1] ?: d.switchTime1Minutes,
             switchTime2Minutes = prefs[k.switchTime2] ?: d.switchTime2Minutes,
+            switchTime24hMinutes = prefs[k.switchTime24h] ?: d.switchTime24hMinutes,
             trailingOffsetMinutes = prefs[k.trailingOffset] ?: d.trailingOffsetMinutes,
             ringStyle = prefs.enumOr(k.ringStyle, d.ringStyle),
             skyHorizon = prefs.enumOr(k.skyHorizon, d.skyHorizon),
@@ -81,6 +83,7 @@ class WidgetPrefsRepository(private val context: Context) {
             prefs[k.switchStrategy] = settings.switchStrategyType.name
             prefs[k.switchTime1] = settings.switchTime1Minutes
             prefs[k.switchTime2] = settings.switchTime2Minutes
+            prefs[k.switchTime24h] = settings.switchTime24hMinutes
             prefs[k.trailingOffset] = settings.trailingOffsetMinutes
             prefs[k.ringStyle] = settings.ringStyle.name
             prefs[k.skyHorizon] = settings.skyHorizon.name

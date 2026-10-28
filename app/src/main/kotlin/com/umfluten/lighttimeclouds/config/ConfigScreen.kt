@@ -224,6 +224,7 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             selected = settings.displayMode,
             onSelect = { viewModel.update { s -> s.copy(displayMode = it) } },
         )
+        RingSwitchSetting(settings, viewModel)
         Text(stringResource(R.string.ring_style_label), style = MaterialTheme.typography.labelLarge)
         SegmentedChoice(
             options = listOf(
@@ -275,10 +276,6 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             )
         }
         WeatherSetting(settings, viewModel)
-    }
-
-    if (settings.displayMode == DisplayMode.TWELVE_HOUR) {
-        DayNightSwitchSection(settings, viewModel)
     }
 
     Section(stringResource(R.string.section_color_mode)) {
@@ -391,40 +388,50 @@ private fun WeatherSetting(settings: WidgetSettings, viewModel: ConfigViewModel)
 private fun hasNetworkPermission(context: Context): Boolean =
     context.checkSelfPermission(Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED
 
+/** Where the ring's shown window begins: at fixed times (two on the 12h dial, one on the 24h dial) or trailing behind now. */
 @Composable
-private fun DayNightSwitchSection(settings: WidgetSettings, viewModel: ConfigViewModel) {
-    Section(stringResource(R.string.section_day_night_switch)) {
-        SegmentedChoice(
-            options = listOf(
-                SwitchStrategyType.FIXED_TIMES to R.string.switch_fixed_times,
-                SwitchStrategyType.TRAILING_OFFSET to R.string.switch_trailing,
-            ),
-            selected = settings.switchStrategyType,
-            onSelect = { viewModel.update { s -> s.copy(switchStrategyType = it) } },
-        )
-        when (settings.switchStrategyType) {
-            SwitchStrategyType.FIXED_TIMES -> {
-                SwitchTimeRow(
-                    label = stringResource(R.string.switch_time_1),
-                    minutesOfDay = settings.switchTime1Minutes,
-                    onPicked = { m -> viewModel.update { s -> s.copy(switchTime1Minutes = m) } },
-                )
-                SwitchTimeRow(
-                    label = stringResource(R.string.switch_time_2),
-                    minutesOfDay = settings.switchTime2Minutes,
-                    onPicked = { m -> viewModel.update { s -> s.copy(switchTime2Minutes = m) } },
-                )
-            }
-            SwitchStrategyType.TRAILING_OFFSET -> {
-                val minutes = settings.trailingOffsetMinutes
-                Text(pluralStringResource(R.plurals.trailing_offset, minutes, minutes), style = MaterialTheme.typography.bodyLarge)
-                Slider(
-                    value = settings.trailingOffsetMinutes.toFloat(),
-                    onValueChange = { v -> viewModel.update { s -> s.copy(trailingOffsetMinutes = v.toInt()) } },
-                    valueRange = 0f..180f,
-                    steps = 35,
-                )
-            }
+private fun RingSwitchSetting(settings: WidgetSettings, viewModel: ConfigViewModel) {
+    val twelveHour = settings.displayMode == DisplayMode.TWELVE_HOUR
+    Text(
+        stringResource(if (twelveHour) R.string.day_night_switch_label else R.string.day_change_label),
+        style = MaterialTheme.typography.labelLarge,
+    )
+    SegmentedChoice(
+        options = listOf(
+            SwitchStrategyType.FIXED_TIMES to R.string.switch_fixed_times,
+            SwitchStrategyType.TRAILING_OFFSET to R.string.switch_trailing,
+        ),
+        selected = settings.switchStrategyType,
+        onSelect = { viewModel.update { s -> s.copy(switchStrategyType = it) } },
+    )
+    when (settings.switchStrategyType) {
+        SwitchStrategyType.FIXED_TIMES -> if (twelveHour) {
+            SwitchTimeRow(
+                label = stringResource(R.string.switch_time_1),
+                minutesOfDay = settings.switchTime1Minutes,
+                onPicked = { m -> viewModel.update { s -> s.copy(switchTime1Minutes = m) } },
+            )
+            SwitchTimeRow(
+                label = stringResource(R.string.switch_time_2),
+                minutesOfDay = settings.switchTime2Minutes,
+                onPicked = { m -> viewModel.update { s -> s.copy(switchTime2Minutes = m) } },
+            )
+        } else {
+            SwitchTimeRow(
+                label = stringResource(R.string.switch_time),
+                minutesOfDay = settings.switchTime24hMinutes,
+                onPicked = { m -> viewModel.update { s -> s.copy(switchTime24hMinutes = m) } },
+            )
+        }
+        SwitchStrategyType.TRAILING_OFFSET -> {
+            val minutes = settings.trailingOffsetMinutes
+            Text(pluralStringResource(R.plurals.trailing_offset, minutes, minutes), style = MaterialTheme.typography.bodyLarge)
+            Slider(
+                value = settings.trailingOffsetMinutes.toFloat(),
+                onValueChange = { v -> viewModel.update { s -> s.copy(trailingOffsetMinutes = v.toInt()) } },
+                valueRange = 0f..180f,
+                steps = 35,
+            )
         }
     }
 }

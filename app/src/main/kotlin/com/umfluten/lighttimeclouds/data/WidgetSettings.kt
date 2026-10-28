@@ -45,6 +45,8 @@ data class WidgetSettings(
     val switchStrategyType: SwitchStrategyType = SwitchStrategyType.FIXED_TIMES,
     val switchTime1Minutes: Int = 6 * 60,
     val switchTime2Minutes: Int = 18 * 60,
+    /** The one fixed switch time of the 24h dial, where its shown day begins. */
+    val switchTime24hMinutes: Int = 0,
     val trailingOffsetMinutes: Int = 30,
     val ringStyle: RingStyle = RingStyle.SKY,
     val skyHorizon: SkyHorizon = SkyHorizon.INNER,

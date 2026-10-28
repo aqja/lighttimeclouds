@@ -58,10 +58,12 @@
     <string name="no_network_access">The app has no network access, so no forecast can be loaded.</string>
     <string name="open_permissions">Open permissions</string>
 
-    <!-- Day/night switch (12-hour dial) -->
-    <string name="section_day_night_switch">Day/night switch</string>
+    <!-- Ring switch: where the shown 12h or 24h window begins -->
+    <string name="day_night_switch_label">Day/night switch</string>
+    <string name="day_change_label">Day change</string>
     <string name="switch_fixed_times">Fixed times</string>
     <string name="switch_trailing">Trailing</string>
+    <string name="switch_time">Switch time</string>
     <string name="switch_time_1">Switch time 1</string>
     <string name="switch_time_2">Switch time 2</string>
     <plurals name="trailing_offset">
