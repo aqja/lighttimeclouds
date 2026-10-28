@@ -41,6 +41,9 @@ internal class UiFormats(val locale: Locale, val is24Hour: Boolean) {
     fun coordinates(latitude: Double, longitude: Double): String =
         String.format(locale, "%.4f°, %.4f°", latitude, longitude)
 
+    /** A single latitude or longitude, rounded to hundredths of a degree. */
+    fun degrees(value: Double): String = String.format(locale, "%.2f°", value)
+
     private fun format(format: DateFormat, dateTime: ZonedDateTime): String {
         format.timeZone = TimeZone.getTimeZone(dateTime.zone.id)
         return format.format(Date.from(dateTime.toInstant()))

@@ -96,7 +96,7 @@ class ClockWidgetProvider : AppWidgetProvider() {
          * The next alarm clock set by any app (e.g. the system clock); Android exposes only this one,
          * not the full list of alarms. Needs no permission.
          */
-        private fun nextAlarm(context: Context): Instant? =
+        fun nextAlarm(context: Context): Instant? =
             (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).nextAlarmClock
                 ?.triggerTime?.let(Instant::ofEpochMilli)
 

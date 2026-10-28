@@ -20,6 +20,7 @@
     <string name="editor_subtitle_template">Template for new widgets</string>
     <string name="editor_subtitle_widget">Widget settings</string>
     <string name="tab_settings">Settings</string>
+    <string name="tab_preview">Preview</string>
     <string name="tab_times">Times</string>
     <string name="tab_weather">Weather</string>
     <string name="template_hint">No widget on the home screen yet. These settings apply to newly placed widgets.</string>
@@ -126,6 +127,12 @@
     <string name="weather_amount_snow">❄ %1$s mm</string>
     <string name="forecast_loaded">Forecast loaded</string>
     <string name="forecast_not_yet">not yet</string>
+
+    <!-- Preview tab -->
+    <string name="preview_intro">The widget with the current settings, even before saving. The sliders only change the preview; the time is shown in the time zone of the place.</string>
+    <string name="preview_date">Date</string>
+    <string name="preview_time">Time</string>
+    <string name="preview_reset">Reset</string>
 
     <!-- Times tab -->
     <string name="times_intro">Solar day from solar midnight to solar midnight. The list switches over at solar midnight.</string>

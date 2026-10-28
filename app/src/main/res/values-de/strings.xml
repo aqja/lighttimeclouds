@@ -19,6 +19,7 @@
     <string name="editor_subtitle_template">Vorlage für neue Widgets</string>
     <string name="editor_subtitle_widget">Widget-Einstellungen</string>
     <string name="tab_settings">Einstellungen</string>
+    <string name="tab_preview">Vorschau</string>
     <string name="tab_times">Zeiten</string>
     <string name="tab_weather">Wetter</string>
     <string name="template_hint">Noch kein Widget auf dem Startbildschirm. Diese Einstellungen gelten für neu platzierte Widgets.</string>
@@ -125,6 +126,12 @@
     <string name="weather_amount_snow">❄ %1$s mm</string>
     <string name="forecast_loaded">Vorhersage geladen</string>
     <string name="forecast_not_yet">noch nicht</string>
+
+    <!-- Preview tab -->
+    <string name="preview_intro">Das Widget mit den aktuellen Einstellungen, auch vor dem Speichern. Die Regler verändern nur die Vorschau; die Uhrzeit gilt in der Zeitzone des Orts.</string>
+    <string name="preview_date">Datum</string>
+    <string name="preview_time">Uhrzeit</string>
+    <string name="preview_reset">Zurücksetzen</string>
 
     <!-- Times tab -->
     <string name="times_intro">Sonnentag von Sonnenmitternacht bis Sonnenmitternacht. Die Liste wechselt zu Sonnenmitternacht.</string>

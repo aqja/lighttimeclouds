@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -32,6 +33,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Slider
@@ -55,6 +57,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.umfluten.lighttimeclouds.R
@@ -153,6 +156,7 @@ private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
     // tab only exists while the weather ring is on, since only then is a forecast downloaded.
     val tabs = buildList {
         add(R.string.tab_settings)
+        add(R.string.tab_preview)
         add(R.string.tab_times)
         if (settings.showWeather) add(R.string.tab_weather)
     }
@@ -166,7 +170,14 @@ private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
                     Tab(
                         selected = pagerState.currentPage == index,
                         onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
-                        text = { Text(stringResource(title)) },
+                        // Long titles shrink to one line rather than wrap, now that four tabs share the width.
+                        text = {
+                            Text(
+                                stringResource(title),
+                                maxLines = 1,
+                                autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = LocalTextStyle.current.fontSize),
+                            )
+                        },
                     )
                 }
             }
@@ -188,9 +199,10 @@ private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
         },
     ) { padding ->
         HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.Top) { page ->
-            when (page) {
-                1 -> TimesTab(settings, padding)
-                2 -> WeatherTab(settings, padding)
+            when (tabs[page]) {
+                R.string.tab_preview -> PreviewTab(settings, padding)
+                R.string.tab_times -> TimesTab(settings, padding)
+                R.string.tab_weather -> WeatherTab(settings, padding)
                 else -> Column(
                     Modifier
                         .fillMaxSize()
