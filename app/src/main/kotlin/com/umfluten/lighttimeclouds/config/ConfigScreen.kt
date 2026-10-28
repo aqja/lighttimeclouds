@@ -61,6 +61,7 @@ import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.data.ColorMode
 import com.umfluten.lighttimeclouds.data.DisplayMode
 import com.umfluten.lighttimeclouds.data.RingStyle
+import com.umfluten.lighttimeclouds.data.MoonStyle
 import com.umfluten.lighttimeclouds.data.SkyHorizon
 import com.umfluten.lighttimeclouds.data.SwitchStrategyType
 import com.umfluten.lighttimeclouds.data.TapAction
@@ -263,6 +264,28 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             checked = settings.showMoon,
             onCheckedChange = { viewModel.update { s -> s.copy(showMoon = it) } },
         )
+        if (settings.showMoon) {
+            SegmentedChoice(
+                options = listOf(MoonStyle.ON_HOUR_HAND to R.string.moon_style_on_hour_hand, MoonStyle.SEPARATE_HAND to R.string.moon_style_separate_hand),
+                selected = settings.moonStyle,
+                onSelect = { viewModel.update { s -> s.copy(moonStyle = it) } },
+            )
+            Text(
+                stringResource(
+                    when (settings.moonStyle) {
+                        MoonStyle.ON_HOUR_HAND -> R.string.moon_style_on_hour_hand_hint
+                        MoonStyle.SEPARATE_HAND -> R.string.moon_style_separate_hand_hint
+                    },
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            SwitchRow(
+                label = stringResource(R.string.show_moon_compass),
+                checked = settings.showMoonCompass,
+                onCheckedChange = { viewModel.update { s -> s.copy(showMoonCompass = it) } },
+            )
+        }
         SwitchRow(
             label = stringResource(R.string.show_next_alarm),
             checked = settings.showNextAlarm,

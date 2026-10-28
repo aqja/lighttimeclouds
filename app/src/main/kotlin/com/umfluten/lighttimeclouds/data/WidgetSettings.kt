@@ -22,6 +22,14 @@ enum class RingStyle { SKY, GRADIENT, BANDS }
 /** For [RingStyle.SKY]: whether the horizon is at the inner or the outer edge of the ring. */
 enum class SkyHorizon { INNER, OUTER }
 
+/**
+ * How the moon is shown: [ON_HOUR_HAND] as a framed disc on the hour hand, its daily path plotted
+ * against clock time (so the path crosses the horizon circle at the actual moonrise/moonset times);
+ * [SEPARATE_HAND] as its own hand at "now minus the moon's lag behind the sun", showing where the
+ * moon is in its daily circuit compared with the sun.
+ */
+enum class MoonStyle { ON_HOUR_HAND, SEPARATE_HAND }
+
 /** Where the weather ring sits: just inside the day/night ring, or outermost around it. */
 enum class WeatherRingPosition { INSIDE, OUTSIDE }
 
@@ -54,6 +62,9 @@ data class WidgetSettings(
     val showSolarMarks: Boolean = true,
     val showSunriseSunsetMarks: Boolean = true,
     val showMoon: Boolean = true,
+    val moonStyle: MoonStyle = MoonStyle.ON_HOUR_HAND,
+    /** Letters on the moon path where the moon passes north, east, south and west. */
+    val showMoonCompass: Boolean = true,
     /** Red tick at the next alarm (the only one Android exposes), if it falls into the shown time span. */
     val showNextAlarm: Boolean = false,
     /** Weather ring from an online forecast; off by default so nothing is fetched without the user opting in. */

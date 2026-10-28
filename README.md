@@ -11,7 +11,7 @@ Ein Ring um ein gewöhnliches Zifferblatt zeigt den Tagesverlauf von Nacht über
 - Konfigurierbare Umschalt-Strategie für den Ring: feste Uhrzeiten (12h: zwei, Standard 6 und 18 Uhr; 24h: eine, Standard Mitternacht) oder kontinuierlich hinter dem Zeiger herlaufend
 - Optionale Markierungen für Sonnenmittag/-mitternacht und Sonnenauf-/untergang
 - Optional ein roter Stundenstrich beim nächsten Wecker, sobald er im angezeigten Zeitraum liegt (Android gibt nur den nächsten Wecker preis); folgt sofort jeder Änderung, beim Schlummern also der neuen Weckzeit, sofern die Wecker-App sie meldet
-- Mondzeiger mit Phase; Abstand zur Mitte zeigt die Mondhöhe, dazu Tagesbahn des Mondes und Horizontkreis (ausblendbar)
+- Mond mit Phase, wahlweise am Stundenzeiger (Bahn schneidet den Horizontkreis zu den echten Auf- und Untergangszeiten) oder als eigener Zeiger, der dem Stundenzeiger um den Abstand des Mondes zur Sonne nachläuft; Abstand zur Mitte zeigt die Mondhöhe, dazu Tagesbahn des Mondes mit den Himmelsrichtungen, die er durchläuft, und Horizontkreis (ausblendbar)
 - Tab „Zeiten“ in der App: alle Sonnenereignisse des Sonnentags, Mondphase, Mondauf- und -untergang
 - Gespeicherte Orte mit Name, Koordinaten und Zeitzone; jedes Widget zeigt die Ortszeit (Weltuhr mit mehreren Widgets). Nur manuelle Eingabe, kein GPS, keine Standort-Berechtigung. Netzwerkzugriff nur für den optionalen Wetter-Ring
 - Antippen öffnet wahlweise die System-Uhr-App oder die App selbst

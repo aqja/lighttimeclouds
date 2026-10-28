@@ -34,6 +34,8 @@ class WidgetPrefsRepository(private val context: Context) {
         val solarMarks = booleanPreferencesKey(prefix + "solar_marks")
         val sunriseMarks = booleanPreferencesKey(prefix + "sunrise_marks")
         val showMoon = booleanPreferencesKey(prefix + "show_moon")
+        val moonStyle = stringPreferencesKey(prefix + "moon_style")
+        val moonCompass = booleanPreferencesKey(prefix + "moon_compass")
         val showNextAlarm = booleanPreferencesKey(prefix + "show_next_alarm")
         val showWeather = booleanPreferencesKey(prefix + "show_weather")
         val temperatureDisplay = stringPreferencesKey(prefix + "temperature_display")
@@ -65,6 +67,8 @@ class WidgetPrefsRepository(private val context: Context) {
             showSolarMarks = prefs[k.solarMarks] ?: d.showSolarMarks,
             showSunriseSunsetMarks = prefs[k.sunriseMarks] ?: d.showSunriseSunsetMarks,
             showMoon = prefs[k.showMoon] ?: d.showMoon,
+            moonStyle = prefs.enumOr(k.moonStyle, d.moonStyle),
+            showMoonCompass = prefs[k.moonCompass] ?: d.showMoonCompass,
             showNextAlarm = prefs[k.showNextAlarm] ?: d.showNextAlarm,
             showWeather = prefs[k.showWeather] ?: d.showWeather,
             temperatureDisplay = prefs.enumOr(k.temperatureDisplay, d.temperatureDisplay),
@@ -92,6 +96,8 @@ class WidgetPrefsRepository(private val context: Context) {
             prefs[k.solarMarks] = settings.showSolarMarks
             prefs[k.sunriseMarks] = settings.showSunriseSunsetMarks
             prefs[k.showMoon] = settings.showMoon
+            prefs[k.moonStyle] = settings.moonStyle.name
+            prefs[k.moonCompass] = settings.showMoonCompass
             prefs[k.showNextAlarm] = settings.showNextAlarm
             prefs[k.showWeather] = settings.showWeather
             prefs[k.temperatureDisplay] = settings.temperatureDisplay.name

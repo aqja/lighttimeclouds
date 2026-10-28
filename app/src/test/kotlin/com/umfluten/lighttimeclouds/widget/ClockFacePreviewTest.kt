@@ -6,6 +6,7 @@ import android.graphics.Color
 import androidx.core.graphics.createBitmap
 import com.umfluten.lighttimeclouds.data.ColorMode
 import com.umfluten.lighttimeclouds.data.DisplayMode
+import com.umfluten.lighttimeclouds.data.MoonStyle
 import com.umfluten.lighttimeclouds.data.Place
 import com.umfluten.lighttimeclouds.data.RingStyle
 import com.umfluten.lighttimeclouds.data.SkyHorizon
@@ -140,6 +141,27 @@ class ClockFacePreviewTest {
             mixedForecast(),
             darkBackground = true,
         )
+    }
+
+    @Test
+    fun moonPreviews() {
+        val onHand = WidgetSettings(widgetId = 1, colorMode = ColorMode.DARK, moonStyle = MoonStyle.ON_HOUR_HAND)
+        val separate = onHand.copy(moonStyle = MoonStyle.SEPARATE_HAND)
+        // Two days after full moon, risen at 17:39: the two styles point about 14h apart.
+        val waningGibbous = ZonedDateTime.of(2026, 10, 28, 20, 0, 0, 0, Place.DEFAULT.zone)
+        render("moon_on_hour_hand_12h", onHand, null, darkBackground = true, at = waningGibbous)
+        render("moon_separate_hand_12h", separate, null, darkBackground = true, at = waningGibbous)
+        render("moon_on_hour_hand_24h", onHand.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR), null, darkBackground = true, at = waningGibbous)
+        render("moon_on_hour_hand_light", onHand.copy(colorMode = ColorMode.LIGHT), null, darkBackground = false, at = waningGibbous)
+        // Thin crescent below the horizon: the frame keeps it visible on the hand.
+        val newMoon = ZonedDateTime.of(2026, 11, 11, 20, 0, 0, 0, Place.DEFAULT.zone)
+        render("moon_on_hour_hand_new_moon", onHand, null, darkBackground = true, at = newMoon)
+        render("moon_separate_hand_new_moon", separate, null, darkBackground = true, at = newMoon)
+        // Low-running moon near the equinox: rises south of east, sets south of west.
+        val lowMoon = ZonedDateTime.of(2026, 9, 23, 20, 0, 0, 0, Place.DEFAULT.zone)
+        render("moon_on_hour_hand_24h_low", onHand.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR), null, darkBackground = true, at = lowMoon)
+        render("moon_separate_hand_24h", separate.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR), null, darkBackground = true, at = waningGibbous)
+        render("moon_on_hour_hand_no_compass", onHand.copy(showMoonCompass = false), null, darkBackground = true, at = waningGibbous)
     }
 
     @Test

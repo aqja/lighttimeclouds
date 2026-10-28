@@ -38,6 +38,15 @@
     <string name="show_solar_marks">Sonnenmittag und -mitternacht</string>
     <string name="show_sunrise_sunset_marks">Sonnenauf- und -untergang</string>
     <string name="show_moon">Mond mit Bahn</string>
+    <string name="show_moon_compass">Himmelsrichtungen an der Mondbahn</string>
+    <string name="compass_north">N</string>
+    <string name="compass_east">O</string>
+    <string name="compass_south">S</string>
+    <string name="compass_west">W</string>
+    <string name="moon_style_on_hour_hand">Am Stundenzeiger</string>
+    <string name="moon_style_separate_hand">Eigener Zeiger</string>
+    <string name="moon_style_on_hour_hand_hint">Der Mond sitzt auf dem Stundenzeiger, sein Abstand zur Mitte zeigt seine Höhe. Wo die Bahn den blassen Horizontkreis schneidet, geht der Mond zu dieser Uhrzeit auf oder unter.</string>
+    <string name="moon_style_separate_hand_hint">Der Mondzeiger läuft dem Stundenzeiger so weit hinterher, wie der Mond der Sonne hinterherläuft, und zeigt so, wo der Mond im Vergleich zur Sonne in seinem Tageslauf steht. Sein Abstand zur Mitte zeigt seine Höhe; die Ziffern geben nicht die Zeiten von Mondauf- und -untergang an.</string>
     <string name="show_next_alarm">Nächsten Wecker markieren</string>
     <string name="next_alarm_hint">Roter Strich, sobald der nächste Wecker im angezeigten Zeitraum liegt. Android verrät anderen Apps nur den jeweils nächsten Wecker, nicht alle gestellten. Beim Schlummern wandert der Strich zur neuen Weckzeit, sofern die Wecker-App sie meldet.</string>
 

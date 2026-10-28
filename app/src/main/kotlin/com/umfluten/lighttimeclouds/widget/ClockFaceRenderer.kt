@@ -14,10 +14,12 @@ import android.graphics.Shader
 import android.os.Build
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withClip
+import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.astro.DialTimeMapper
 import com.umfluten.lighttimeclouds.astro.SunMoonCalculator
 import com.umfluten.lighttimeclouds.data.ColorMode
 import com.umfluten.lighttimeclouds.data.DisplayMode
+import com.umfluten.lighttimeclouds.data.MoonStyle
 import com.umfluten.lighttimeclouds.data.RingStyle
 import com.umfluten.lighttimeclouds.data.SkyHorizon
 import com.umfluten.lighttimeclouds.data.SwitchStrategyType
@@ -124,6 +126,14 @@ object ClockFaceRenderer {
 
     private const val MOON_PATH_SAMPLES = 144
 
+    /** Radius of the moon's phase disc, as a fraction of the dial radius. */
+    private const val MOON_SIZE = 0.073f
+
+    /** With [MoonStyle.ON_HOUR_HAND]: radius of the phase disc, width of its frame, and how much hand stays visible beyond it. */
+    private const val MOON_ON_HAND_SIZE = 0.055f
+    private const val MOON_ON_HAND_FRAME = 0.014f
+    private const val MOON_ON_HAND_TIP = 0.025f
+
     /**
      * Draws the clock for [now], which defaults to the current time in the time zone of the widget's
      * place. With [WidgetSettings.showWeather] the dial makes room for the weather ring (and the
@@ -188,9 +198,9 @@ object ClockFaceRenderer {
             )
         }
         if (settings.showMoon) {
-            drawMoon(canvas, cx, cy, radius, settings, layout, now, dark)
+            drawMoon(context, canvas, cx, cy, radius, settings, layout, now, dark)
         }
-        drawHands(canvas, cx, cy, radius, settings, layout, now, chromeColor)
+        drawHands(canvas, cx, cy, radius, settings, layout, now, chromeColor, dark)
         drawCenterPin(canvas, cx, cy, radius, chromeColor)
 
         return bitmap
@@ -735,14 +745,17 @@ object ClockFaceRenderer {
     // --- Moon ------------------------------------------------------------
 
     /**
-     * Moon hand and daily moon path. The angle stands for where the moon is in its daily circuit:
-     * the dial time "t minus [SunMoonCalculator.moonLagHours]", the same way the hour hand stands
-     * for the sun. The distance from the center shows the moon's altitude: a faint circle marks the
-     * horizon, above it the moon climbs outward, below it sinks inward (drawn faded). The path
-     * covers the same time window as the day/night ring (the active 12h or 24h window, moving with
-     * it), so it always contains the current point, where the phase disc sits.
+     * Daily moon path, plus the moon hand and phase disc with [MoonStyle.SEPARATE_HAND] (with
+     * [MoonStyle.ON_HOUR_HAND] the disc is drawn together with the hands, see [drawMoonOnHourHand]).
+     * The angle of each point comes from [moonPointAt]. The distance from the center shows the moon's
+     * altitude: a faint circle marks the horizon, above it the moon climbs outward, below it sinks
+     * inward (drawn faded). The path covers the same time window as the day/night ring (the active
+     * 12h or 24h window, moving with it), so it always contains the current point. With
+     * [WidgetSettings.showMoonCompass], a dot and letter mark where the moon passes north, east,
+     * south or west.
      */
     private fun drawMoon(
+        context: Context,
         canvas: Canvas,
         cx: Float,
         cy: Float,
@@ -752,14 +765,7 @@ object ClockFaceRenderer {
         now: ZonedDateTime,
         dark: Boolean,
     ) {
-        fun pointAt(time: ZonedDateTime): Triple<Float, Float, Boolean> {
-            val lagSeconds = (SunMoonCalculator.moonLagHours(time.toInstant()) * 3600.0).toLong()
-            val angle = dialAngle(time.minusSeconds(lagSeconds), settings.displayMode)
-            val altitude = SunMoonCalculator.moonAltitudeDegrees(time.toInstant(), settings.place.latitude, settings.place.longitude)
-            val r = radius * moonOrbitRadiusFactor(altitude, layout)
-            val rad = Math.toRadians(angle - 90.0)
-            return Triple(cx + (cos(rad) * r).toFloat(), cy + (sin(rad) * r).toFloat(), altitude > 0.0)
-        }
+        fun pointAt(time: ZonedDateTime) = moonPointAt(time, cx, cy, radius, settings, layout)
 
         val mapper = mapperFor(settings)
         val pathStart = mapper.windowStart(now)
@@ -770,24 +776,39 @@ object ClockFaceRenderer {
             style = Paint.Style.STROKE
             strokeWidth = radius * 0.006f
         }
-        canvas.drawCircle(cx, cy, radius * layout.moonHorizon, horizonPaint)
+        canvas.drawCircle(cx, cy, radius * moonOrbit(settings, layout).first, horizonPaint)
 
         val pathPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = MARK_COLOR
             strokeWidth = radius * 0.008f
             strokeCap = Paint.Cap.ROUND
         }
+        val compassPoints = mutableListOf<Pair<ZonedDateTime, Int>>()
+        val stepSeconds = spanMinutes * 60.0 / MOON_PATH_SAMPLES
+        var previousTime = pathStart
         var previous = pointAt(pathStart)
         for (i in 1..MOON_PATH_SAMPLES) {
-            val current = pointAt(pathStart.plusMinutes(spanMinutes * i / MOON_PATH_SAMPLES))
-            pathPaint.alpha = if (previous.third || current.third) 200 else 80
-            canvas.drawLine(previous.first, previous.second, current.first, current.second, pathPaint)
+            val time = pathStart.plusMinutes(spanMinutes * i / MOON_PATH_SAMPLES)
+            val current = pointAt(time)
+            pathPaint.alpha = if (previous.aboveHorizon || current.aboveHorizon) 200 else 80
+            canvas.drawLine(previous.x, previous.y, current.x, current.y, pathPaint)
+            // Azimuth step unwrapped across north (±180°), so a crossing of north is found like any other.
+            val step = ((current.azimuthDeg - previous.azimuthDeg + 540.0) % 360.0) - 180.0
+            for ((azimuth, label) in COMPASS_POINTS) {
+                val fraction = (azimuth - previous.azimuthDeg) / step
+                if (settings.showMoonCompass && step != 0.0 && fraction > 0.0 && fraction <= 1.0) {
+                    compassPoints += previousTime.plusSeconds((fraction * stepSeconds).toLong()) to label
+                }
+            }
+            previousTime = time
             previous = current
         }
+        drawCompassPoints(context, canvas, cx, cy, radius, compassPoints.map { (time, label) -> pointAt(time) to label })
+        if (settings.moonStyle != MoonStyle.SEPARATE_HAND) return
 
         // Hand and phase disc at the current position; faded while the moon is below the horizon.
         val (mx, my, aboveHorizon) = pointAt(now)
-        val moonSize = radius * 0.073f
+        val moonSize = radius * MOON_SIZE
         val alpha = if (aboveHorizon) 255 else 110
         val dx = mx - cx
         val dy = my - cy
@@ -801,17 +822,130 @@ object ClockFaceRenderer {
         }
         canvas.drawLine(cx, cy, cx + dx * handScale, cy + dy * handScale, handPaint)
 
-        val litColor = if (dark) Color.rgb(235, 235, 225) else Color.rgb(250, 250, 245)
-        val shadowColor = if (dark) Color.rgb(40, 40, 45) else Color.rgb(90, 90, 95)
         val illumination = SunMoonCalculator.moonIllumination(now.toInstant())
         canvas.saveLayerAlpha(null, alpha)
-        drawMoonPhase(canvas, mx, my, moonSize, illumination, litColor, shadowColor)
+        drawMoonPhase(canvas, mx, my, moonSize, illumination, moonLitColor(dark), moonShadowColor(dark))
         canvas.restore()
     }
 
+    /**
+     * Moon azimuths (SunCalc convention: from south, positive toward west) labeled on the path, with
+     * their letter. North appears twice so that crossings from either side of ±180° are found.
+     */
+    private val COMPASS_POINTS = listOf(
+        -180.0 to R.string.compass_north,
+        -90.0 to R.string.compass_east,
+        0.0 to R.string.compass_south,
+        90.0 to R.string.compass_west,
+        180.0 to R.string.compass_north,
+    )
+
+    /** A dot on the path at each of [points], with its letter just outside it (away from the center). */
+    private fun drawCompassPoints(context: Context, canvas: Canvas, cx: Float, cy: Float, radius: Float, points: List<Pair<MoonPoint, Int>>) {
+        val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = MARK_COLOR; style = Paint.Style.FILL }
+        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = MARK_COLOR
+            textSize = radius * 0.065f
+            textAlign = Paint.Align.CENTER
+            isFakeBoldText = true
+        }
+        val bounds = Rect()
+        for ((point, labelRes) in points) {
+            val alpha = if (point.aboveHorizon) 255 else 130
+            dotPaint.alpha = alpha
+            textPaint.alpha = alpha
+            canvas.drawCircle(point.x, point.y, radius * 0.014f, dotPaint)
+            val dx = point.x - cx
+            val dy = point.y - cy
+            val distance = hypot(dx, dy).coerceAtLeast(1f)
+            val offset = radius * 0.06f
+            val label = context.getString(labelRes)
+            textPaint.getTextBounds(label, 0, label.length, bounds)
+            canvas.drawText(label, point.x + dx / distance * offset, point.y + dy / distance * offset + bounds.height() / 2f, textPaint)
+        }
+    }
+
+    /**
+     * Phase disc on the hour hand ([MoonStyle.ON_HOUR_HAND]), framed in the hand's [color] so that it
+     * reads as part of the hand and a new moon stays visible. Drawn opaque so the hand does not show
+     * through; below the horizon the lit part is dimmed instead.
+     */
+    private fun drawMoonOnHourHand(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        settings: WidgetSettings,
+        layout: DialLayout,
+        handTime: ZonedDateTime,
+        dark: Boolean,
+        color: Int,
+    ) {
+        val (mx, my, aboveHorizon) = moonPointAt(handTime, cx, cy, radius, settings, layout)
+        val moonSize = radius * MOON_ON_HAND_SIZE
+        val shadowColor = moonShadowColor(dark)
+        val litColor = if (aboveHorizon) moonLitColor(dark) else lerpColor(moonLitColor(dark), shadowColor, 0.55)
+        drawMoonPhase(canvas, mx, my, moonSize, SunMoonCalculator.moonIllumination(handTime.toInstant()), litColor, shadowColor)
+        val framePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            this.color = color
+            style = Paint.Style.STROKE
+            strokeWidth = radius * MOON_ON_HAND_FRAME
+        }
+        canvas.drawCircle(mx, my, moonSize + framePaint.strokeWidth / 2f, framePaint)
+    }
+
+    /** A point of the moon on the dial, whether it is above the horizon, and its azimuth (from south, positive toward west). */
+    private data class MoonPoint(val x: Float, val y: Float, val aboveHorizon: Boolean, val azimuthDeg: Double)
+
+    /**
+     * Where the moon appears on the dial at [time], and whether it is above the horizon. With
+     * [MoonStyle.ON_HOUR_HAND] the angle is [time] itself, so the path crosses the horizon circle at
+     * the actual moonrise/moonset times and the current point lies on the hour hand. With
+     * [MoonStyle.SEPARATE_HAND] it is "[time] minus [SunMoonCalculator.moonLagHours]": where the moon
+     * is in its daily circuit, the same way the hour hand stands for the sun.
+     */
+    private fun moonPointAt(
+        time: ZonedDateTime,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        settings: WidgetSettings,
+        layout: DialLayout,
+    ): MoonPoint {
+        val dialTime = when (settings.moonStyle) {
+            MoonStyle.ON_HOUR_HAND -> time
+            MoonStyle.SEPARATE_HAND -> time.minusSeconds((SunMoonCalculator.moonLagHours(time.toInstant()) * 3600.0).toLong())
+        }
+        val angle = dialAngle(dialTime, settings.displayMode)
+        val position = SunMoonCalculator.moonPosition(time.toInstant(), settings.place.latitude, settings.place.longitude)
+        val r = radius * moonOrbitRadiusFactor(position.altitudeDegrees, settings, layout)
+        val rad = Math.toRadians(angle - 90.0)
+        return MoonPoint(cx + (cos(rad) * r).toFloat(), cy + (sin(rad) * r).toFloat(), position.altitudeDegrees > 0.0, position.azimuthDegrees)
+    }
+
+    private fun moonLitColor(dark: Boolean): Int = if (dark) Color.rgb(235, 235, 225) else Color.rgb(250, 250, 245)
+
+    private fun moonShadowColor(dark: Boolean): Int = if (dark) Color.rgb(40, 40, 45) else Color.rgb(90, 90, 95)
+
     /** Moon distance from the center, as a fraction of the dial radius: the horizon circle offset by sin(altitude), outward above and inward below. */
-    private fun moonOrbitRadiusFactor(altitudeDeg: Double, layout: DialLayout): Float =
-        layout.moonHorizon + layout.moonAmplitude * sin(Math.toRadians(altitudeDeg.coerceIn(-90.0, 90.0))).toFloat()
+    private fun moonOrbitRadiusFactor(altitudeDeg: Double, settings: WidgetSettings, layout: DialLayout): Float {
+        val (horizon, amplitude) = moonOrbit(settings, layout)
+        return horizon + amplitude * sin(Math.toRadians(altitudeDeg.coerceIn(-90.0, 90.0))).toFloat()
+    }
+
+    /**
+     * Horizon radius and altitude amplitude of the moon path, as fractions of the dial radius. On the
+     * hour hand the framed disc spans from the center (moon at the nadir) to just short of the hand's
+     * tip (moon at the zenith), so a bit of the hand always shows beyond it.
+     */
+    private fun moonOrbit(settings: WidgetSettings, layout: DialLayout): Pair<Float, Float> = when (settings.moonStyle) {
+        MoonStyle.SEPARATE_HAND -> layout.moonHorizon to layout.moonAmplitude
+        MoonStyle.ON_HOUR_HAND -> {
+            val disc = MOON_ON_HAND_SIZE + MOON_ON_HAND_FRAME
+            val outer = layout.hourHand - MOON_ON_HAND_TIP - disc
+            (outer + disc) / 2f to (outer - disc) / 2f
+        }
+    }
 
     /** Dial angle (0..360, 0 = top) at which [time] appears on the dial. */
     private fun dialAngle(time: ZonedDateTime, mode: DisplayMode): Double {
@@ -868,8 +1002,10 @@ object ClockFaceRenderer {
         layout: DialLayout,
         now: ZonedDateTime,
         color: Int,
+        dark: Boolean,
     ) {
-        val hourAngle = dialAngle(now.withSecond(0), settings.displayMode)
+        val handTime = now.withSecond(0)
+        val hourAngle = dialAngle(handTime, settings.displayMode)
         val minuteAngle = now.minute * 6.0
 
         val hourPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -884,6 +1020,9 @@ object ClockFaceRenderer {
         }
 
         drawHand(canvas, cx, cy, hourAngle, radius * layout.hourHand, hourPaint)
+        if (settings.showMoon && settings.moonStyle == MoonStyle.ON_HOUR_HAND) {
+            drawMoonOnHourHand(canvas, cx, cy, radius, settings, layout, handTime, dark, color)
+        }
         drawHand(canvas, cx, cy, minuteAngle, radius * layout.minuteHand, minutePaint)
     }
 

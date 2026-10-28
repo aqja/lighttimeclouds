@@ -39,6 +39,15 @@
     <string name="show_solar_marks">Solar noon and midnight</string>
     <string name="show_sunrise_sunset_marks">Sunrise and sunset</string>
     <string name="show_moon">Moon and its path</string>
+    <string name="show_moon_compass">Compass points on the moon path</string>
+    <string name="compass_north">N</string>
+    <string name="compass_east">E</string>
+    <string name="compass_south">S</string>
+    <string name="compass_west">W</string>
+    <string name="moon_style_on_hour_hand">On the hour hand</string>
+    <string name="moon_style_separate_hand">Own hand</string>
+    <string name="moon_style_on_hour_hand_hint">The moon rides on the hour hand; its distance from the center shows its altitude. Where the path crosses the faint horizon circle, the moon rises or sets at that time.</string>
+    <string name="moon_style_separate_hand_hint">The moon hand trails the hour hand by as much as the moon lags behind the sun, showing where the moon is in its daily course compared with the sun. Its distance from the center shows its altitude; the numerals do not give the times of moonrise and moonset.</string>
     <string name="show_next_alarm">Mark next alarm</string>
     <string name="next_alarm_hint">A red tick as soon as the next alarm falls within the displayed period. Android only reveals the next alarm to other apps, not all alarms that are set. When snoozing, the tick moves to the new alarm time if the clock app reports it.</string>
 
