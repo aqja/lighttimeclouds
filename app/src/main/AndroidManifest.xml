@@ -46,6 +46,15 @@
             android:name=".widget.ClockUpdateReceiver"
             android:exported="false" />
 
+        <!-- Exempt from the implicit-broadcast limits, so a manifest receiver still gets it. -->
+        <receiver
+            android:name=".widget.NextAlarmReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
+            </intent-filter>
+        </receiver>
+
         <receiver
             android:name=".widget.BootReceiver"
             android:exported="true">

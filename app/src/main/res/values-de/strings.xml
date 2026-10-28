@@ -38,7 +38,7 @@
     <string name="show_sunrise_sunset_marks">Sonnenauf- und -untergang</string>
     <string name="show_moon">Mond mit Bahn</string>
     <string name="show_next_alarm">Nächsten Wecker markieren</string>
-    <string name="next_alarm_hint">Roter Strich, sobald der nächste Wecker im angezeigten Zeitraum liegt. Android verrät anderen Apps nur den jeweils nächsten Wecker, nicht alle gestellten.</string>
+    <string name="next_alarm_hint">Roter Strich, sobald der nächste Wecker im angezeigten Zeitraum liegt. Android verrät anderen Apps nur den jeweils nächsten Wecker, nicht alle gestellten. Beim Schlummern wandert der Strich zur neuen Weckzeit, sofern die Wecker-App sie meldet.</string>
 
     <!-- Weather -->
     <string name="show_weather">Wetter (Bewölkung und Niederschlag)</string>

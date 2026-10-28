@@ -10,7 +10,7 @@ Ein Ring um ein gewöhnliches Zifferblatt zeigt den Tagesverlauf von Nacht über
 - Tag/Dämmerung/Nacht-Ring nach aktuellem Sonnenstand am konfigurierten Standort, wahlweise als „Himmel“ (Standard), Verlauf oder in festen Phasenfarben. „Himmel“ zeigt in jedem Ringabschnitt den Himmel vom Horizont nach oben (Horizont innen oder außen einstellbar): Tag und Morgen-/Abendrot aus einem physikalischen Streuungsmodell, dazu die blaue Stunde und das Nachtlila der Dämmerung
 - Konfigurierbare Umschalt-Strategie für den Ring im 12h-Modus: feste Uhrzeiten oder kontinuierlich hinter dem Zeiger herlaufend
 - Optionale Markierungen für Sonnenmittag/-mitternacht und Sonnenauf-/untergang
-- Optional ein roter Stundenstrich beim nächsten Wecker, sobald er im angezeigten Zeitraum liegt (Android gibt nur den nächsten Wecker preis)
+- Optional ein roter Stundenstrich beim nächsten Wecker, sobald er im angezeigten Zeitraum liegt (Android gibt nur den nächsten Wecker preis); folgt sofort jeder Änderung, beim Schlummern also der neuen Weckzeit, sofern die Wecker-App sie meldet
 - Mondzeiger mit Phase; Abstand zur Mitte zeigt die Mondhöhe, dazu Tagesbahn des Mondes und Horizontkreis (ausblendbar)
 - Tab „Zeiten“ in der App: alle Sonnenereignisse des Sonnentags, Mondphase, Mondauf- und -untergang
 - Gespeicherte Orte mit Name, Koordinaten und Zeitzone; jedes Widget zeigt die Ortszeit (Weltuhr mit mehreren Widgets). Nur manuelle Eingabe, kein GPS, keine Standort-Berechtigung. Netzwerkzugriff nur für den optionalen Wetter-Ring

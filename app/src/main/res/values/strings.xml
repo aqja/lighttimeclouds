@@ -39,7 +39,7 @@
     <string name="show_sunrise_sunset_marks">Sunrise and sunset</string>
     <string name="show_moon">Moon and its path</string>
     <string name="show_next_alarm">Mark next alarm</string>
-    <string name="next_alarm_hint">A red tick as soon as the next alarm falls within the displayed period. Android only reveals the next alarm to other apps, not all alarms that are set.</string>
+    <string name="next_alarm_hint">A red tick as soon as the next alarm falls within the displayed period. Android only reveals the next alarm to other apps, not all alarms that are set. When snoozing, the tick moves to the new alarm time if the clock app reports it.</string>
 
     <!-- Weather -->
     <string name="show_weather">Weather (clouds and precipitation)</string>
