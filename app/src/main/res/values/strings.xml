@@ -111,6 +111,35 @@
     <string name="place_invalid_value">Invalid value</string>
     <string name="zone_search">Search</string>
 
+    <!-- Weather summary -->
+    <string name="summary_position_label">Weather summary</string>
+    <string name="summary_position_left">Left</string>
+    <string name="summary_position_right">Right</string>
+    <string name="summary_position_hint">A few words on the weather: compared with yesterday, how it feels, and whether rain or snow is coming. Left or right of the clock needs a widget wider than it is tall.</string>
+    <string name="summary_much_warmer">Much warmer than this time yesterday, up %1$d°.</string>
+    <string name="summary_warmer">A bit warmer than this time yesterday.</string>
+    <string name="summary_similar">About as warm as this time yesterday.</string>
+    <string name="summary_cooler">A bit cooler than this time yesterday.</string>
+    <string name="summary_much_colder">Much colder than this time yesterday, down %1$d°.</string>
+    <string name="summary_feels_colder">Feels %1$d° colder than the thermometer says.</string>
+    <string name="summary_feels_warmer">Feels %1$d° warmer than the thermometer says.</string>
+    <plurals name="summary_snow">
+        <item quantity="one">Snow expected within the next hour.</item>
+        <item quantity="other">Snow expected in the next %1$d hours.</item>
+    </plurals>
+    <plurals name="summary_rain">
+        <item quantity="one">Rain likely within the next hour.</item>
+        <item quantity="other">Rain likely in the next %1$d hours.</item>
+    </plurals>
+    <plurals name="summary_chance">
+        <item quantity="one">A chance of rain within the next hour.</item>
+        <item quantity="other">A chance of rain in the next %1$d hours.</item>
+    </plurals>
+    <plurals name="summary_dry">
+        <item quantity="one">No rain expected within the next hour.</item>
+        <item quantity="other">No rain expected in the next %1$d hours.</item>
+    </plurals>
+
     <!-- Weather tab -->
     <string name="weather_intro">Hourly values from the Open-Meteo weather model, for past hours as well. Top: sky colors as on the ring. Below the temperatures: cloud cover hanging from the top, precipitation rising from the bottom, colored as on the weather ring.</string>
     <string name="weather_no_forecast">No forecast loaded yet. It is downloaded after saving, as soon as a widget of this place shows the weather ring.</string>

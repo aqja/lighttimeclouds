@@ -66,6 +66,7 @@ import com.umfluten.lighttimeclouds.data.DisplayMode
 import com.umfluten.lighttimeclouds.data.RingStyle
 import com.umfluten.lighttimeclouds.data.MoonStyle
 import com.umfluten.lighttimeclouds.data.SkyHorizon
+import com.umfluten.lighttimeclouds.data.SummaryPosition
 import com.umfluten.lighttimeclouds.data.SwitchStrategyType
 import com.umfluten.lighttimeclouds.data.TapAction
 import com.umfluten.lighttimeclouds.data.TemperatureDisplay
@@ -406,6 +407,22 @@ private fun WeatherSetting(settings: WidgetSettings, viewModel: ConfigViewModel)
             onSelect = { viewModel.update { s -> s.copy(temperaturePosition = it) } },
         )
     }
+    Text(stringResource(R.string.summary_position_label), style = MaterialTheme.typography.labelLarge)
+    SegmentedChoice(
+        options = listOf(
+            SummaryPosition.NONE to R.string.label_position_none,
+            SummaryPosition.LEFT to R.string.summary_position_left,
+            SummaryPosition.RIGHT to R.string.summary_position_right,
+            SummaryPosition.BELOW to R.string.label_position_below,
+        ),
+        selected = settings.summaryPosition,
+        onSelect = { viewModel.update { s -> s.copy(summaryPosition = it) } },
+    )
+    Text(
+        stringResource(R.string.summary_position_hint),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
     if (!networkAllowed) {
         Text(
             stringResource(R.string.no_network_access),

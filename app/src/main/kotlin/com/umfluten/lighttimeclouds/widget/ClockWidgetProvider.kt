@@ -9,9 +9,11 @@ import android.view.View
 import android.widget.RemoteViews
 import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.data.LabelPosition
+import com.umfluten.lighttimeclouds.data.SummaryPosition
 import com.umfluten.lighttimeclouds.data.WeatherRepository
 import com.umfluten.lighttimeclouds.data.WidgetPrefsRepository
 import com.umfluten.lighttimeclouds.data.WidgetSettings
+import com.umfluten.lighttimeclouds.weather.WeatherForecast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -86,6 +88,38 @@ class ClockWidgetProvider : AppWidgetProvider() {
             }
         }
 
+        /**
+         * Shows the weather summary left of, right of or below the clock per
+         * [WidgetSettings.summaryPosition] (only with the weather ring), in the dial's chrome color.
+         * Stays hidden while the forecast does not cover the current time.
+         */
+        private fun bindSummary(context: Context, views: RemoteViews, settings: WidgetSettings, weather: WeatherForecast?, widthPx: Int) {
+            val text = if (settings.showWeather && settings.summaryPosition != SummaryPosition.NONE) {
+                WeatherSummaryText.of(context.resources, weather, Instant.now())
+            } else {
+                null
+            }
+            val color = ClockFaceRenderer.chromeColor(context, settings)
+            for ((viewId, position) in listOf(
+                R.id.widget_summary_left to SummaryPosition.LEFT,
+                R.id.widget_summary_right to SummaryPosition.RIGHT,
+                R.id.widget_summary_below to SummaryPosition.BELOW,
+            )) {
+                val visible = text != null && settings.summaryPosition == position
+                views.setViewVisibility(viewId, if (visible) View.VISIBLE else View.GONE)
+                if (visible) {
+                    views.setTextViewText(viewId, text)
+                    views.setTextColor(viewId, color)
+                    if (position != SummaryPosition.BELOW) {
+                        views.setInt(viewId, "setMaxWidth", (widthPx * MAX_SIDE_SUMMARY_WIDTH).toInt())
+                    }
+                }
+            }
+        }
+
+        /** Share of the widget's width that text beside the clock may take; the clock shrinks to make room. */
+        private const val MAX_SIDE_SUMMARY_WIDTH = 0.4f
+
         /** Redraws every placed widget, e.g. on the minute tick or after a shared place was edited. */
         suspend fun updateAll(context: Context) {
             val appWidgetManager = AppWidgetManager.getInstance(context)
@@ -121,6 +155,7 @@ class ClockWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_clock)
             views.setImageViewBitmap(R.id.widget_clock_image, bitmap)
             bindPlaceLabel(context, views, settings)
+            bindSummary(context, views, settings, weather, WidgetSizing.currentWidthPx(context, appWidgetManager, appWidgetId))
             views.setOnClickPendingIntent(
                 R.id.widget_root,
                 TapActionResolver.buildPendingIntent(context, appWidgetId, settings.tapAction),

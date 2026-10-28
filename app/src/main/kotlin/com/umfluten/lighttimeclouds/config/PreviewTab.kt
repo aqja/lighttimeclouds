@@ -30,18 +30,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.umfluten.lighttimeclouds.R
+import com.umfluten.lighttimeclouds.data.SummaryPosition
 import com.umfluten.lighttimeclouds.data.WeatherRepository
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.weather.WeatherForecast
 import com.umfluten.lighttimeclouds.widget.ClockFaceRenderer
 import com.umfluten.lighttimeclouds.widget.ClockWidgetProvider
+import com.umfluten.lighttimeclouds.widget.WeatherSummaryText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.withContext
@@ -97,6 +102,11 @@ internal fun PreviewTab(settings: WidgetSettings, padding: PaddingValues) {
     val nextAlarm = remember(settings.showNextAlarm) {
         if (settings.showNextAlarm) ClockWidgetProvider.nextAlarm(context) else null
     }
+    val summary = if (settings.showWeather && settings.summaryPosition != SummaryPosition.NONE) {
+        WeatherSummaryText.of(LocalResources.current, weather, now.toInstant())
+    } else {
+        null
+    }
     val frame by rememberUpdatedState(
         PreviewFrame(
             settings.copy(place = place.copy(latitude = latitude.toDouble(), longitude = longitude.toDouble())),
@@ -120,7 +130,9 @@ internal fun PreviewTab(settings: WidgetSettings, padding: PaddingValues) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            val sizeDp = minOf(maxWidth, 320.dp)
+            // Side text takes up to 40% of the width, as in the widget.
+            val sideText = summary != null && settings.summaryPosition in setOf(SummaryPosition.LEFT, SummaryPosition.RIGHT)
+            val sizeDp = minOf(if (sideText) maxWidth * 0.6f else maxWidth, 320.dp)
             val sizePx = with(LocalDensity.current) { sizeDp.roundToPx() }
             var bitmap by remember { mutableStateOf<ImageBitmap?>(null) }
             // Renders off the main thread; while dragging, frames that arrive during a render are
@@ -132,8 +144,33 @@ internal fun PreviewTab(settings: WidgetSettings, padding: PaddingValues) {
                     }
                 }
             }
-            Box(Modifier.size(sizeDp)) {
-                bitmap?.let { Image(it, contentDescription = stringResource(R.string.widget_content_description)) }
+            val clock = @Composable {
+                Box(Modifier.size(sizeDp)) {
+                    bitmap?.let { Image(it, contentDescription = stringResource(R.string.widget_content_description)) }
+                }
+            }
+            val summaryColor = Color(ClockFaceRenderer.chromeColor(context, settings))
+            when {
+                summary == null -> clock()
+                settings.summaryPosition == SummaryPosition.BELOW -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    clock()
+                    Text(summary, color = summaryColor, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium)
+                }
+                else -> Row(verticalAlignment = Alignment.CenterVertically) {
+                    val left = settings.summaryPosition == SummaryPosition.LEFT
+                    val text = @Composable {
+                        Text(
+                            summary,
+                            color = summaryColor,
+                            textAlign = if (left) TextAlign.End else TextAlign.Start,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
+                        )
+                    }
+                    if (left) text()
+                    clock()
+                    if (!left) text()
+                }
             }
         }
 

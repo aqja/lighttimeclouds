@@ -110,6 +110,35 @@
     <string name="place_invalid_value">Ungültiger Wert</string>
     <string name="zone_search">Suchen</string>
 
+    <!-- Weather summary -->
+    <string name="summary_position_label">Wetter in Worten</string>
+    <string name="summary_position_left">Links</string>
+    <string name="summary_position_right">Rechts</string>
+    <string name="summary_position_hint">Ein paar Worte zum Wetter: im Vergleich zu gestern, wie es sich anfühlt und ob Regen oder Schnee kommt. Links oder rechts der Uhr braucht ein Widget, das breiter als hoch ist.</string>
+    <string name="summary_much_warmer">Viel wärmer als gestern um diese Zeit, %1$d° mehr.</string>
+    <string name="summary_warmer">Etwas wärmer als gestern um diese Zeit.</string>
+    <string name="summary_similar">Etwa so warm wie gestern um diese Zeit.</string>
+    <string name="summary_cooler">Etwas kühler als gestern um diese Zeit.</string>
+    <string name="summary_much_colder">Viel kälter als gestern um diese Zeit, %1$d° weniger.</string>
+    <string name="summary_feels_colder">Fühlt sich %1$d° kälter an, als das Thermometer sagt.</string>
+    <string name="summary_feels_warmer">Fühlt sich %1$d° wärmer an, als das Thermometer sagt.</string>
+    <plurals name="summary_snow">
+        <item quantity="one">Schnee in der nächsten Stunde erwartet.</item>
+        <item quantity="other">Schnee in den nächsten %1$d Stunden erwartet.</item>
+    </plurals>
+    <plurals name="summary_rain">
+        <item quantity="one">Regen in der nächsten Stunde wahrscheinlich.</item>
+        <item quantity="other">Regen in den nächsten %1$d Stunden wahrscheinlich.</item>
+    </plurals>
+    <plurals name="summary_chance">
+        <item quantity="one">Regen in der nächsten Stunde möglich.</item>
+        <item quantity="other">Regen in den nächsten %1$d Stunden möglich.</item>
+    </plurals>
+    <plurals name="summary_dry">
+        <item quantity="one">Kein Regen in der nächsten Stunde erwartet.</item>
+        <item quantity="other">Kein Regen in den nächsten %1$d Stunden erwartet.</item>
+    </plurals>
+
     <!-- Weather tab -->
     <string name="weather_intro">Stundenwerte aus dem Wettermodell von Open-Meteo, auch für vergangene Stunden. Oben die Himmelsfarben wie auf dem Ring. Unter den Temperaturen hängt die Bewölkung von oben herab, der Niederschlag wächst von unten, gefärbt wie auf dem Wetterring.</string>
     <string name="weather_no_forecast">Noch keine Vorhersage geladen. Sie wird nach dem Speichern heruntergeladen, sobald ein Widget dieses Orts den Wetterring zeigt.</string>

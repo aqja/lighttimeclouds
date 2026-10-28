@@ -36,6 +36,9 @@ enum class WeatherRingPosition { INSIDE, OUTSIDE }
 /** Where the temperature labels sit: between the hour numerals, or as a scale around the outermost ring. */
 enum class TemperaturePosition { BETWEEN_NUMERALS, OUTSIDE }
 
+/** Where a short weather assessment (see WeatherOutlook) is shown next to the clock, if at all. */
+enum class SummaryPosition { NONE, LEFT, RIGHT, BELOW }
+
 /** Hourly temperature labels around the dial (only with the weather ring): none, air or apparent ("feels like") temperature. */
 enum class TemperatureDisplay { NONE, AIR, APPARENT }
 
@@ -72,6 +75,8 @@ data class WidgetSettings(
     val weatherRingPosition: WeatherRingPosition = WeatherRingPosition.INSIDE,
     val temperatureDisplay: TemperatureDisplay = TemperatureDisplay.NONE,
     val temperaturePosition: TemperaturePosition = TemperaturePosition.BETWEEN_NUMERALS,
+    /** Only with the weather ring, whose forecast it is based on. */
+    val summaryPosition: SummaryPosition = SummaryPosition.NONE,
     val labelPosition: LabelPosition = LabelPosition.NONE,
 ) {
     companion object {

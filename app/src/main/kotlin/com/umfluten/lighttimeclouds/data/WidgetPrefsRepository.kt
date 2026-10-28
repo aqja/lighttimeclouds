@@ -41,6 +41,7 @@ class WidgetPrefsRepository(private val context: Context) {
         val temperatureDisplay = stringPreferencesKey(prefix + "temperature_display")
         val temperaturePosition = stringPreferencesKey(prefix + "temperature_position")
         val labelPosition = stringPreferencesKey(prefix + "label_position")
+        val summaryPosition = stringPreferencesKey(prefix + "summary_position")
         val configured = booleanPreferencesKey(prefix + "configured")
     }
 
@@ -74,6 +75,7 @@ class WidgetPrefsRepository(private val context: Context) {
             temperatureDisplay = prefs.enumOr(k.temperatureDisplay, d.temperatureDisplay),
             temperaturePosition = prefs.enumOr(k.temperaturePosition, d.temperaturePosition),
             labelPosition = prefs.enumOr(k.labelPosition, d.labelPosition),
+            summaryPosition = prefs.enumOr(k.summaryPosition, d.summaryPosition),
         )
     }
 
@@ -103,6 +105,7 @@ class WidgetPrefsRepository(private val context: Context) {
             prefs[k.temperatureDisplay] = settings.temperatureDisplay.name
             prefs[k.temperaturePosition] = settings.temperaturePosition.name
             prefs[k.labelPosition] = settings.labelPosition.name
+            prefs[k.summaryPosition] = settings.summaryPosition.name
             prefs[k.configured] = true
         }
     }

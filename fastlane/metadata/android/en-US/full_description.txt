@@ -3,7 +3,7 @@
 <ul>
 <li><b>Sky ring:</b> each section of the ring shows the sky from the horizon upward at that time of day. Daylight, sunrise and sunset come from a physical light scattering model, plus the blue hour and the night purple of twilight. Alternatively a simple gradient or fixed colors per phase.</li>
 <li><b>Moon:</b> with its phase, on the hour hand or as a hand of its own; its distance from the center shows the moon's altitude, with the moon's daily path.</li>
-<li><b>Optional weather ring</b> (forecast by Open-Meteo): cloud cover as grey, precipitation in blue (snow violet), darker with the amount and more opaque with the probability. Optional air or apparent temperature between the numerals or as a scale around the rim.</li>
+<li><b>Optional weather ring</b> (forecast by Open-Meteo): cloud cover as grey, precipitation in blue (snow violet), darker with the amount and more opaque with the probability. Optional air or apparent temperature between the numerals or as a scale around the rim, and the weather in words beside or below the clock ("A bit cooler than this time yesterday. No rain expected in the next 6 hours.").</li>
 <li>Marks for solar noon and midnight, sunrise and sunset, and optionally the next alarm.</li>
 <li>Saved places with their own time zone: several widgets make a world clock.</li>
 <li>"Times" tab in the app with all sun events of the day, moon phase, moonrise and moonset.</li>

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The place name above or below the clock is optional (LabelPosition); both labels start hidden. -->
+<!-- The place name above or below the clock is optional (LabelPosition), as is the weather summary
+     left of, right of or below it (SummaryPosition); all of them start hidden. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -12,17 +14,50 @@
         style="@style/WidgetPlaceLabel"
         android:visibility="gone" />
 
-    <ImageView
-        android:id="@+id/widget_clock_image"
+    <!-- Side text takes what it needs up to a maximum width set at runtime; the clock fits into the rest.
+         The nested weight costs little in a tree this small. -->
+    <LinearLayout
+        tools:ignore="NestedWeights"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:contentDescription="@string/widget_content_description"
-        android:scaleType="fitCenter" />
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/widget_summary_left"
+            style="@style/WidgetSummary.Side"
+            android:gravity="center_vertical|end"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/widget_clock_image"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:contentDescription="@string/widget_content_description"
+            android:scaleType="fitCenter" />
+
+        <TextView
+            android:id="@+id/widget_summary_right"
+            style="@style/WidgetSummary.Side"
+            android:gravity="center_vertical|start"
+            android:visibility="gone" />
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/widget_label_below"
         style="@style/WidgetPlaceLabel"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/widget_summary_below"
+        style="@style/WidgetSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:maxLines="3"
         android:visibility="gone" />
 
 </LinearLayout>

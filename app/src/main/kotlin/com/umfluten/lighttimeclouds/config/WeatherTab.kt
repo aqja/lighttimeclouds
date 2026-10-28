@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +41,7 @@ import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.weather.WeatherCondition
 import com.umfluten.lighttimeclouds.weather.WeatherForecast
 import com.umfluten.lighttimeclouds.widget.ClockFaceRenderer
+import com.umfluten.lighttimeclouds.widget.WeatherSummaryText
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.Instant
@@ -68,6 +70,8 @@ internal fun WeatherTab(settings: WidgetSettings, padding: PaddingValues) {
         forecast = WeatherRepository(context).cached(place)
     }
     val rows = remember(forecast) { forecast?.let(::hourRows).orEmpty() }
+    val resources = LocalResources.current
+    val summary = remember(resources, forecast, now) { WeatherSummaryText.of(resources, forecast, now.toInstant()) }
     val currentIndex = rows.indexOfFirst { !now.toInstant().isBefore(it.time) && now.toInstant().isBefore(it.time.plus(HOUR)) }
     var showTable by rememberSaveable { mutableStateOf(false) }
 
@@ -75,6 +79,7 @@ internal fun WeatherTab(settings: WidgetSettings, padding: PaddingValues) {
         item {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(place.name, style = MaterialTheme.typography.titleMedium)
+                summary?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
                 Text(
                     stringResource(R.string.weather_intro),
                     style = MaterialTheme.typography.bodySmall,
