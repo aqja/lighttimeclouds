@@ -426,15 +426,15 @@ object ClockFaceRenderer {
     private val RAIN_RAMP = listOf(Color.rgb(150, 200, 250), Color.rgb(50, 120, 225), Color.rgb(15, 40, 150))
     private val SNOW_RAMP = listOf(Color.rgb(215, 200, 250), Color.rgb(160, 135, 235), Color.rgb(105, 70, 195))
 
-    /** Cloud layer color; lighter on a [dark] background so clouds stay visible. */
-    private fun cloudColor(condition: WeatherCondition, dark: Boolean): Int {
+    /** Cloud layer color; lighter on a [dark] background so clouds stay visible. Also used by the config app's weather chart. */
+    internal fun cloudColor(condition: WeatherCondition, dark: Boolean): Int {
         val base = if (dark) CLOUD_ON_DARK else CLOUD_ON_LIGHT
         val alpha = (condition.cloudCoverPercent.coerceIn(0.0, 100.0) / 100.0 * CLOUD_MAX_ALPHA).toInt()
         return Color.argb(alpha, Color.red(base), Color.green(base), Color.blue(base))
     }
 
-    /** Precipitation layer color: shade from the amount, opacity from the probability; transparent if dry. */
-    private fun precipitationColor(condition: WeatherCondition): Int {
+    /** Precipitation layer color: shade from the amount, opacity from the probability; transparent if dry. Also used by the weather chart. */
+    internal fun precipitationColor(condition: WeatherCondition): Int {
         if (!condition.hasPrecipitation) return Color.TRANSPARENT
         val ramp = if (condition.isSnow) SNOW_RAMP else RAIN_RAMP
         val level = condition.precipitationLevel * (ramp.size - 1)
@@ -561,7 +561,7 @@ object ClockFaceRenderer {
     }
 
     /** Whole degrees with a real minus sign; "-0" becomes "0". */
-    private fun formatTemperature(celsius: Double): String {
+    internal fun formatTemperature(celsius: Double): String {
         val rounded = celsius.roundToInt()
         return if (rounded < 0) "\u2212${-rounded}°" else "$rounded°"
     }

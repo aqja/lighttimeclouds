@@ -20,6 +20,7 @@
     <string name="editor_subtitle_widget">Widget-Einstellungen</string>
     <string name="tab_settings">Einstellungen</string>
     <string name="tab_times">Zeiten</string>
+    <string name="tab_weather">Wetter</string>
     <string name="template_hint">Noch kein Widget auf dem Startbildschirm. Diese Einstellungen gelten für neu platzierte Widgets.</string>
 
     <!-- Clock face -->
@@ -97,6 +98,23 @@
     <string name="place_invalid_value">Ungültiger Wert</string>
     <string name="zone_search">Suchen</string>
 
+    <!-- Weather tab -->
+    <string name="weather_intro">Stundenwerte aus dem Wettermodell von Open-Meteo, auch für vergangene Stunden. Oben die Himmelsfarben wie auf dem Ring. Unter den Temperaturen hängt die Bewölkung von oben herab, der Niederschlag wächst von unten, gefärbt wie auf dem Wetterring.</string>
+    <string name="weather_no_forecast">Noch keine Vorhersage geladen. Sie wird nach dem Speichern heruntergeladen, sobald ein Widget dieses Orts den Wetterring zeigt.</string>
+    <string name="weather_hourly_values">Stundenwerte</string>
+    <string name="weather_legend_now">Jetzt</string>
+    <string name="weather_column_time">Zeit</string>
+    <string name="weather_column_air">Luft</string>
+    <string name="weather_column_apparent">Gefühlt</string>
+    <string name="weather_column_clouds">Wolken</string>
+    <string name="weather_column_precipitation">Niederschlag</string>
+    <string name="percent">%1$d %%</string>
+    <string name="weather_probability">%1$d %% Wahrsch.</string>
+    <string name="weather_amount">%1$s mm</string>
+    <string name="weather_amount_snow">❄ %1$s mm</string>
+    <string name="forecast_loaded">Vorhersage geladen</string>
+    <string name="forecast_not_yet">noch nicht</string>
+
     <!-- Times tab -->
     <string name="times_intro">Sonnentag von Sonnenmitternacht bis Sonnenmitternacht. Die Liste wechselt zu Sonnenmitternacht.</string>
     <string name="event_does_not_occur">tritt an diesem Tag nicht ein</string>
@@ -109,9 +127,6 @@
     <string name="moon_stays_down">Der Mond bleibt unter dem Horizont.</string>
     <string name="moonrise">Mondaufgang</string>
     <string name="moonset">Monduntergang</string>
-    <string name="weather_title">Wetter</string>
-    <string name="forecast_loaded">Vorhersage geladen</string>
-    <string name="forecast_not_yet">noch nicht</string>
 
     <string name="moon_phase_new">Neumond</string>
     <string name="moon_phase_waxing_crescent">Zunehmende Sichel</string>

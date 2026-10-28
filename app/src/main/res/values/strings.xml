@@ -21,6 +21,7 @@
     <string name="editor_subtitle_widget">Widget settings</string>
     <string name="tab_settings">Settings</string>
     <string name="tab_times">Times</string>
+    <string name="tab_weather">Weather</string>
     <string name="template_hint">No widget on the home screen yet. These settings apply to newly placed widgets.</string>
 
     <!-- Clock face -->
@@ -98,6 +99,23 @@
     <string name="place_invalid_value">Invalid value</string>
     <string name="zone_search">Search</string>
 
+    <!-- Weather tab -->
+    <string name="weather_intro">Hourly values from the Open-Meteo weather model, for past hours as well. Top: sky colors as on the ring. Below the temperatures: cloud cover hanging from the top, precipitation rising from the bottom, colored as on the weather ring.</string>
+    <string name="weather_no_forecast">No forecast loaded yet. It is downloaded after saving, as soon as a widget of this place shows the weather ring.</string>
+    <string name="weather_hourly_values">Hourly values</string>
+    <string name="weather_legend_now">Now</string>
+    <string name="weather_column_time">Time</string>
+    <string name="weather_column_air">Air</string>
+    <string name="weather_column_apparent">Feels like</string>
+    <string name="weather_column_clouds">Clouds</string>
+    <string name="weather_column_precipitation">Precipitation</string>
+    <string name="percent">%1$d%%</string>
+    <string name="weather_probability">%1$d%% chance</string>
+    <string name="weather_amount">%1$s mm</string>
+    <string name="weather_amount_snow">❄ %1$s mm</string>
+    <string name="forecast_loaded">Forecast loaded</string>
+    <string name="forecast_not_yet">not yet</string>
+
     <!-- Times tab -->
     <string name="times_intro">Solar day from solar midnight to solar midnight. The list switches over at solar midnight.</string>
     <string name="event_does_not_occur">does not occur on this day</string>
@@ -110,9 +128,6 @@
     <string name="moon_stays_down">The moon stays below the horizon.</string>
     <string name="moonrise">Moonrise</string>
     <string name="moonset">Moonset</string>
-    <string name="weather_title">Weather</string>
-    <string name="forecast_loaded">Forecast loaded</string>
-    <string name="forecast_not_yet">not yet</string>
 
     <string name="moon_phase_new">New moon</string>
     <string name="moon_phase_waxing_crescent">Waxing crescent</string>

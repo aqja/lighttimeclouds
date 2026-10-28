@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -43,10 +45,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,6 +70,7 @@ import com.umfluten.lighttimeclouds.data.WeatherRingPosition
 import com.umfluten.lighttimeclouds.data.WidgetPrefsRepository
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.widget.WidgetIds
+import kotlinx.coroutines.launch
 
 /**
  * Entry point of the config UI: edits [initialWidgetId] directly, or - when opened from the
@@ -146,17 +148,30 @@ private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
         return
     }
 
-    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    // Tabs and pager share one state, so a tab can be chosen by tapping it or by swiping. The weather
+    // tab only exists while the weather ring is on, since only then is a forecast downloaded.
+    val tabs = buildList {
+        add(R.string.tab_settings)
+        add(R.string.tab_times)
+        if (settings.showWeather) add(R.string.tab_weather)
+    }
+    val pagerState = rememberPagerState { tabs.size }
+    val scope = rememberCoroutineScope()
     ConfigScaffold(
         subtitle = subtitle,
         tabs = {
-            PrimaryTabRow(selectedTabIndex = selectedTab) {
-                Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text(stringResource(R.string.tab_settings)) })
-                Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text(stringResource(R.string.tab_times)) })
+            PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {
+                tabs.forEachIndexed { index, title ->
+                    Tab(
+                        selected = pagerState.currentPage == index,
+                        onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
+                        text = { Text(stringResource(title)) },
+                    )
+                }
             }
         },
         bottomBar = {
-            if (selectedTab == 0) {
+            if (pagerState.currentPage == 0) {
                 Surface(tonalElevation = 3.dp) {
                     Button(
                         onClick = { viewModel.save(onDone) },
@@ -171,19 +186,21 @@ private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
             }
         },
     ) { padding ->
-        if (selectedTab == 1) {
-            TimesTab(settings, padding)
-        } else {
-            Column(
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .imePadding()
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                SettingsContent(widgetId, settings, viewModel)
+        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.Top) { page ->
+            when (page) {
+                1 -> TimesTab(settings, padding)
+                2 -> WeatherTab(settings, padding)
+                else -> Column(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .imePadding()
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    SettingsContent(widgetId, settings, viewModel)
+                }
             }
         }
     }

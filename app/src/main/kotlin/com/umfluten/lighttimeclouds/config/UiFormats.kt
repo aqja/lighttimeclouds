@@ -20,12 +20,16 @@ internal class UiFormats(val locale: Locale, val is24Hour: Boolean) {
     private val timeOfDayFormat = DateFormat.getInstanceForSkeleton(if (is24Hour) "Hm" else "hm", locale)
     private val timeFormat = DateFormat.getInstanceForSkeleton(if (is24Hour) "Hmz" else "hmz", locale)
     private val dateFormat = DateFormat.getInstanceForSkeleton("EEEMMMd", locale)
+    private val weekdayFormat = DateFormat.getInstanceForSkeleton("EEE", locale)
 
     /** Time with zone abbreviation, e.g. "07:42 MESZ" or "7:42 AM GMT+2". */
     fun time(dateTime: ZonedDateTime): String = format(timeFormat, dateTime)
 
     /** Short weekday and date, e.g. "Sa., 18. Okt." or "Sat, Oct 18". */
     fun date(dateTime: ZonedDateTime): String = format(dateFormat, dateTime)
+
+    /** Short weekday, e.g. "Sa." or "Sat". */
+    fun weekday(dateTime: ZonedDateTime): String = format(weekdayFormat, dateTime)
 
     /** A time of day given in minutes since midnight, without zone. */
     fun timeOfDay(minutesOfDay: Int): String {
