@@ -1,25 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Widget picker preview in the style of the launcher icon: sky ring of the 24h dial, moon on the
+     hour hand, plus hour ticks. The face reaches just past the ring to frame it on light backgrounds. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="192dp"
     android:height="192dp"
-    android:viewportWidth="192"
-    android:viewportHeight="192">
+    android:viewportWidth="108"
+    android:viewportHeight="108">
     <path
-        android:pathData="M96,16 A80,80 0 1,1 95.9,16"
-        android:strokeColor="#87CEEB"
-        android:strokeWidth="18"
-        android:fillColor="#00000000" />
+        android:pathData="M1.8,54 a52.2,52.2 0 1,0 104.4,0 a52.2,52.2 0 1,0 -104.4,0 z"
+        android:fillColor="#101830" />
     <path
-        android:pathData="M96,96 L96,40"
-        android:strokeColor="#1E1E1E"
-        android:strokeWidth="6"
+        android:pathData="M54,8.76 a45.24,45.24 0 1,1 0,90.48 a45.24,45.24 0 1,1 0,-90.48"
+        android:strokeWidth="11.52">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:type="sweep"
+                android:centerX="54"
+                android:centerY="54">
+                    <item android:offset="0" android:color="#F2C46D" />
+                    <item android:offset="0.05" android:color="#A9D3EE" />
+                    <item android:offset="0.25" android:color="#E6F3FB" />
+                    <item android:offset="0.45" android:color="#A9D3EE" />
+                    <item android:offset="0.5" android:color="#F2C46D" />
+                    <item android:offset="0.56" android:color="#B784C4" />
+                    <item android:offset="0.62" android:color="#5566AA" />
+                    <item android:offset="0.75" android:color="#3C4A88" />
+                    <item android:offset="0.88" android:color="#5566AA" />
+                    <item android:offset="0.94" android:color="#B784C4" />
+                    <item android:offset="1" android:color="#F2C46D" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:pathData="M54,22.23 L54,17.43"
+        android:strokeColor="#8892B8"
+        android:strokeWidth="2.2"
         android:strokeLineCap="round" />
     <path
-        android:pathData="M96,96 L140,96"
-        android:strokeColor="#1E1E1E"
-        android:strokeWidth="5"
+        android:pathData="M70.48,25.45 L72.28,22.33"
+        android:strokeColor="#8892B8"
+        android:strokeWidth="1.4"
         android:strokeLineCap="round" />
     <path
-        android:pathData="M91,96 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 z"
-        android:fillColor="#1E1E1E" />
+        android:pathData="M82.55,37.52 L85.67,35.72"
+        android:strokeColor="#8892B8"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M85.77,54 L90.57,54"
+        android:strokeColor="#8892B8"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M82.55,70.48 L85.67,72.28"
+        android:strokeColor="#8892B8"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M70.48,82.55 L72.28,85.67"
+        android:strokeColor="#8892B8"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M54,85.77 L54,90.57"
+        android:strokeColor="#8892B8"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M37.52,82.55 L35.72,85.67"
+        android:strokeColor="#8892B8"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M25.45,70.48 L22.33,72.28"
+        android:strokeColor="#8892B8"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M22.23,54 L17.43,54"
+        android:strokeColor="#8892B8"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M25.45,37.52 L22.33,35.72"
+        android:strokeColor="#8892B8"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M37.52,25.45 L35.72,22.33"
+        android:strokeColor="#8892B8"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M54,54 L81.78,37.96"
+        android:strokeColor="#F5F5F0"
+        android:strokeWidth="4.93"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M54,54 L33.11,39.37"
+        android:strokeColor="#F5F5F0"
+        android:strokeWidth="7.4"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M49.72,54 a4.28,4.28 0 1,0 8.55,0 a4.28,4.28 0 1,0 -8.55,0 z"
+        android:fillColor="#F5F5F0" />
+    <path
+        android:pathData="M23.95,40.79 a11.19,11.19 0 1,0 22.37,0 a11.19,11.19 0 1,0 -22.37,0 z"
+        android:fillColor="#3C4A88" />
+    <path
+        android:pathData="M42.29,32.19 A11.19,11.19 0 1,0 35.09,51.98 A11.19,11.19 0 0,1 42.29,32.19 z"
+        android:fillColor="#FFF4D6" />
 </vector>

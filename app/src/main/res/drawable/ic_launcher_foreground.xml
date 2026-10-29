@@ -1,28 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- The ring is colored like the sky ring of the 24h dial: midnight at the top, noon at the bottom,
+     twilight left and right. The moon sits on the hour hand, as in the widget's default.
+     The ring reaches a little beyond the 66dp safe zone, to the edge of round masks. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:pathData="M54,21 A33,33 0 1,1 53.9,21"
-        android:strokeColor="#87CEEB"
-        android:strokeWidth="9"
-        android:fillColor="#00000000" />
+        android:pathData="M54,22.95 a31.05,31.05 0 1,1 0,62.1 a31.05,31.05 0 1,1 0,-62.1"
+        android:strokeWidth="7.9">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:type="sweep"
+                android:centerX="54"
+                android:centerY="54">
+                    <item android:offset="0" android:color="#F2C46D" />
+                    <item android:offset="0.05" android:color="#A9D3EE" />
+                    <item android:offset="0.25" android:color="#E6F3FB" />
+                    <item android:offset="0.45" android:color="#A9D3EE" />
+                    <item android:offset="0.5" android:color="#F2C46D" />
+                    <item android:offset="0.56" android:color="#B784C4" />
+                    <item android:offset="0.62" android:color="#5566AA" />
+                    <item android:offset="0.75" android:color="#3C4A88" />
+                    <item android:offset="0.88" android:color="#5566AA" />
+                    <item android:offset="0.94" android:color="#B784C4" />
+                    <item android:offset="1" android:color="#F2C46D" />
+            </gradient>
+        </aapt:attr>
+    </path>
     <path
-        android:pathData="M54,54 L54,30"
+        android:pathData="M54,54 L73.07,42.99"
         android:strokeColor="#F5F5F0"
-        android:strokeWidth="4"
+        android:strokeWidth="3.39"
         android:strokeLineCap="round" />
     <path
-        android:pathData="M54,54 L72,54"
+        android:pathData="M54,54 L39.66,43.96"
         android:strokeColor="#F5F5F0"
-        android:strokeWidth="3.5"
+        android:strokeWidth="5.08"
         android:strokeLineCap="round" />
     <path
-        android:pathData="M65,70 a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 z"
-        android:fillColor="#D8D8D0" />
+        android:pathData="M51.06,54 a2.94,2.94 0 1,0 5.87,0 a2.94,2.94 0 1,0 -5.87,0 z"
+        android:fillColor="#F5F5F0" />
     <path
-        android:pathData="M71,70 a9,9 0 1,0 12,0 a9,9 0 1,0 -12,0 z"
-        android:fillColor="#101830" />
+        android:pathData="M33.38,44.93 a7.68,7.68 0 1,0 15.35,0 a7.68,7.68 0 1,0 -15.35,0 z"
+        android:fillColor="#3C4A88" />
+    <path
+        android:pathData="M45.96,39.03 A7.68,7.68 0 1,0 41.02,52.61 A7.68,7.68 0 0,1 45.96,39.03 z"
+        android:fillColor="#FFF4D6" />
 </vector>
