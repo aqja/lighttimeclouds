@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RadialGradient
@@ -131,11 +132,11 @@ object ClockFaceRenderer {
     private const val MOON_PATH_SAMPLES = 144
 
     /** Radius of the moon's phase disc, as a fraction of the dial radius. */
-    private const val MOON_SIZE = 0.073f
+    private const val MOON_SIZE = 0.058f
 
     /** With [MoonStyle.ON_HOUR_HAND]: radius of the phase disc, width of its frame, and how much hand stays visible beyond it. */
-    private const val MOON_ON_HAND_SIZE = 0.055f
-    private const val MOON_ON_HAND_FRAME = 0.014f
+    private const val MOON_ON_HAND_SIZE = 0.045f
+    private const val MOON_ON_HAND_FRAME = 0.008f
     private const val MOON_ON_HAND_TIP = 0.025f
 
     /**
@@ -202,7 +203,7 @@ object ClockFaceRenderer {
             )
         }
         if (settings.showMoon) {
-            drawMoon(context, canvas, cx, cy, radius, settings, layout, now, dark)
+            drawMoon(context, canvas, cx, cy, radius, settings, layout, now, dark, chromeColor)
         }
         drawHands(canvas, cx, cy, radius, settings, layout, now, chromeColor, dark)
         drawCenterPin(canvas, cx, cy, radius, chromeColor)
@@ -812,7 +813,7 @@ object ClockFaceRenderer {
      * [MoonStyle.ON_HOUR_HAND] the disc is drawn together with the hands, see [drawMoonOnHourHand]).
      * The angle of each point comes from [moonPointAt]. The distance from the center shows the moon's
      * altitude: a faint circle marks the horizon, above it the moon climbs outward, below it sinks
-     * inward (drawn faded). The path covers the same time window as the day/night ring (the active
+     * inward (drawn dashed and fainter). Path and horizon are drawn in the chrome [color]. The path covers the same time window as the day/night ring (the active
      * 12h or 24h window, moving with it), so it always contains the current point. With
      * [WidgetSettings.showMoonCompass], a dot and letter mark where the moon passes north, east,
      * south or west.
@@ -827,6 +828,7 @@ object ClockFaceRenderer {
         layout: DialLayout,
         now: ZonedDateTime,
         dark: Boolean,
+        color: Int,
     ) {
         fun pointAt(time: ZonedDateTime) = moonPointAt(time, cx, cy, radius, settings, layout)
 
@@ -834,18 +836,17 @@ object ClockFaceRenderer {
         val pathStart = mapper.windowStart(now)
         val spanMinutes = Duration.between(pathStart, mapper.windowEnd(now)).toMinutes()
         val horizonPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = MARK_COLOR
-            alpha = 60
+            this.color = color
+            alpha = 70
             style = Paint.Style.STROKE
             strokeWidth = radius * 0.006f
         }
         canvas.drawCircle(cx, cy, radius * moonOrbit(settings, layout).first, horizonPaint)
 
-        val pathPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = MARK_COLOR
-            strokeWidth = radius * 0.008f
-            strokeCap = Paint.Cap.ROUND
-        }
+        // One contour per stretch above or below the horizon, so the dashes run on along each stretch.
+        val abovePath = Path()
+        val belowPath = Path()
+        var lastAbove: Boolean? = null
         val compassPoints = mutableListOf<Pair<ZonedDateTime, Int>>()
         val stepSeconds = spanMinutes * 60.0 / MOON_PATH_SAMPLES
         var previousTime = pathStart
@@ -853,8 +854,11 @@ object ClockFaceRenderer {
         for (i in 1..MOON_PATH_SAMPLES) {
             val time = pathStart.plusMinutes(spanMinutes * i / MOON_PATH_SAMPLES)
             val current = pointAt(time)
-            pathPaint.alpha = if (previous.aboveHorizon || current.aboveHorizon) 200 else 80
-            canvas.drawLine(previous.x, previous.y, current.x, current.y, pathPaint)
+            val above = previous.aboveHorizon || current.aboveHorizon
+            val path = if (above) abovePath else belowPath
+            if (above != lastAbove) path.moveTo(previous.x, previous.y)
+            path.lineTo(current.x, current.y)
+            lastAbove = above
             // Azimuth step unwrapped across north (±180°), so a crossing of north is found like any other.
             val step = ((current.azimuthDeg - previous.azimuthDeg + 540.0) % 360.0) - 180.0
             for ((azimuth, label) in COMPASS_POINTS) {
@@ -866,7 +870,29 @@ object ClockFaceRenderer {
             previousTime = time
             previous = current
         }
-        drawCompassPoints(context, canvas, cx, cy, radius, compassPoints.map { (time, label) -> pointAt(time) to label })
+        val pathPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            this.color = color
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+        }
+        canvas.drawPath(
+            belowPath,
+            pathPaint.apply {
+                alpha = 110
+                strokeWidth = radius * 0.010f
+                pathEffect = DashPathEffect(floatArrayOf(radius * 0.018f, radius * 0.026f), 0f)
+            },
+        )
+        canvas.drawPath(
+            abovePath,
+            pathPaint.apply {
+                alpha = 200
+                strokeWidth = radius * 0.014f
+                pathEffect = null
+            },
+        )
+        drawCompassPoints(context, canvas, cx, cy, radius, color, compassPoints.map { (time, label) -> pointAt(time) to label })
         if (settings.moonStyle != MoonStyle.SEPARATE_HAND) return
 
         // Hand and phase disc at the current position; faded while the moon is below the horizon.
@@ -878,7 +904,7 @@ object ClockFaceRenderer {
         val distance = hypot(dx, dy)
         val handScale = ((distance - moonSize) / distance).coerceAtLeast(0f)
         val handPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = MARK_COLOR
+            this.color = MARK_COLOR
             this.alpha = alpha
             strokeWidth = radius * 0.014f
             strokeCap = Paint.Cap.ROUND
@@ -904,17 +930,25 @@ object ClockFaceRenderer {
     )
 
     /** A dot on the path at each of [points], with its letter just outside it (away from the center). */
-    private fun drawCompassPoints(context: Context, canvas: Canvas, cx: Float, cy: Float, radius: Float, points: List<Pair<MoonPoint, Int>>) {
-        val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = MARK_COLOR; style = Paint.Style.FILL }
+    private fun drawCompassPoints(
+        context: Context,
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        color: Int,
+        points: List<Pair<MoonPoint, Int>>,
+    ) {
+        val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color; style = Paint.Style.FILL }
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = MARK_COLOR
+            this.color = color
             textSize = radius * 0.065f
             textAlign = Paint.Align.CENTER
             isFakeBoldText = true
         }
         val bounds = Rect()
         for ((point, labelRes) in points) {
-            val alpha = if (point.aboveHorizon) 255 else 130
+            val alpha = if (point.aboveHorizon) 230 else 130
             dotPaint.alpha = alpha
             textPaint.alpha = alpha
             canvas.drawCircle(point.x, point.y, radius * 0.014f, dotPaint)
