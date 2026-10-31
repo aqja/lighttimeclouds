@@ -2,7 +2,6 @@ package com.umfluten.lighttimeclouds.weather
 
 import java.time.Duration
 import java.time.Instant
-import kotlin.math.log10
 
 /**
  * One hourly step as Open-Meteo reports it: [cloudCoverPercent] and the temperatures are instant
@@ -23,6 +22,26 @@ data class HourlyWeather(
 /** Which temperature the dial labels show. */
 enum class TemperatureKind { AIR, APPARENT }
 
+/**
+ * Precipitation intensity, starting at [minMmPerHour]: the DWD's rain classes (light below
+ * 2.5 mm/h, moderate up to 10 mm/h, heavy above), with the light class split at 0.5 mm/h, where
+ * the DWD's drizzle classes end. A mere chance of precipitation without a forecast amount counts
+ * as [SLIGHT].
+ */
+enum class PrecipitationIntensity(val minMmPerHour: Double) {
+    SLIGHT(WeatherCondition.MIN_PRECIPITATION_MM),
+    LIGHT(0.5),
+    MODERATE(2.5),
+    HEAVY(10.0),
+}
+
+/** The DWD's heavy rain warning levels, starting at [minMmPerHour] of rain within one hour. */
+enum class HeavyRainWarning(val minMmPerHour: Double) {
+    MARKED(15.0),
+    SEVERE(25.0),
+    EXTREME(40.0),
+}
+
 /** Weather of one hour-long segment of the ring. */
 data class WeatherCondition(
     val cloudCoverPercent: Double,
@@ -37,12 +56,17 @@ data class WeatherCondition(
     val hasPrecipitation: Boolean
         get() = hasAmount || (precipitationProbabilityPercent ?: 0.0) > 0.0
 
-    /**
-     * Position on the precipitation color ramp, from 0 (0.1 mm/h, or only a chance) to 1
-     * (10 mm/h and more), logarithmic so that 1 mm/h sits in the middle.
-     */
-    val precipitationLevel: Float
-        get() = if (!hasAmount) 0f else (log10(precipitationMm / MIN_PRECIPITATION_MM) / 2.0).toFloat().coerceIn(0f, 1f)
+    /** Intensity class of the precipitation amount; null if dry. */
+    val precipitationIntensity: PrecipitationIntensity?
+        get() = if (!hasPrecipitation) {
+            null
+        } else {
+            PrecipitationIntensity.entries.lastOrNull { precipitationMm >= it.minMmPerHour } ?: PrecipitationIntensity.SLIGHT
+        }
+
+    /** Heavy rain warning level of the amount; null below the first level and for snow. */
+    val heavyRainWarning: HeavyRainWarning?
+        get() = if (isSnow) null else HeavyRainWarning.entries.lastOrNull { precipitationMm >= it.minMmPerHour }
 
     /**
      * Opacity of the precipitation color: its probability. A forecast amount is never drawn fainter

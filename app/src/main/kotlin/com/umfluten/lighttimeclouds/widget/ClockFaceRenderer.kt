@@ -28,6 +28,8 @@ import com.umfluten.lighttimeclouds.data.TemperaturePosition
 import com.umfluten.lighttimeclouds.data.WeatherRingPosition
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.sky.SkyGradientTable
+import com.umfluten.lighttimeclouds.weather.HeavyRainWarning
+import com.umfluten.lighttimeclouds.weather.PrecipitationIntensity
 import com.umfluten.lighttimeclouds.weather.TemperatureKind
 import com.umfluten.lighttimeclouds.weather.WeatherCondition
 import com.umfluten.lighttimeclouds.weather.WeatherForecast
@@ -35,11 +37,13 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZonedDateTime
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 /** Renders the whole clock face (rings, sun marks, ticks, moon, hands) into a square [Bitmap]. */
 object ClockFaceRenderer {
@@ -368,8 +372,9 @@ object ClockFaceRenderer {
     /**
      * Cloud cover and precipitation of the shown time span, in hour-long segments, as two layers:
      * clouds as grey that is transparent under a clear sky and grows opaque with cloud cover; on
-     * top, precipitation in blue (violet for snow) that darkens with the amount and is as opaque as
-     * it is likely. Past hours are dimmed, and the whole ring fades as the forecast ages
+     * top, precipitation as an even lattice of dots, larger with each intensity class and as opaque
+     * as it is likely: blue for rain (yellow, orange, red at the heavy rain warning levels), violet
+     * for snow. Past hours are dimmed, and the whole ring fades as the forecast ages
      * ([WeatherForecast.freshnessAlpha]).
      */
     private fun drawWeatherRing(
@@ -388,12 +393,14 @@ object ClockFaceRenderer {
 
         val clouds = IntArray(RING_SAMPLES)
         val precipitation = IntArray(RING_SAMPLES)
+        val dotSizes = FloatArray(RING_SAMPLES)
         for (i in 0 until RING_SAMPLES) {
             val instant = resolveInstantForAngle(360.0 * (i + 0.5) / RING_SAMPLES, settings, now)
             val condition = forecast.conditionAt(instant) ?: continue
             val alpha = if (instant.isBefore(now.toInstant())) freshness * WEATHER_PAST_ALPHA else freshness
             clouds[i] = withAlphaFactor(cloudColor(condition, dark), alpha)
             precipitation[i] = withAlphaFactor(precipitationColor(condition), alpha)
+            dotSizes[i] = precipitationDotSize(condition)
         }
 
         val mid = radius * (bands.weatherOuter + bands.weatherInner) / 2f
@@ -404,7 +411,39 @@ object ClockFaceRenderer {
             strokeCap = Paint.Cap.BUTT
         }
         drawColorRuns(canvas, rect, paint, clouds)
-        drawColorRuns(canvas, rect, paint, precipitation)
+        drawPrecipitationDots(canvas, cx, cy, radius * bands.weatherInner, radius * bands.weatherOuter, precipitation, dotSizes)
+    }
+
+    /**
+     * Precipitation dots on a fixed hexagonal lattice of [DOT_ROWS] staggered rows across the band
+     * between [inner] and [outer], every dot equally far from its neighbors. [sizes] gives the dot
+     * radius per ring sample as a fraction of that distance.
+     */
+    private fun drawPrecipitationDots(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        inner: Float,
+        outer: Float,
+        colors: IntArray,
+        sizes: FloatArray,
+    ) {
+        val rowPitch = (outer - inner) / DOT_ROWS
+        val spacing = rowPitch * 2f / sqrt(3f)
+        val columns = (PI * (inner + outer) / spacing).roundToInt().coerceAtLeast(1)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+        for (row in 0 until DOT_ROWS) {
+            val r = inner + rowPitch * (row + 0.5f)
+            val offset = if (row % 2 == 1) 0.5 else 0.0
+            for (column in 0 until columns) {
+                val fraction = (column + offset) / columns
+                val sample = (fraction * RING_SAMPLES).toInt() % RING_SAMPLES
+                if (Color.alpha(colors[sample]) == 0 || sizes[sample] <= 0f) continue
+                paint.color = colors[sample]
+                val angle = 2 * PI * fraction - PI / 2
+                canvas.drawCircle(cx + r * cos(angle).toFloat(), cy + r * sin(angle).toFloat(), spacing * sizes[sample], paint)
+            }
+        }
     }
 
     /**
@@ -428,9 +467,26 @@ object ClockFaceRenderer {
     private val CLOUD_ON_LIGHT = Color.rgb(110, 115, 125)
     private const val CLOUD_MAX_ALPHA = 230
 
-    /** Precipitation ramps over [WeatherCondition.precipitationLevel]: 0.1 mm/h (or only a chance), 1 mm/h, 10 mm/h. */
-    private val RAIN_RAMP = listOf(Color.rgb(150, 200, 250), Color.rgb(50, 120, 225), Color.rgb(15, 40, 150))
-    private val SNOW_RAMP = listOf(Color.rgb(215, 200, 250), Color.rgb(160, 135, 235), Color.rgb(105, 70, 195))
+    private val RAIN_COLOR = Color.rgb(40, 110, 230)
+    private val SNOW_COLOR = Color.rgb(140, 90, 230)
+
+    /** Rain colors per [HeavyRainWarning] level. */
+    private val WARNING_COLORS = mapOf(
+        HeavyRainWarning.MARKED to Color.rgb(245, 200, 0),
+        HeavyRainWarning.SEVERE to Color.rgb(245, 125, 0),
+        HeavyRainWarning.EXTREME to Color.rgb(220, 25, 25),
+    )
+
+    private const val DOT_ROWS = 2
+
+    /** Dot radius per [PrecipitationIntensity] as a fraction of the dot spacing; at 0.5 neighbors touch. */
+    private val DOT_SIZES = mapOf(
+        PrecipitationIntensity.SLIGHT to 0.17f,
+        PrecipitationIntensity.LIGHT to 0.25f,
+        PrecipitationIntensity.MODERATE to 0.33f,
+        PrecipitationIntensity.HEAVY to 0.42f,
+    )
+
 
     /** Cloud layer color; lighter on a [dark] background so clouds stay visible. Also used by the config app's weather chart. */
     internal fun cloudColor(condition: WeatherCondition, dark: Boolean): Int {
@@ -439,15 +495,22 @@ object ClockFaceRenderer {
         return Color.argb(alpha, Color.red(base), Color.green(base), Color.blue(base))
     }
 
-    /** Precipitation layer color: shade from the amount, opacity from the probability; transparent if dry. Also used by the weather chart. */
+    /**
+     * Precipitation color, as opaque as it is likely: blue for rain, or its heavy rain warning
+     * color; violet for snow; transparent if dry. Also used by the weather chart.
+     */
     internal fun precipitationColor(condition: WeatherCondition): Int {
         if (!condition.hasPrecipitation) return Color.TRANSPARENT
-        val ramp = if (condition.isSnow) SNOW_RAMP else RAIN_RAMP
-        val level = condition.precipitationLevel * (ramp.size - 1)
-        val index = level.toInt().coerceAtMost(ramp.size - 2)
-        val color = lerpColor(ramp[index], ramp[index + 1], (level - index).toDouble())
+        val color = when {
+            condition.isSnow -> SNOW_COLOR
+            else -> condition.heavyRainWarning?.let(WARNING_COLORS::getValue) ?: RAIN_COLOR
+        }
         return withAlphaFactor(color, condition.precipitationAlpha)
     }
+
+    /** Precipitation dot radius from the intensity class (see [DOT_SIZES]); 0 if dry. */
+    private fun precipitationDotSize(condition: WeatherCondition): Float =
+        condition.precipitationIntensity?.let(DOT_SIZES::getValue) ?: 0f
 
     private fun withAlphaFactor(color: Int, factor: Float): Int =
         Color.argb((Color.alpha(color) * factor).toInt().coerceIn(0, 255), Color.red(color), Color.green(color), Color.blue(color))

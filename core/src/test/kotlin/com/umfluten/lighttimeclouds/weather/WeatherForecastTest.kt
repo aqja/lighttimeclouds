@@ -52,14 +52,30 @@ class WeatherForecastTest {
     }
 
     @Test
-    fun `precipitation level grows logarithmically with the amount`() {
-        fun level(mm: Double) = WeatherCondition(100.0, mm, 0.0).precipitationLevel
+    fun `precipitation intensity follows the DWD rain classes`() {
+        fun intensity(mm: Double, probability: Double? = null) = WeatherCondition(100.0, mm, 0.0, probability).precipitationIntensity
 
-        assertEquals(0f, level(0.05), 1e-6f)
-        assertEquals(0f, level(0.1), 1e-6f)
-        assertEquals(0.5f, level(1.0), 1e-6f)
-        assertEquals(1f, level(10.0), 1e-6f)
-        assertEquals(1f, level(40.0), 1e-6f)
+        assertNull(intensity(0.05))
+        assertEquals(PrecipitationIntensity.SLIGHT, intensity(0.0, 30.0))
+        assertEquals(PrecipitationIntensity.SLIGHT, intensity(0.1))
+        assertEquals(PrecipitationIntensity.SLIGHT, intensity(0.4))
+        assertEquals(PrecipitationIntensity.LIGHT, intensity(0.5))
+        assertEquals(PrecipitationIntensity.LIGHT, intensity(2.4))
+        assertEquals(PrecipitationIntensity.MODERATE, intensity(2.5))
+        assertEquals(PrecipitationIntensity.MODERATE, intensity(9.9))
+        assertEquals(PrecipitationIntensity.HEAVY, intensity(10.0))
+        assertEquals(PrecipitationIntensity.HEAVY, intensity(60.0))
+    }
+
+    @Test
+    fun `heavy rain warnings follow the DWD levels, for rain only`() {
+        fun warning(mm: Double, snowCm: Double = 0.0) = WeatherCondition(100.0, mm, snowCm, 100.0).heavyRainWarning
+
+        assertNull(warning(14.9))
+        assertEquals(HeavyRainWarning.MARKED, warning(15.0))
+        assertEquals(HeavyRainWarning.SEVERE, warning(25.0))
+        assertEquals(HeavyRainWarning.EXTREME, warning(40.0))
+        assertNull(warning(20.0, snowCm = 14.0))
     }
 
     @Test

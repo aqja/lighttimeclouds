@@ -78,6 +78,18 @@ class ClockFacePreviewTest {
         return WeatherForecast(Place.DEFAULT.latitude, Place.DEFAULT.longitude, now.toInstant(), hours)
     }
 
+    /** Rain through every intensity class and heavy rain warning level, one step per hour. */
+    private fun intensityForecast(): WeatherForecast {
+        val base = now.truncatedTo(ChronoUnit.HOURS)
+        val amounts = listOf(0.0, 0.2, 1.0, 5.0, 12.0, 18.0, 30.0, 45.0)
+        val hours = (-24..48).map { k ->
+            val mm = amounts.getOrElse(k) { 0.0 }
+            val probability = if (k == 0) 50.0 else if (mm > 0.0) 90.0 else 0.0
+            HourlyWeather(base.plusHours(k.toLong()).toInstant(), 70.0, mm, 0.0, probability, 15.0, 14.0)
+        }
+        return WeatherForecast(Place.DEFAULT.latitude, Place.DEFAULT.longitude, now.toInstant(), hours)
+    }
+
     private fun render(
         name: String,
         settings: WidgetSettings,
@@ -201,6 +213,8 @@ class ClockFacePreviewTest {
             darkBackground = true,
         )
         render("12h_dark_snow", weatherSettings.copy(colorMode = ColorMode.DARK), snowForecast(), darkBackground = true)
+        render("24h_dark_intensities", weatherSettings.copy(colorMode = ColorMode.DARK, displayMode = DisplayMode.TWENTY_FOUR_HOUR), intensityForecast(), darkBackground = true)
+        render("24h_light_intensities", weatherSettings.copy(colorMode = ColorMode.LIGHT, displayMode = DisplayMode.TWENTY_FOUR_HOUR), intensityForecast(), darkBackground = false)
         render(
             "12h_dark_weather_only",
             weatherSettings.copy(colorMode = ColorMode.DARK, temperatureDisplay = TemperatureDisplay.NONE),
