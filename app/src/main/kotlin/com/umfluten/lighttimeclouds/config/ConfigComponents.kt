@@ -26,14 +26,23 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.umfluten.lighttimeclouds.R
+import kotlinx.coroutines.delay
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 /** Follows the system's light/dark setting and, from Android 12 on, the wallpaper-derived system colors. */
 @Composable
@@ -112,6 +121,39 @@ internal fun <T> SegmentedChoice(options: List<Pair<T, Int>>, selected: T, onSel
             }
         }
     }
+}
+
+/** Secondary text explaining the settings around it. */
+@Composable
+internal fun Hint(text: String) {
+    Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+/** Heading of the control below it, inside a [Section]. */
+@Composable
+internal fun FieldLabel(text: String) {
+    Text(text, style = MaterialTheme.typography.labelLarge)
+}
+
+/** The current time in [zone], updated at every full minute. */
+@Composable
+internal fun rememberMinuteClock(zone: ZoneId): ZonedDateTime {
+    var now by remember(zone) { mutableStateOf(ZonedDateTime.now(zone)) }
+    LaunchedEffect(zone) {
+        while (true) {
+            delay((60 - ZonedDateTime.now().second) * 1000L)
+            now = ZonedDateTime.now(zone)
+        }
+    }
+    return now
+}
+
+/** Text color of a row in a list over time: highlighted for the current or next entry, dimmed for past ones. */
+@Composable
+internal fun timelineColor(highlighted: Boolean, past: Boolean): Color = when {
+    highlighted -> MaterialTheme.colorScheme.primary
+    past -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+    else -> MaterialTheme.colorScheme.onSurface
 }
 
 /** A full-width row that toggles [checked] when tapped anywhere, not just on the switch. */

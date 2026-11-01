@@ -13,7 +13,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -241,7 +240,7 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             onSelect = { viewModel.update { s -> s.copy(displayMode = it) } },
         )
         RingSwitchSetting(settings, viewModel)
-        Text(stringResource(R.string.ring_style_label), style = MaterialTheme.typography.labelLarge)
+        FieldLabel(stringResource(R.string.ring_style_label))
         SegmentedChoice(
             options = listOf(
                 RingStyle.SKY to R.string.ring_style_sky,
@@ -263,11 +262,7 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
         )
         val bodiesInRing = settings.showSunInRing || settings.showMoonInRing
         if (bodiesInRing) {
-            Text(
-                stringResource(R.string.bodies_in_ring_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Hint(stringResource(R.string.bodies_in_ring_hint))
         }
         if (settings.showMoonInRing) {
             SwitchRow(
@@ -277,7 +272,7 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             )
         }
         if (settings.ringStyle == RingStyle.SKY || bodiesInRing) {
-            Text(stringResource(R.string.sky_horizon_label), style = MaterialTheme.typography.labelLarge)
+            FieldLabel(stringResource(R.string.sky_horizon_label))
             SegmentedChoice(
                 options = listOf(SkyHorizon.INNER to R.string.sky_horizon_inner, SkyHorizon.OUTER to R.string.sky_horizon_outer),
                 selected = settings.skyHorizon,
@@ -318,15 +313,13 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
                 selected = settings.moonStyle,
                 onSelect = { viewModel.update { s -> s.copy(moonStyle = it) } },
             )
-            Text(
+            Hint(
                 stringResource(
                     when (settings.moonStyle) {
                         MoonStyle.ON_HOUR_HAND -> R.string.moon_style_on_hour_hand_hint
                         MoonStyle.SEPARATE_HAND -> R.string.moon_style_separate_hand_hint
                     },
                 ),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             SwitchRow(
                 label = stringResource(R.string.show_moon_compass),
@@ -340,21 +333,13 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             onCheckedChange = { viewModel.update { s -> s.copy(showNextAlarm = it) } },
         )
         if (settings.showNextAlarm) {
-            Text(
-                stringResource(R.string.next_alarm_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Hint(stringResource(R.string.next_alarm_hint))
         }
         WeatherSetting(settings, viewModel)
     }
 
     Section(stringResource(R.string.section_color_mode)) {
-        Text(
-            stringResource(R.string.color_mode_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Hint(stringResource(R.string.color_mode_hint))
         SegmentedChoice(
             options = listOf(
                 ColorMode.AUTO to R.string.color_mode_auto,
@@ -365,11 +350,7 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             onSelect = { viewModel.update { s -> s.copy(colorMode = it) } },
         )
         if (settings.colorMode == ColorMode.AUTO) {
-            Text(
-                stringResource(R.string.color_mode_auto_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Hint(stringResource(R.string.color_mode_auto_hint))
         }
     }
 
@@ -408,12 +389,8 @@ private fun WeatherSetting(settings: WidgetSettings, viewModel: ConfigViewModel)
         },
     )
     if (!settings.showWeather) return
-    Text(
-        stringResource(R.string.weather_hint, stringResource(R.string.weather_attribution)),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Text(stringResource(R.string.weather_ring_position_label), style = MaterialTheme.typography.labelLarge)
+    Hint(stringResource(R.string.weather_hint, stringResource(R.string.weather_attribution)))
+    FieldLabel(stringResource(R.string.weather_ring_position_label))
     SegmentedChoice(
         options = listOf(
             WeatherRingPosition.INSIDE to R.string.weather_ring_inside,
@@ -422,7 +399,7 @@ private fun WeatherSetting(settings: WidgetSettings, viewModel: ConfigViewModel)
         selected = settings.weatherRingPosition,
         onSelect = { viewModel.update { s -> s.copy(weatherRingPosition = it) } },
     )
-    Text(stringResource(R.string.temperature_label), style = MaterialTheme.typography.labelLarge)
+    FieldLabel(stringResource(R.string.temperature_label))
     SegmentedChoice(
         options = listOf(
             TemperatureDisplay.NONE to R.string.temperature_none,
@@ -442,7 +419,7 @@ private fun WeatherSetting(settings: WidgetSettings, viewModel: ConfigViewModel)
             onSelect = { viewModel.update { s -> s.copy(temperaturePosition = it) } },
         )
     }
-    Text(stringResource(R.string.summary_position_label), style = MaterialTheme.typography.labelLarge)
+    FieldLabel(stringResource(R.string.summary_position_label))
     SegmentedChoice(
         options = listOf(
             SummaryPosition.NONE to R.string.label_position_none,
@@ -453,11 +430,7 @@ private fun WeatherSetting(settings: WidgetSettings, viewModel: ConfigViewModel)
         selected = settings.summaryPosition,
         onSelect = { viewModel.update { s -> s.copy(summaryPosition = it) } },
     )
-    Text(
-        stringResource(R.string.summary_position_hint),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+    Hint(stringResource(R.string.summary_position_hint))
     if (!networkAllowed) {
         Text(
             stringResource(R.string.no_network_access),
@@ -479,10 +452,7 @@ private fun hasNetworkPermission(context: Context): Boolean =
 @Composable
 private fun RingSwitchSetting(settings: WidgetSettings, viewModel: ConfigViewModel) {
     val twelveHour = settings.displayMode == DisplayMode.TWELVE_HOUR
-    Text(
-        stringResource(if (twelveHour) R.string.day_night_switch_label else R.string.day_change_label),
-        style = MaterialTheme.typography.labelLarge,
-    )
+    FieldLabel(stringResource(if (twelveHour) R.string.day_night_switch_label else R.string.day_change_label))
     SegmentedChoice(
         options = listOf(
             SwitchStrategyType.FIXED_TIMES to R.string.switch_fixed_times,

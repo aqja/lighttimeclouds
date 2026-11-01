@@ -123,11 +123,7 @@ internal fun PreviewTab(settings: WidgetSettings, padding: PaddingValues) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(
-            stringResource(R.string.preview_intro),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Hint(stringResource(R.string.preview_intro))
         BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             // Side text takes up to 40% of the width, as in the widget.
             val sideText = summary != null && settings.summaryPosition in setOf(SummaryPosition.LEFT, SummaryPosition.RIGHT)

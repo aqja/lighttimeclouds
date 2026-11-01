@@ -42,7 +42,6 @@ import com.umfluten.lighttimeclouds.weather.WeatherCondition
 import com.umfluten.lighttimeclouds.weather.WeatherForecast
 import com.umfluten.lighttimeclouds.widget.ClockFaceRenderer
 import com.umfluten.lighttimeclouds.widget.WeatherSummaryText
-import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.Instant
 import java.time.ZonedDateTime
@@ -56,13 +55,7 @@ import kotlin.math.roundToInt
 @Composable
 internal fun WeatherTab(settings: WidgetSettings, padding: PaddingValues) {
     val place = settings.place
-    var now by remember(place.zone) { mutableStateOf(ZonedDateTime.now(place.zone)) }
-    LaunchedEffect(place.zone) {
-        while (true) {
-            delay((60 - ZonedDateTime.now().second) * 1000L)
-            now = ZonedDateTime.now(place.zone)
-        }
-    }
+    val now = rememberMinuteClock(place.zone)
     val context = LocalContext.current
     val formats = rememberUiFormats()
     var forecast by remember(place) { mutableStateOf<WeatherForecast?>(null) }
@@ -80,11 +73,7 @@ internal fun WeatherTab(settings: WidgetSettings, padding: PaddingValues) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(place.name, style = MaterialTheme.typography.titleMedium)
                 summary?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
-                Text(
-                    stringResource(R.string.weather_intro),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Hint(stringResource(R.string.weather_intro))
             }
         }
         if (rows.isEmpty()) {
@@ -199,11 +188,7 @@ private fun HeaderRow() {
 
 @Composable
 private fun HourRow(row: HourRow, local: ZonedDateTime, formats: UiFormats, isCurrent: Boolean, isPast: Boolean) {
-    val color = when {
-        isCurrent -> MaterialTheme.colorScheme.primary
-        isPast -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-        else -> MaterialTheme.colorScheme.onSurface
-    }
+    val color = timelineColor(highlighted = isCurrent, past = isPast)
     val style = MaterialTheme.typography.bodyLarge.let { if (isCurrent) it.copy(fontWeight = FontWeight.Bold) else it }
     val background = if (isCurrent) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f) else MaterialTheme.colorScheme.surface
     TableRow(Modifier.background(background).padding(vertical = 10.dp)) {

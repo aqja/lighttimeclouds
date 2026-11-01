@@ -16,11 +16,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -33,7 +29,6 @@ import com.umfluten.lighttimeclouds.astro.SolarEventType
 import com.umfluten.lighttimeclouds.astro.SunMoonCalculator
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.widget.ClockFaceRenderer
-import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.ZonedDateTime
 
@@ -45,13 +40,7 @@ import java.time.ZonedDateTime
 @Composable
 internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
     val place = settings.place
-    var now by remember(place.zone) { mutableStateOf(ZonedDateTime.now(place.zone)) }
-    LaunchedEffect(place.zone) {
-        while (true) {
-            delay((60 - ZonedDateTime.now().second) * 1000L)
-            now = ZonedDateTime.now(place.zone)
-        }
-    }
+    val now = rememberMinuteClock(place.zone)
     val events = remember(place, now) {
         SolarDay.eventsAround(now.toInstant(), now.zone, place.latitude, place.longitude)
     }
@@ -77,11 +66,7 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
                     formats.coordinates(place.latitude, place.longitude) + " · " + place.zone.id,
                     style = MaterialTheme.typography.bodyMedium,
                 )
-                Text(
-                    stringResource(R.string.times_intro),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Hint(stringResource(R.string.times_intro))
             }
         }
         items(events.size) { index ->
@@ -157,11 +142,7 @@ private fun EventRow(
 ) {
     val local = instant?.atZone(now.zone)
     val isPast = instant?.isAfter(now.toInstant()) == false
-    val contentColor = when {
-        isNext -> MaterialTheme.colorScheme.primary
-        isPast -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-        else -> MaterialTheme.colorScheme.onSurface
-    }
+    val contentColor = timelineColor(highlighted = isNext, past = isPast)
     val weight = if (isNext) FontWeight.Bold else null
     ListItem(
         leadingContent = {
