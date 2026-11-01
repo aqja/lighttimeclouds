@@ -55,6 +55,15 @@ Voraussetzungen:
 
 Die Himmelsfarben werden beim Build aus `core/.../sky/SkyModel.kt` als Tabelle vorberechnet (Gradle-Task `:core:generateSkyTable`); im Repo liegt keine Binärdatei.
 
+Zwei Python-Skripte unter `tools/` (Ausführung mit [uv](https://docs.astral.sh/uv/), Abhängigkeiten stehen im Skript) gehören zur Astronomie; der App-Build braucht sie nicht:
+
+```sh
+uv run tools/astro_series.py        # kürzt ELP 2000-82B und VSOP87 neu nach core/.../astro/AstroSeries.kt
+uv run tools/reference_ephemeris.py # Referenzwerte aus JPL DE440s für die Tests (core/src/test/resources/astro/)
+```
+
+Beide laden ihre Rohdaten (IMCCE-Reihen, ~32 MB Ephemeride) in `~/.cache/lighttimeclouds/`, nicht ins Repo.
+
 Zum manuellen Testen: Widget auf den Homescreen ziehen, über das Launcher-Icon „LightTimeClouds“ konfigurieren; Logs per `adb logcat`.
 
 ### Übersetzungen
@@ -63,7 +72,7 @@ Alle UI-Texte liegen in `app/src/main/res/values/strings.xml` (Englisch, zugleic
 
 ## Credits
 
-Die Sonnen-/Mondberechnung in `core/.../astro/SunMoonCalculator.kt` ist eine Portierung der Formeln aus [SunCalc](https://github.com/mourner/suncalc) von Vladimir Agafonkin (BSD-2-Clause, Lizenztext in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)).
+Die Sonnen- und Mondberechnung (`core/.../astro/`) beruht direkt auf den Primärquellen: der Mond auf der Mondtheorie ELP 2000-82B (M. Chapront-Touzé, J. Chapront, A&A 124, 50, 1983 und A&A 190, 342, 1988), die Sonne auf der Planetentheorie VSOP87 (P. Bretagnon, G. Francou, A&A 202, 309, 1988), beide in der Fassung des [IMCCE](https://www.imcce.fr/) (Observatoire de Paris) und für die App auf etwa 10″ gekürzt; Nutation, Schiefe der Ekliptik und Sternzeit folgen den IERS Conventions 2010 (IERS Technical Note 36), die Refraktion Sæmundsson (1986). Geprüft wird gegen die JPL-Ephemeride DE440s. Angeregt wurden Umfang und Auswahl der Sonnenereignisse von [SunCalc](https://github.com/mourner/suncalc) von Vladimir Agafonkin, das frühere Versionen der App portiert hatten.
 
 Die Himmelsfarben des Rings (Darstellung „Himmel“) berechnet `core/.../sky/SkyModel.kt`, eine Portierung von [Horizon](https://github.com/dnlzro/horizon) von Daniel Lazaro (MIT-Lizenz), erweitert um Mehrfachstreuung nach Hillaire (2020) und eine spektrale Rechnung mit Sonnenspektrum und Ozon-Absorptionsquerschnitten aus [Precomputed Atmospheric Scattering](https://github.com/ebruneton/precomputed_atmospheric_scattering) von Eric Bruneton (BSD-3-Clause); Lizenztexte in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
@@ -71,4 +80,4 @@ Die Wetterdaten stammen von [Open-Meteo.com](https://open-meteo.com/) (Lizenz CC
 
 ## Lizenz
 
-LightTimeClouds steht unter der [MIT-Lizenz](LICENSE). Portierte oder übernommene Teile fremder Projekte (SunCalc, Horizon, Precomputed Atmospheric Scattering) behalten ihre eigenen Lizenzen, siehe [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+LightTimeClouds steht unter der [MIT-Lizenz](LICENSE). Portierte oder übernommene Teile fremder Projekte (Horizon, Precomputed Atmospheric Scattering) behalten ihre eigenen Lizenzen, siehe [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
