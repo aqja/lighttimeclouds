@@ -78,6 +78,8 @@ Die Himmelsfarben des Rings (Darstellung „Himmel“) berechnet `core/.../sky/S
 
 Die Wetterdaten stammen von [Open-Meteo.com](https://open-meteo.com/) (Lizenz CC BY 4.0).
 
+Alle Formeln, Konstanten und Vereinfachungen der Astronomie, des Himmelsmodells und der Wetterauswertung, mit Quellen, beschreibt [`docs/PHYSIK.md`](docs/PHYSIK.md) (englisch: [`docs/PHYSICS.md`](docs/PHYSICS.md)).
+
 ## Lizenz
 
 LightTimeClouds steht unter der [MIT-Lizenz](LICENSE). Portierte oder übernommene Teile fremder Projekte (Horizon, Precomputed Atmospheric Scattering) behalten ihre eigenen Lizenzen, siehe [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
