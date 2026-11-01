@@ -43,7 +43,8 @@ internal object Topocentric {
 
     /**
      * Atmospheric refraction (rad) for a geometric altitude [altitude] (rad), after Sæmundsson
-     * (1986) for 10 °C and 1010 hPa; below −1° held at its value there.
+     * (1986) for 10 °C and 1010 hPa; below −1° held at its value there. At a geometric altitude of
+     * 0 it is about 29′; a body appears on the horizon at about −34′, where it is the usual 34′.
      */
     fun refraction(altitude: Double): Double {
         val h = (altitude / DEG).coerceAtLeast(-1.0)

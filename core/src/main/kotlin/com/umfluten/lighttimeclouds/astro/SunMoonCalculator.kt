@@ -9,6 +9,7 @@ import kotlin.math.asin
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.tan
 
 /**
  * Positions, rise and set times and the phase of the Sun and the Moon for a place, from the
@@ -185,6 +186,28 @@ object SunMoonCalculator {
         val phaseAngle = atan2(sun.distanceKm * sin(elongation), moon.distanceKm - sun.distanceKm * cos(elongation))
         val phase = (moon.longitude - sun.longitude).mod(2 * PI) / (2 * PI)
         return MoonIllumination((1 + cos(phaseAngle)) / 2, phase)
+    }
+
+    /**
+     * Where the bright limb of the Moon points as seen from [latitude]/[longitude] (degrees): the
+     * angle (rad, 0 until 2π) from the zenith, counterclockwise on the sky as the observer faces the
+     * Moon, so π/2 is to the left. The position angle χ of the bright limb from the north point of
+     * the disc (Meeus, Astronomical Algorithms, eq. 48.5) minus the parallactic angle q (eq. 14.1),
+     * both from geocentric positions.
+     */
+    fun moonBrightLimbAngle(instant: Instant, latitude: Double, longitude: Double): Double {
+        val epoch = Ephemeris.Epoch(instant)
+        val moon = Ephemeris.equatorial(Ephemeris.moon(epoch), epoch)
+        val sun = Ephemeris.equatorial(Ephemeris.sun(epoch), epoch)
+        val dAlpha = sun.rightAscension - moon.rightAscension
+        val positionAngle = atan2(
+            cos(sun.declination) * sin(dAlpha),
+            sin(sun.declination) * cos(moon.declination) - cos(sun.declination) * sin(moon.declination) * cos(dAlpha),
+        )
+        val hourAngle = Topocentric.hourAngle(moon, epoch, longitude)
+        val phi = latitude * DEG
+        val parallactic = atan2(sin(hourAngle), tan(phi) * cos(moon.declination) - sin(moon.declination) * cos(hourAngle))
+        return (positionAngle - parallactic).mod(2 * PI)
     }
 
     /** Names the phase value of [moonIllumination] (0 = new, 0.5 = full); each name covers ±1/16 cycle around its center. */

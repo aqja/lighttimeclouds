@@ -426,9 +426,8 @@ object ClockFaceRenderer {
 
         moon?.let { (r, disc) ->
             val (x, y) = pointOnDial(cx, cy, r, angleFor(r, -1f))
-            val illumination = SunMoonCalculator.moonIllumination(instant)
             if (disc) {
-                canvas.withClip(band) { drawMoonPhase(this, x, y, discRadius, illumination, moonLitColor(true), moonShadowColor(true)) }
+                canvas.withClip(band) { drawMoonPhase(this, x, y, discRadius, instant, settings, moonLitColor(true), moonShadowColor(true)) }
             } else {
                 drawSkyDot(canvas, x, y, dotRadius, moonLitColor(true), moonShadowColor(true))
             }
@@ -1079,9 +1078,8 @@ object ClockFaceRenderer {
         }
         canvas.drawLine(cx, cy, cx + dx * handScale, cy + dy * handScale, handPaint)
 
-        val illumination = SunMoonCalculator.moonIllumination(now.toInstant())
         canvas.saveLayerAlpha(null, alpha)
-        drawMoonPhase(canvas, mx, my, moonSize, illumination, moonLitColor(dark), moonShadowColor(dark))
+        drawMoonPhase(canvas, mx, my, moonSize, now.toInstant(), settings, moonLitColor(dark), moonShadowColor(dark))
         canvas.restore()
     }
 
@@ -1162,7 +1160,7 @@ object ClockFaceRenderer {
         val moonSize = radius * MOON_ON_HAND_SIZE
         val shadowColor = moonShadowColor(dark)
         val litColor = if (aboveHorizon) moonLitColor(dark) else lerpColor(moonLitColor(dark), shadowColor, 0.55)
-        drawMoonPhase(canvas, mx, my, moonSize, SunMoonCalculator.moonIllumination(handTime.toInstant()), litColor, shadowColor)
+        drawMoonPhase(canvas, mx, my, moonSize, handTime.toInstant(), settings, litColor, shadowColor)
         val framePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             this.color = color
             style = Paint.Style.STROKE
@@ -1232,16 +1230,36 @@ object ClockFaceRenderer {
         }
     }
 
-    /**
-     * Classic "two offset circles" moon-phase rendering: a lit disc and a same-radius
-     * shadow disc shifted horizontally by an amount derived from the phase angle.
-     */
+    /** The Moon's phase disc at [time] for [settings]' place: lit fraction and the tilt of its bright limb. */
     private fun drawMoonPhase(
         canvas: Canvas,
         cx: Float,
         cy: Float,
         r: Float,
-        illumination: SunMoonCalculator.MoonIllumination,
+        time: Instant,
+        settings: WidgetSettings,
+        litColor: Int,
+        shadowColor: Int,
+    ) {
+        val fraction = SunMoonCalculator.moonIllumination(time).fraction
+        val limb = SunMoonCalculator.moonBrightLimbAngle(time, settings.place.latitude, settings.place.longitude)
+        drawMoonPhase(canvas, cx, cy, r, fraction, limb, litColor, shadowColor)
+    }
+
+    /**
+     * Moon phase disc as one sees it, with the top of the screen as the zenith: the lit part is
+     * bounded by half the rim on the side of [brightLimbAngle] (from the top, counterclockwise, see
+     * [SunMoonCalculator.moonBrightLimbAngle]) and by the terminator, the half-ellipse whose
+     * semi-axis along the limb direction is r·(2k − 1) for the lit fraction k: bulging to the dark
+     * side when gibbous, to the bright side as a crescent.
+     */
+    internal fun drawMoonPhase(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        r: Float,
+        fraction: Double,
+        brightLimbAngle: Double,
         litColor: Int,
         shadowColor: Int,
     ) {
@@ -1252,20 +1270,34 @@ object ClockFaceRenderer {
             strokeWidth = r * 0.08f
             color = shadowColor
         }
+        canvas.drawCircle(cx, cy, r, shadowPaint)
 
-        canvas.withClip(Path().apply { addCircle(cx, cy, r, Path.Direction.CW) }) {
-            drawCircle(cx, cy, r, litPaint)
-
-            val phase = ((illumination.phase % 1.0) + 1.0) % 1.0
-            val waxing = phase < 0.5
-            val theta = phase * 2.0 * Math.PI
-            val shift = (r * (1.0 - cos(theta))).toFloat()
-            val shadowCx = if (waxing) cx - shift else cx + shift
-            drawCircle(shadowCx, cy, r, shadowPaint)
+        // Towards the bright limb (screen y points down) and across it.
+        val ux = -sin(brightLimbAngle)
+        val uy = -cos(brightLimbAngle)
+        val terminator = 2.0 * fraction.coerceIn(0.0, 1.0) - 1.0
+        val lit = Path()
+        fun point(along: Double, across: Double, first: Boolean) {
+            val x = (cx + r * (along * ux - across * uy)).toFloat()
+            val y = (cy + r * (along * uy + across * ux)).toFloat()
+            if (first) lit.moveTo(x, y) else lit.lineTo(x, y)
         }
+        for (i in 0..MOON_PHASE_STEPS) {
+            val s = -PI / 2 + PI * i / MOON_PHASE_STEPS
+            point(cos(s), sin(s), first = i == 0)
+        }
+        for (i in 0..MOON_PHASE_STEPS) {
+            val s = PI / 2 - PI * i / MOON_PHASE_STEPS
+            point(-terminator * cos(s), sin(s), first = false)
+        }
+        lit.close()
+        canvas.drawPath(lit, litPaint)
 
         canvas.drawCircle(cx, cy, r, outlinePaint)
     }
+
+    /** Segments of each half of the lit part's outline. */
+    private const val MOON_PHASE_STEPS = 32
 
     // --- Hands ------------------------------------------------------------
 
