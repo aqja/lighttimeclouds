@@ -15,6 +15,7 @@
         android:visibility="gone" />
 
     <!-- Side text takes what it needs up to a maximum width set at runtime; the clock fits into the rest.
+         The summary's line limit is set at runtime too, from the height the widget has.
          The nested weight costs little in a tree this small. -->
     <LinearLayout
         tools:ignore="NestedWeights"
@@ -57,7 +58,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:maxLines="3"
         android:visibility="gone" />
 
 </LinearLayout>

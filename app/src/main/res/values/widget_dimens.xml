@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Text sizes of the widget, shared by its styles and by the code that works out how many lines fit. -->
+<resources>
+    <dimen name="widget_label_text_size">14sp</dimen>
+    <dimen name="widget_summary_text_size">13sp</dimen>
+</resources>

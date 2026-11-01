@@ -4,9 +4,12 @@ import android.app.AlarmManager
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
+import android.graphics.Paint
 import android.os.Bundle
+import android.util.Size
 import android.view.View
 import android.widget.RemoteViews
+import androidx.annotation.DimenRes
 import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.data.LabelPosition
 import com.umfluten.lighttimeclouds.data.SummaryPosition
@@ -93,7 +96,7 @@ class ClockWidgetProvider : AppWidgetProvider() {
          * [WidgetSettings.summaryPosition] (only with the weather ring), in the dial's chrome color.
          * Stays hidden while the forecast does not cover the current time.
          */
-        private fun bindSummary(context: Context, views: RemoteViews, settings: WidgetSettings, weather: WeatherForecast?, widthPx: Int) {
+        private fun bindSummary(context: Context, views: RemoteViews, settings: WidgetSettings, weather: WeatherForecast?, widgetSize: Size) {
             val text = if (settings.showWeather && settings.summaryPosition != SummaryPosition.NONE) {
                 WeatherSummaryText.of(context.resources, weather, Instant.now())
             } else {
@@ -111,11 +114,38 @@ class ClockWidgetProvider : AppWidgetProvider() {
                     views.setTextViewText(viewId, text)
                     views.setTextColor(viewId, color)
                     if (position != SummaryPosition.BELOW) {
-                        views.setInt(viewId, "setMaxWidth", (widthPx * MAX_SIDE_SUMMARY_WIDTH).toInt())
+                        views.setInt(viewId, "setMaxWidth", (widgetSize.width * MAX_SIDE_SUMMARY_WIDTH).toInt())
                     }
+                    views.setInt(viewId, "setMaxLines", summaryMaxLines(context, settings, position, widgetSize))
                 }
             }
         }
+
+        /**
+         * How many lines of summary fit: beside the clock, its whole height; below it, the height
+         * the clock leaves free at full width, but at least [MIN_SUMMARY_LINES_BELOW], for which
+         * the clock shrinks. Either way minus the place name if it is shown.
+         */
+        private fun summaryMaxLines(context: Context, settings: WidgetSettings, position: SummaryPosition, widgetSize: Size): Int {
+            val label = if (settings.labelPosition != LabelPosition.NONE) lineHeight(context, R.dimen.widget_label_text_size, 1f) else 0f
+            val line = lineHeight(context, R.dimen.widget_summary_text_size, SUMMARY_LINE_SPACING)
+            return if (position == SummaryPosition.BELOW) {
+                val free = widgetSize.height - widgetSize.width - label
+                ((free / line).toInt()).coerceAtLeast(MIN_SUMMARY_LINES_BELOW)
+            } else {
+                ((widgetSize.height - label) / line).toInt().coerceAtLeast(1)
+            }
+        }
+
+        /** Height (px) of one line of text in the size [textSizeRes], with [spacing] as in the style's lineSpacingMultiplier. */
+        private fun lineHeight(context: Context, @DimenRes textSizeRes: Int, spacing: Float): Float =
+            Paint().apply { textSize = context.resources.getDimension(textSizeRes) }.fontSpacing * spacing
+
+        /** The summary style's lineSpacingMultiplier. */
+        private const val SUMMARY_LINE_SPACING = 1.1f
+
+        /** Lines the summary below the clock gets even where the clock has to shrink for them. */
+        private const val MIN_SUMMARY_LINES_BELOW = 3
 
         /** Share of the widget's width that text beside the clock may take; the clock shrinks to make room. */
         private const val MAX_SIDE_SUMMARY_WIDTH = 0.4f
@@ -155,7 +185,7 @@ class ClockWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_clock)
             views.setImageViewBitmap(R.id.widget_clock_image, bitmap)
             bindPlaceLabel(context, views, settings)
-            bindSummary(context, views, settings, weather, WidgetSizing.currentWidthPx(context, appWidgetManager, appWidgetId))
+            bindSummary(context, views, settings, weather, WidgetSizing.currentWidgetSizePx(context, appWidgetManager, appWidgetId))
             views.setOnClickPendingIntent(
                 R.id.widget_root,
                 TapActionResolver.buildPendingIntent(context, appWidgetId, settings.tapAction),
