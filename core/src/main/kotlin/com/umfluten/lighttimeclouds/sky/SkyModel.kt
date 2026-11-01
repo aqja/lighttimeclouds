@@ -25,10 +25,11 @@ import kotlin.math.sqrt
  * across a broad band of the spectrum, which three wavelengths render as a purple.
  *
  * Port of "Horizon" by Daniel Lazaro (https://github.com/dnlzro/horizon, MIT License), whose
- * implementation derives from "Production Sky Rendering" by Andrew Helmer (MIT License) and whose
- * physical model and parameters come from "A Scalable and Production Ready Sky and Atmosphere
- * Rendering Technique" (Sébastien Hillaire, 2020); the multiple scattering follows section 5.5 of
- * that paper.
+ * implementation derives from "Production Sky Rendering" by Andrew Helmer
+ * (https://www.shadertoy.com/view/slSXRW, MIT License as stated by its author in the shader's
+ * comments) and whose physical model and parameters come from "A Scalable and Production Ready Sky
+ * and Atmosphere Rendering Technique" (Sébastien Hillaire, 2020); the multiple scattering follows
+ * section 5.5 of that paper.
  */
 object SkyModel {
 

@@ -2,13 +2,21 @@
 
 ## Horizon
 
-`core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyModel.kt` (and the precomputed table
-`core/src/main/resources/com/umfluten/lighttimeclouds/sky/sky_gradients.bin` generated from it) is a
-Kotlin port of the sky gradient renderer in [Horizon](https://github.com/dnlzro/horizon). As stated
-there, its implementation derives from ["Production Sky Rendering"](https://www.shadertoy.com/view/slSXRW)
-(Andrew Helmer, MIT License), and the physical model and parameters come from ["A Scalable and
-Production Ready Sky and Atmosphere Rendering Technique"](https://onlinelibrary.wiley.com/doi/10.1111/cgf.14050)
-(Sébastien Hillaire).
+`core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyModel.kt` (and the sky color table generated
+from it at build time) is a Kotlin port of the sky gradient renderer in
+[Horizon](https://github.com/dnlzro/horizon), extended with multiple scattering and a spectral
+computation. The physical model and its parameters come from ["A Scalable and Production Ready Sky and
+Atmosphere Rendering Technique"](https://onlinelibrary.wiley.com/doi/10.1111/cgf.14050) (Sébastien
+Hillaire, 2020), whose reference implementation
+([UnrealEngineSkyAtmosphere](https://github.com/sebh/UnrealEngineSkyAtmosphere), Copyright (c) 2020
+Epic Games, Inc.) is also MIT licensed.
+
+Horizon states that its implementation derives from
+["Production Sky Rendering"](https://www.shadertoy.com/view/slSXRW) by Andrew Helmer (Shadertoy, 2021).
+That shader's code carries no license notice, but its author stated in the shader's comments on
+2021-09-07 that he put it under the MIT License, except for the function `jodieReinhardTonemap()`
+taken from another shader; neither Horizon nor this app uses that function (both tone map with
+Narkowicz's ACES fit).
 
 ```
 MIT License
