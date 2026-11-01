@@ -34,7 +34,7 @@ object WeatherSync {
     private val PERIODIC_INTERVAL: Duration = Duration.ofHours(2)
 
     /** A fetch younger than this is reused; a bit below the interval, so a slightly early run still refreshes. */
-    private val PERIODIC_MAX_AGE: Duration = Duration.ofMinutes(105)
+    internal val PERIODIC_MAX_AGE: Duration = Duration.ofMinutes(105)
     private val IMMEDIATE_MAX_AGE: Duration = Duration.ofMinutes(15)
 
     private val networkConstraint = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
@@ -96,7 +96,7 @@ class WeatherSyncWorker(context: Context, params: WorkerParameters) : CoroutineW
             WeatherSync.cancel(applicationContext)
             return Result.success()
         }
-        val maxAge = Duration.ofMinutes(inputData.getLong(KEY_MAX_AGE_MINUTES, DEFAULT_MAX_AGE_MINUTES))
+        val maxAge = Duration.ofMinutes(inputData.getLong(KEY_MAX_AGE_MINUTES, WeatherSync.PERIODIC_MAX_AGE.toMinutes()))
 
         var changed = false
         var failed = false
@@ -124,6 +124,5 @@ class WeatherSyncWorker(context: Context, params: WorkerParameters) : CoroutineW
         const val KEY_MAX_AGE_MINUTES = "max_age_minutes"
         private const val TAG = "WeatherSync"
         private const val MAX_RETRIES = 3
-        private const val DEFAULT_MAX_AGE_MINUTES = 105L
     }
 }

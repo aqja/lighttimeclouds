@@ -24,8 +24,7 @@ object OpenMeteo {
 
     /**
      * Hourly cloud cover, precipitation (amount, snow, probability) and air/apparent temperature
-     * from 24 h back to 48 h ahead, timestamps as
-     * Unix seconds. That covers the 12 h window (which can start up to 12 h before now) and the
+     * from 24 h back to 48 h ahead, timestamps as Unix seconds. That covers the 12 h window (which can start up to 12 h before now) and the
      * whole local day in 24 h mode even for a cache that is half a day old.
      */
     fun forecastUrl(latitude: Double, longitude: Double): String =

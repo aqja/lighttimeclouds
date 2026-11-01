@@ -36,10 +36,10 @@ object SunMoonCalculator {
         val altitudeDegrees: Double get() = altitudeRad / RAD
         val azimuthDegrees: Double get() = azimuthRad / RAD
     }
-    data class MoonIllumination(val fraction: Double, val phase: Double, val angle: Double)
+    data class MoonIllumination(val fraction: Double, val phase: Double)
 
     /** Moonrise/moonset within the 24h after the start instant; null if it does not happen in that span. */
-    data class MoonTimes(val rise: Instant?, val set: Instant?, val alwaysUp: Boolean, val alwaysDown: Boolean)
+    data class MoonTimes(val rise: Instant?, val set: Instant?)
 
     /** The eight named moon phases, each covering one eighth of the synodic cycle. */
     enum class MoonPhase {
@@ -240,7 +240,7 @@ object SunMoonCalculator {
         return normalized / (2 * PI) * 24.0
     }
 
-    /** Illuminated fraction (0..1), phase (0=new, 0.5=full, wrapping to 1=new again) and bright-limb angle, at [instant]. */
+    /** Illuminated fraction (0..1) and phase (0=new, 0.5=full, wrapping to 1=new again) at [instant]. */
     fun moonIllumination(instant: Instant): MoonIllumination {
         val d = toDays(instant)
         val s = sunCoords(d)
@@ -251,13 +251,14 @@ object SunMoonCalculator {
                 cos(s.declination) * cos(m.declination) * cos(s.rightAscension - m.rightAscension)).coerceIn(-1.0, 1.0)
         )
         val inc = atan2(sunDistanceKm * sin(phi), m.distanceKm - sunDistanceKm * cos(phi))
+        // Bright-limb angle; only its sign is needed, to tell waxing from waning.
         val angle = atan2(
             cos(s.declination) * sin(s.rightAscension - m.rightAscension),
             sin(s.declination) * cos(m.declination) - cos(s.declination) * sin(m.declination) * cos(s.rightAscension - m.rightAscension)
         )
         val fraction = (1 + cos(inc)) / 2
         val phase = 0.5 + 0.5 * inc * (if (angle < 0) -1.0 else 1.0) / PI
-        return MoonIllumination(fraction, phase, angle)
+        return MoonIllumination(fraction, phase)
     }
 
     /** Names the phase value of [moonIllumination] (0 = new, 0.5 = full); each name covers ±1/16 cycle around its center. */
@@ -280,14 +281,13 @@ object SunMoonCalculator {
         var h0 = altitudeAt(0)
         var rise: Double? = null
         var set: Double? = null
-        var ye = 0.0
         for (i in 1..24 step 2) {
             val h1 = altitudeAt(i)
             val h2 = altitudeAt(i + 1)
             val a = (h0 + h2) / 2 - h1
             val b = (h2 - h0) / 2
             val xe = -b / (2 * a)
-            ye = (a * xe + b) * xe + h1
+            val ye = (a * xe + b) * xe + h1
             val d = b * b - 4 * a * h1
             var roots = 0
             var x1 = 0.0
@@ -311,11 +311,6 @@ object SunMoonCalculator {
         }
 
         fun at(hours: Double?) = hours?.let { start.plusMillis((it * 3600_000.0).toLong()) }
-        return MoonTimes(
-            rise = at(rise),
-            set = at(set),
-            alwaysUp = rise == null && set == null && ye > 0,
-            alwaysDown = rise == null && set == null && ye <= 0,
-        )
+        return MoonTimes(rise = at(rise), set = at(set))
     }
 }
