@@ -36,6 +36,12 @@
     <string name="sky_horizon_label">Horizon in the ring</string>
     <string name="sky_horizon_inner">Inside</string>
     <string name="sky_horizon_outer">Outside</string>
+    <string name="sky_top_elevation_label">Sky in the ring up to</string>
+    <string name="sky_top_elevation_value">%1$d° above the horizon</string>
+    <string name="show_sun_in_ring">Sun in the ring</string>
+    <string name="show_moon_in_ring">Moon in the ring</string>
+    <string name="bodies_in_ring_hint">At the current time, as far from the horizon edge as it stands above the horizon. Below the horizon or higher than shown: a small dot at that edge.</string>
+    <string name="show_moon_path_in_ring">Moon path in the ring</string>
     <string name="show_minute_ticks">Minute ticks</string>
     <string name="show_solar_marks">Solar noon and midnight</string>
     <string name="show_sunrise_sunset_marks">Sunrise and sunset</string>

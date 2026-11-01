@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -174,28 +173,28 @@ internal fun PreviewTab(settings: WidgetSettings, padding: PaddingValues) {
             }
         }
 
-        PreviewSlider(
+        LabeledSlider(
             label = stringResource(R.string.place_latitude),
             value = formats.degrees(latitude.toDouble()),
             position = latitude,
             range = -90f..90f,
             onChange = { latitude = it },
         )
-        PreviewSlider(
+        LabeledSlider(
             label = stringResource(R.string.place_longitude),
             value = formats.degrees(longitude.toDouble()),
             position = longitude,
             range = -180f..180f,
             onChange = { longitude = it },
         )
-        PreviewSlider(
+        LabeledSlider(
             label = stringResource(R.string.preview_date),
             value = formats.date(now),
             position = dayOfYear.toFloat(),
             range = 1f..year.length().toFloat(),
             onChange = { dayOfYear = it.roundToInt() },
         )
-        PreviewSlider(
+        LabeledSlider(
             label = stringResource(R.string.preview_time),
             value = formats.time(now),
             position = minuteOfDay.toFloat(),
@@ -205,23 +204,5 @@ internal fun PreviewTab(settings: WidgetSettings, padding: PaddingValues) {
         TextButton(onClick = ::reset, modifier = Modifier.align(Alignment.End)) {
             Text(stringResource(R.string.preview_reset))
         }
-    }
-}
-
-/** A slider with its label on the left and the current [value] on the right above it. */
-@Composable
-private fun PreviewSlider(
-    label: String,
-    value: String,
-    position: Float,
-    range: ClosedFloatingPointRange<Float>,
-    onChange: (Float) -> Unit,
-) {
-    Column {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
-            Text(value, style = MaterialTheme.typography.bodyLarge)
-        }
-        Slider(value = position, onValueChange = onChange, valueRange = range)
     }
 }

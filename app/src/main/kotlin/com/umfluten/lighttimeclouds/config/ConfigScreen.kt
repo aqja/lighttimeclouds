@@ -74,8 +74,10 @@ import com.umfluten.lighttimeclouds.data.TemperaturePosition
 import com.umfluten.lighttimeclouds.data.WeatherRingPosition
 import com.umfluten.lighttimeclouds.data.WidgetPrefsRepository
 import com.umfluten.lighttimeclouds.data.WidgetSettings
+import com.umfluten.lighttimeclouds.sky.SkyProjection
 import com.umfluten.lighttimeclouds.widget.WidgetIds
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 /**
  * Entry point of the config UI: edits [initialWidgetId] directly, or - when opened from the
@@ -249,12 +251,45 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             selected = settings.ringStyle,
             onSelect = { viewModel.update { s -> s.copy(ringStyle = it) } },
         )
-        if (settings.ringStyle == RingStyle.SKY) {
+        SwitchRow(
+            label = stringResource(R.string.show_sun_in_ring),
+            checked = settings.showSunInRing,
+            onCheckedChange = { viewModel.update { s -> s.copy(showSunInRing = it) } },
+        )
+        SwitchRow(
+            label = stringResource(R.string.show_moon_in_ring),
+            checked = settings.showMoonInRing,
+            onCheckedChange = { viewModel.update { s -> s.copy(showMoonInRing = it) } },
+        )
+        val bodiesInRing = settings.showSunInRing || settings.showMoonInRing
+        if (bodiesInRing) {
+            Text(
+                stringResource(R.string.bodies_in_ring_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (settings.showMoonInRing) {
+            SwitchRow(
+                label = stringResource(R.string.show_moon_path_in_ring),
+                checked = settings.showMoonPathInRing,
+                onCheckedChange = { viewModel.update { s -> s.copy(showMoonPathInRing = it) } },
+            )
+        }
+        if (settings.ringStyle == RingStyle.SKY || bodiesInRing) {
             Text(stringResource(R.string.sky_horizon_label), style = MaterialTheme.typography.labelLarge)
             SegmentedChoice(
                 options = listOf(SkyHorizon.INNER to R.string.sky_horizon_inner, SkyHorizon.OUTER to R.string.sky_horizon_outer),
                 selected = settings.skyHorizon,
                 onSelect = { viewModel.update { s -> s.copy(skyHorizon = it) } },
+            )
+            LabeledSlider(
+                label = stringResource(R.string.sky_top_elevation_label),
+                value = stringResource(R.string.sky_top_elevation_value, settings.skyTopElevationDeg),
+                position = settings.skyTopElevationDeg.toFloat(),
+                range = SKY_TOP_ELEVATION_MIN.toFloat()..SKY_TOP_ELEVATION_MAX.toFloat(),
+                steps = (SKY_TOP_ELEVATION_MAX - SKY_TOP_ELEVATION_MIN) / SKY_TOP_ELEVATION_STEP - 1,
+                onChange = { viewModel.update { s -> s.copy(skyTopElevationDeg = it.roundToInt()) } },
             )
         }
         SwitchRow(
@@ -522,3 +557,8 @@ private fun SwitchTimeRow(label: String, minutesOfDay: Int, onPicked: (Int) -> U
         )
     }
 }
+
+/** Range and step (degrees) of the elevation shown at the far edge of the ring. */
+private const val SKY_TOP_ELEVATION_MIN = 10
+private const val SKY_TOP_ELEVATION_MAX = SkyProjection.MAX_TOP_ELEVATION_DEG.toInt()
+private const val SKY_TOP_ELEVATION_STEP = 5

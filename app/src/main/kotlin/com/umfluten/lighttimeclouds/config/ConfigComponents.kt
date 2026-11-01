@@ -14,6 +14,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
@@ -124,5 +125,24 @@ internal fun SwitchRow(label: String, checked: Boolean, onCheckedChange: (Boolea
     ) {
         Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
         Switch(checked = checked, onCheckedChange = null)
+    }
+}
+
+/** A slider with its label on the left and the current [value] on the right above it; [steps] as in [Slider]. */
+@Composable
+internal fun LabeledSlider(
+    label: String,
+    value: String,
+    position: Float,
+    range: ClosedFloatingPointRange<Float>,
+    onChange: (Float) -> Unit,
+    steps: Int = 0,
+) {
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+            Text(value, style = MaterialTheme.typography.bodyLarge)
+        }
+        Slider(value = position, onValueChange = onChange, valueRange = range, steps = steps)
     }
 }

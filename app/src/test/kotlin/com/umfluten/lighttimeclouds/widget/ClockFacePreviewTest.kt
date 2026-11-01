@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import androidx.core.graphics.createBitmap
+import com.umfluten.lighttimeclouds.astro.SunMoonCalculator
 import com.umfluten.lighttimeclouds.data.ColorMode
 import com.umfluten.lighttimeclouds.data.DisplayMode
 import com.umfluten.lighttimeclouds.data.MoonStyle
@@ -15,8 +16,10 @@ import com.umfluten.lighttimeclouds.data.TemperatureDisplay
 import com.umfluten.lighttimeclouds.data.TemperaturePosition
 import com.umfluten.lighttimeclouds.data.WeatherRingPosition
 import com.umfluten.lighttimeclouds.data.WidgetSettings
+import com.umfluten.lighttimeclouds.sky.SkyProjection
 import com.umfluten.lighttimeclouds.weather.HourlyWeather
 import com.umfluten.lighttimeclouds.weather.WeatherForecast
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,6 +31,9 @@ import java.io.File
 import java.time.Duration
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.hypot
 import kotlin.math.sin
 
 /**
@@ -153,6 +159,76 @@ class ClockFacePreviewTest {
             mixedForecast(),
             darkBackground = true,
         )
+    }
+
+    @Test
+    fun skyBodyPreviews() {
+        val plain = WidgetSettings(widgetId = 1, colorMode = ColorMode.DARK, showMoon = false)
+        val fullDay = plain.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR)
+        // Afternoon, sun about 25° high, waxing moon low in the south-east.
+        render("ring_bodies_24h", fullDay, null, darkBackground = true)
+        render("ring_bodies_24h_top_80", fullDay.copy(skyTopElevationDeg = 80), null, darkBackground = true)
+        render("ring_bodies_24h_top_15", fullDay.copy(skyTopElevationDeg = 15), null, darkBackground = true)
+        render("ring_bodies_24h_horizon_outer", fullDay.copy(skyHorizon = SkyHorizon.OUTER), null, darkBackground = true)
+        render("ring_bodies_24h_gradient", fullDay.copy(ringStyle = RingStyle.GRADIENT), null, darkBackground = true)
+        // Midsummer noon: the sun stands higher than the far edge.
+        val midsummer = ZonedDateTime.of(2026, 6, 21, 13, 15, 0, 0, Place.DEFAULT.zone)
+        render("ring_bodies_24h_midsummer", fullDay, null, darkBackground = true, at = midsummer)
+        // Just after sunset: no sun in the ring.
+        val evening = ZonedDateTime.of(2026, 10, 17, 19, 10, 0, 0, Place.DEFAULT.zone)
+        render("ring_bodies_12h_evening", plain, null, darkBackground = true, at = evening)
+        // Sunrise: the sun half above the horizon edge.
+        val sunrise = ZonedDateTime.of(2026, 10, 17, 7, 47, 0, 0, Place.DEFAULT.zone)
+        render("ring_bodies_12h_sunrise", plain, null, darkBackground = true, at = sunrise)
+        // New moon night: both below the horizon, so neither in the ring.
+        val newMoonNight = ZonedDateTime.of(2026, 11, 9, 2, 0, 0, 0, Place.DEFAULT.zone)
+        render("ring_bodies_12h_new_moon_night", plain, null, darkBackground = true, at = newMoonNight)
+        // Full moon night with the moon high.
+        val fullMoonNight = ZonedDateTime.of(2026, 10, 26, 23, 30, 0, 0, Place.DEFAULT.zone)
+        render("ring_bodies_24h_full_moon_night", fullDay, null, darkBackground = true, at = fullMoonNight)
+        val outer = plain.copy(skyHorizon = SkyHorizon.OUTER)
+        val waningNight = ZonedDateTime.of(2026, 11, 1, 1, 0, 0, 0, Place.DEFAULT.zone)
+        render("ring_bodies_12h_horizon_outer_night", outer, null, darkBackground = true, at = waningNight)
+        render("ring_bodies_24h_horizon_outer_night", outer.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR), null, darkBackground = true, at = waningNight)
+        render("ring_bodies_12h_horizon_outer_day", outer, null, darkBackground = true, at = waningNight.withHour(11))
+        render("ring_bodies_12h_weather_light", weatherSettings.copy(colorMode = ColorMode.LIGHT), mixedForecast(), darkBackground = false)
+    }
+
+    /**
+     * The sun disc (found by its color) lies as far from the horizon edge as the sun is high, on the
+     * sky colors' scale up to the far edge, whichever edge the horizon is on: day/night ring from
+     * 0.82 to 1 of the dial radius, which is 0.96 of half the size.
+     */
+    @Test
+    fun sunInRingFollowsTheHorizonEdge() {
+        val sunOnly = WidgetSettings(
+            widgetId = 1, displayMode = DisplayMode.TWENTY_FOUR_HOUR, showMoon = false, showMoonInRing = false,
+            showSolarMarks = false, showSunriseSunsetMarks = false,
+        )
+        val altitude = SunMoonCalculator.sunAltitudeDegrees(now.toInstant(), Place.DEFAULT.latitude, Place.DEFAULT.longitude)
+        val fraction = SkyProjection.fraction(altitude, 45.0).toFloat()
+        val expected = mapOf(SkyHorizon.INNER to 0.82f + 0.18f * fraction, SkyHorizon.OUTER to 1f - 0.18f * fraction)
+        // Only pixels toward the current time on the 24h dial: elsewhere the horizon glow can be as yellow.
+        val nowAngle = Math.toRadians((now.hour + now.minute / 60.0) * 15.0 - 90.0)
+        for ((horizon, radius) in expected) {
+            val size = 600
+            val clock = ClockFaceRenderer.render(RuntimeEnvironment.getApplication(), size, sunOnly.copy(skyHorizon = horizon), null, now)
+            var sumX = 0.0
+            var sumY = 0.0
+            var count = 0
+            for (y in 0 until size) for (x in 0 until size) {
+                val c = clock.getPixel(x, y)
+                val offAngle = abs(Math.IEEEremainder(atan2(y - size / 2.0, x - size / 2.0) - nowAngle, 2 * Math.PI))
+                if (offAngle < Math.toRadians(8.0) && Color.red(c) > 240 && Color.green(c) in 215..250 && Color.blue(c) < 90) {
+                    sumX += x
+                    sumY += y
+                    count++
+                }
+            }
+            assertTrue("no sun disc with horizon $horizon", count > 50)
+            val distance = hypot(sumX / count - size / 2.0, sumY / count - size / 2.0) / (size / 2.0 * 0.96)
+            assertEquals("sun distance with horizon $horizon", radius.toDouble(), distance, 0.01)
+        }
     }
 
     @Test

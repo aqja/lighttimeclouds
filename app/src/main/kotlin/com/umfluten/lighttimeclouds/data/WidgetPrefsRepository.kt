@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.umfluten.lighttimeclouds.sky.SkyProjection
 import kotlinx.coroutines.flow.first
 
 /**
@@ -29,6 +30,10 @@ class WidgetPrefsRepository(private val context: Context) {
         val trailingOffset = intPreferencesKey(prefix + "trailing_offset")
         val ringStyle = stringPreferencesKey(prefix + "ring_style")
         val skyHorizon = stringPreferencesKey(prefix + "sky_horizon")
+        val skyTopElevation = intPreferencesKey(prefix + "sky_top_elevation")
+        val sunInRing = booleanPreferencesKey(prefix + "sun_in_ring")
+        val moonInRing = booleanPreferencesKey(prefix + "moon_in_ring")
+        val moonPathInRing = booleanPreferencesKey(prefix + "moon_path_in_ring")
         val weatherRingPosition = stringPreferencesKey(prefix + "weather_ring_position")
         val minuteTicks = booleanPreferencesKey(prefix + "minute_ticks")
         val solarMarks = booleanPreferencesKey(prefix + "solar_marks")
@@ -63,6 +68,11 @@ class WidgetPrefsRepository(private val context: Context) {
             trailingOffsetMinutes = prefs[k.trailingOffset] ?: d.trailingOffsetMinutes,
             ringStyle = prefs.enumOr(k.ringStyle, d.ringStyle),
             skyHorizon = prefs.enumOr(k.skyHorizon, d.skyHorizon),
+            skyTopElevationDeg = (prefs[k.skyTopElevation] ?: d.skyTopElevationDeg)
+                .coerceAtMost(SkyProjection.MAX_TOP_ELEVATION_DEG.toInt()),
+            showSunInRing = prefs[k.sunInRing] ?: d.showSunInRing,
+            showMoonInRing = prefs[k.moonInRing] ?: d.showMoonInRing,
+            showMoonPathInRing = prefs[k.moonPathInRing] ?: d.showMoonPathInRing,
             weatherRingPosition = prefs.enumOr(k.weatherRingPosition, d.weatherRingPosition),
             showMinuteTicks = prefs[k.minuteTicks] ?: d.showMinuteTicks,
             showSolarMarks = prefs[k.solarMarks] ?: d.showSolarMarks,
@@ -93,6 +103,10 @@ class WidgetPrefsRepository(private val context: Context) {
             prefs[k.trailingOffset] = settings.trailingOffsetMinutes
             prefs[k.ringStyle] = settings.ringStyle.name
             prefs[k.skyHorizon] = settings.skyHorizon.name
+            prefs[k.skyTopElevation] = settings.skyTopElevationDeg
+            prefs[k.sunInRing] = settings.showSunInRing
+            prefs[k.moonInRing] = settings.showMoonInRing
+            prefs[k.moonPathInRing] = settings.showMoonPathInRing
             prefs[k.weatherRingPosition] = settings.weatherRingPosition.name
             prefs[k.minuteTicks] = settings.showMinuteTicks
             prefs[k.solarMarks] = settings.showSolarMarks

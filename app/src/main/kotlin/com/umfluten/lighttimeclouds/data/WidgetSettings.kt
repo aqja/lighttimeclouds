@@ -19,7 +19,7 @@ enum class LabelPosition { NONE, ABOVE, BELOW }
  */
 enum class RingStyle { SKY, GRADIENT, BANDS }
 
-/** For [RingStyle.SKY]: whether the horizon is at the inner or the outer edge of the ring. */
+/** Whether the horizon is at the inner or the outer edge of the ring (sky gradient, sun and moon in the ring). */
 enum class SkyHorizon { INNER, OUTER }
 
 /**
@@ -61,6 +61,18 @@ data class WidgetSettings(
     val trailingOffsetMinutes: Int = 30,
     val ringStyle: RingStyle = RingStyle.SKY,
     val skyHorizon: SkyHorizon = SkyHorizon.INNER,
+    /**
+     * Elevation above the horizon (degrees) that the ring's far edge stands for: the sky gradient
+     * spans up to it, and sun and moon in the ring are placed on this scale. At most
+     * [com.umfluten.lighttimeclouds.sky.SkyProjection.MAX_TOP_ELEVATION_DEG].
+     */
+    val skyTopElevationDeg: Int = 45,
+    /** The sun in the day/night ring at the current time, as far from the horizon edge as it is high. */
+    val showSunInRing: Boolean = true,
+    /** Like [showSunInRing], for the moon with its phase. */
+    val showMoonInRing: Boolean = true,
+    /** With [showMoonInRing]: the moon's altitude over the whole shown time span as a thin line in the ring. */
+    val showMoonPathInRing: Boolean = true,
     val showMinuteTicks: Boolean = false,
     val showSolarMarks: Boolean = true,
     val showSunriseSunsetMarks: Boolean = true,

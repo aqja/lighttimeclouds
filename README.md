@@ -7,7 +7,8 @@ Ein Ring um ein gewöhnliches Zifferblatt zeigt den Tagesverlauf von Nacht über
 ## Features
 
 - Analoges 12h- oder 24h-Zifferblatt, minutengenau, ohne Sekundenzeiger, optional mit Minutenstrichen
-- Tag/Dämmerung/Nacht-Ring nach aktuellem Sonnenstand am konfigurierten Standort, wahlweise als „Himmel“ (Standard), Verlauf oder in festen Phasenfarben. „Himmel“ zeigt in jedem Ringabschnitt den Himmel vom Horizont nach oben (Horizont innen oder außen einstellbar): Tag und Morgen-/Abendrot aus einem physikalischen Streuungsmodell, dazu die blaue Stunde und das Nachtlila der Dämmerung
+- Tag/Dämmerung/Nacht-Ring nach aktuellem Sonnenstand am konfigurierten Standort, wahlweise als „Himmel“ (Standard), Verlauf oder in festen Phasenfarben. „Himmel“ zeigt in jedem Ringabschnitt den Himmel vom Horizont nach oben (Horizont innen oder außen einstellbar): Tag, Morgen-/Abendrot und das Blau der Dämmerung aus einem physikalischen Streuungsmodell (spektral, mit Mehrfachstreuung und Augenanpassung an die Dunkelheit)
+- Sonne und Mond (mit Phase) im Ring zur aktuellen Uhrzeit, so weit vom Horizontrand entfernt, wie sie über dem Horizont stehen; höher als dargestellt als kleiner Punkt am Rand gegenüber dem Horizont; unter dem Horizont gar nicht. Optional die Bahn des Mondes über den ganzen angezeigten Zeitraum als dünne graue Linie. Wie hoch über dem Horizont der äußere Rand reicht (10°–80°), ist einstellbar; der Himmelsverlauf passt sich an
 - Konfigurierbare Umschalt-Strategie für den Ring: feste Uhrzeiten (12h: zwei, Standard 6 und 18 Uhr; 24h: eine, Standard Mitternacht) oder kontinuierlich hinter dem Zeiger herlaufend
 - Optionale Markierungen für Sonnenmittag/-mitternacht und Sonnenauf-/untergang
 - Optional ein roter Stundenstrich beim nächsten Wecker, sobald er im angezeigten Zeitraum liegt (Android gibt nur den nächsten Wecker preis); folgt sofort jeder Änderung, beim Schlummern also der neuen Weckzeit, sofern die Wecker-App sie meldet
@@ -64,10 +65,10 @@ Alle UI-Texte liegen in `app/src/main/res/values/strings.xml` (Englisch, zugleic
 
 Die Sonnen-/Mondberechnung in `core/.../astro/SunMoonCalculator.kt` ist eine Portierung der Formeln aus [SunCalc](https://github.com/mourner/suncalc) von Vladimir Agafonkin (BSD-2-Clause, Lizenztext in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)).
 
-Die Himmelsfarben des Rings (Darstellung „Himmel“) berechnet `core/.../sky/SkyModel.kt`, eine Portierung von [Horizon](https://github.com/dnlzro/horizon) von Daniel Lazaro (MIT-Lizenz, Lizenztext in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)).
+Die Himmelsfarben des Rings (Darstellung „Himmel“) berechnet `core/.../sky/SkyModel.kt`, eine Portierung von [Horizon](https://github.com/dnlzro/horizon) von Daniel Lazaro (MIT-Lizenz), erweitert um Mehrfachstreuung nach Hillaire (2020) und eine spektrale Rechnung mit Sonnenspektrum und Ozon-Absorptionsquerschnitten aus [Precomputed Atmospheric Scattering](https://github.com/ebruneton/precomputed_atmospheric_scattering) von Eric Bruneton (BSD-3-Clause); Lizenztexte in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
 Die Wetterdaten stammen von [Open-Meteo.com](https://open-meteo.com/) (Lizenz CC BY 4.0).
 
 ## Lizenz
 
-LightTimeClouds steht unter der [MIT-Lizenz](LICENSE). Portierte Teile fremder Projekte (SunCalc, Horizon) behalten ihre eigenen Lizenzen, siehe [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+LightTimeClouds steht unter der [MIT-Lizenz](LICENSE). Portierte oder übernommene Teile fremder Projekte (SunCalc, Horizon, Precomputed Atmospheric Scattering) behalten ihre eigenen Lizenzen, siehe [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

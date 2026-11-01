@@ -29,6 +29,7 @@ import com.umfluten.lighttimeclouds.data.TemperaturePosition
 import com.umfluten.lighttimeclouds.data.WeatherRingPosition
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.sky.SkyGradientTable
+import com.umfluten.lighttimeclouds.sky.SkyProjection
 import com.umfluten.lighttimeclouds.weather.HeavyRainWarning
 import com.umfluten.lighttimeclouds.weather.PrecipitationIntensity
 import com.umfluten.lighttimeclouds.weather.TemperatureKind
@@ -185,6 +186,9 @@ object ClockFaceRenderer {
         if (settings.showSolarMarks || settings.showSunriseSunsetMarks) {
             drawSolarMarks(canvas, cx, cy, radius, bands, settings, now)
         }
+        if (settings.showSunInRing || settings.showMoonInRing) {
+            drawSkyBodies(canvas, cx, cy, radius, bands, settings, now)
+        }
         if (settings.showWeather && weather != null) {
             drawWeatherRing(canvas, cx, cy, radius, bands, settings, now, weather, dark)
         }
@@ -232,8 +236,8 @@ object ClockFaceRenderer {
         }
         // Sky style: per sample a radial gradient from the horizon colors to the upper sky (inner to
         // outer edge, or reversed per [WidgetSettings.skyHorizon]), stops spread evenly across the band.
-        val skyPositions = FloatArray(SkyGradientTable.STOPS) { k ->
-            (ringInner + (ringOuter - ringInner) * k / (SkyGradientTable.STOPS - 1)) / ringOuter
+        val skyPositions = FloatArray(SKY_STOPS) { k ->
+            (ringInner + (ringOuter - ringInner) * k / (SKY_STOPS - 1)) / ringOuter
         }
         for (i in 0 until RING_SAMPLES) {
             val a0 = 360.0 * i / RING_SAMPLES
@@ -242,7 +246,8 @@ object ClockFaceRenderer {
             val instant = resolveInstantForAngle(mid, settings, now)
             val altitude = SunMoonCalculator.sunAltitudeDegrees(instant, settings.place.latitude, settings.place.longitude)
             if (settings.ringStyle == RingStyle.SKY) {
-                val colors = skyColors(altitude).let { if (settings.skyHorizon == SkyHorizon.OUTER) it.reversedArray() else it }
+                val colors = skyColors(altitude, settings.skyTopElevationDeg.toDouble())
+                    .let { if (settings.skyHorizon == SkyHorizon.OUTER) it.reversedArray() else it }
                 paint.shader = RadialGradient(cx, cy, ringOuter, colors, skyPositions, Shader.TileMode.CLAMP)
             } else {
                 paint.color = ringColor(altitude, settings)
@@ -257,37 +262,21 @@ object ClockFaceRenderer {
     /** Below this sun altitude the sky shows only [SKY_NIGHT_FLOOR] (end of astronomical twilight). */
     private const val SKY_NIGHT_BELOW = -18.0
 
-    /** The twilight base tone follows [gradientColor] up to this sun altitude (the night purple). */
-    private const val SKY_BASE_TOP = -6.0
-
-    /** The twilight base tone fades out between these sun altitudes, leaving the modeled daylight. */
-    private const val SKY_BASE_FADE_START = -3.0
-    private const val SKY_BASE_FADE_END = 2.0
-
-    /** Twilight base: horizon tone as the sky [SKY_TWILIGHT_SPREAD]° higher, top tone as that much lower. */
-    private const val SKY_TWILIGHT_SPREAD = 3.0
+    /** Gradient stops across the band in the sky style. */
+    private const val SKY_STOPS = 24
 
     /**
-     * Sky colors for [altitudeDeg] as opaque ARGB, horizon first, as two layers combined with a
-     * "screen" blend:
-     * - the light of the physical model ([SkyGradientTable]: averaged all around, capped eye
-     *   adaptation), which supplies daylight and the red/golden glow from about -6° upward;
-     * - a twilight base tone from [gradientColor] (from [SKY_NIGHT_FLOOR] through the blue to the
-     *   night purple at [SKY_BASE_TOP]), standing in for the blue of the blue hour, which comes from
-     *   ozone absorption and multiple scattering that the single-scattering model barely captures.
-     *   It fades out around sunrise/sunset.
+     * [SKY_STOPS] sky colors for the sun at [altitudeDeg] as opaque ARGB, from the horizon up to
+     * [topElevationDeg] above it, evenly spaced in [SkyProjection]: the physical model
+     * ([SkyGradientTable]: averaged all around, with eye adaptation), which supplies daylight, the
+     * red/golden glow and the blue of twilight, over [SKY_NIGHT_FLOOR] with a "screen" blend.
      * Below [SKY_NIGHT_BELOW] only the night color remains.
      */
-    internal fun skyColors(altitudeDeg: Double): IntArray {
-        val light = SkyGradientTable.colors(altitudeDeg)
-        val t = ((altitudeDeg - SKY_BASE_FADE_START) / (SKY_BASE_FADE_END - SKY_BASE_FADE_START)).coerceIn(0.0, 1.0)
-        val baseStrength = 1.0 - t * t * (3 - 2 * t)
-        val last = SkyGradientTable.STOPS - 1
-        return IntArray(SkyGradientTable.STOPS) { k ->
-            val baseAltitude = (altitudeDeg + SKY_TWILIGHT_SPREAD * (1 - 2.0 * k / last)).coerceIn(SKY_NIGHT_BELOW, SKY_BASE_TOP)
-            val base = lerpColor(Color.BLACK, gradientColor(baseAltitude), baseStrength)
-            screenBlend(base, light[k] or (0xFF shl 24))
-        }
+    internal fun skyColors(altitudeDeg: Double, topElevationDeg: Double): IntArray {
+        val floor = SKY_NIGHT_FLOOR
+        if (altitudeDeg <= SKY_NIGHT_BELOW) return IntArray(SKY_STOPS) { floor }
+        val light = SkyGradientTable.colors(altitudeDeg, topElevationDeg, SKY_STOPS)
+        return IntArray(SKY_STOPS) { k -> screenBlend(floor, light[k] or (0xFF shl 24)) }
     }
 
     /** "Screen" blend of two opaque colors: 1 - (1 - a)(1 - b) per channel; never darker than either. */
@@ -338,6 +327,184 @@ object ClockFaceRenderer {
                 canvas.drawLine(cx + dx * inner, cy + dy * inner, cx + dx * outer, cy + dy * outer, paint)
             }
         }
+    }
+
+    // --- Sun and moon in the ring ----------------------------------------------------
+
+    /**
+     * The day/night ring read as the sky: [horizon] and [top] are the radii (px) of the horizon edge
+     * and the far edge, which stands for [topElevation] degrees above the horizon, with the
+     * elevations in between spread as by [SkyProjection], like the sky colors.
+     */
+    private class SkyBand(val horizon: Float, val top: Float, val topElevation: Double) {
+        /**
+         * Distance from the center for [altitudeDeg], not limited to the band, but at most [overshoot]
+         * band widths beyond either edge.
+         */
+        fun radiusFor(altitudeDeg: Double, overshoot: Double = Double.POSITIVE_INFINITY): Float {
+            val fraction = SkyProjection.fraction(altitudeDeg, topElevation).coerceIn(-overshoot, 1 + overshoot)
+            return horizon + (top - horizon) * fraction.toFloat()
+        }
+
+        /** [distance] px into the band from the far edge. */
+        fun fromTop(distance: Float): Float = top + if (top > horizon) -distance else distance
+    }
+
+    private fun skyBandFor(radius: Float, bands: RingBands, settings: WidgetSettings): SkyBand {
+        val inner = radius * bands.sunInner
+        val outer = radius * bands.sunOuter
+        val top = settings.skyTopElevationDeg.toDouble().coerceIn(1.0, SkyProjection.MAX_TOP_ELEVATION_DEG)
+        return when (settings.skyHorizon) {
+            SkyHorizon.INNER -> SkyBand(inner, outer, top)
+            SkyHorizon.OUTER -> SkyBand(outer, inner, top)
+        }
+    }
+
+    private const val SKY_PATH_SAMPLES = 240
+
+    /** Sizes (fractions of the dial radius) of the discs, the edge dots and the moon path line in the ring. */
+    private const val SKY_DISC_SIZE = 0.045f
+    private const val SKY_DOT_SIZE = 0.02f
+    private const val SKY_PATH_WIDTH = 0.008f
+
+    private val SUN_COLOR = Color.rgb(255, 232, 60)
+
+    /** Sun symbol in text presentation (the variation selector rules out a colored emoji). */
+    private const val SUN_SYMBOL = "\u2600\uFE0E"
+
+    /** The symbol's rays reach a bit beyond the moon disc, its core is about as large. */
+    private const val SUN_SYMBOL_SCALE = 1.3f
+
+    /**
+     * Sun and moon in the day/night ring, per settings, read as a sky: the angle is the current
+     * time, the distance from the horizon edge the current altitude, up to
+     * [WidgetSettings.skyTopElevationDeg] at the far edge. A disc (the moon with its phase) while
+     * within that range, clipped by the band's edges like a body setting behind the horizon;
+     * above it a small dot at the far edge. Below the horizon neither shows: the hour hand already
+     * points there, and the ring's colors tell whether the sun is up. With
+     * [WidgetSettings.showMoonPathInRing], the moon's altitude over the whole shown time span as a
+     * thin line, which leaves the band where the moon sets or climbs beyond the far edge. The sun
+     * needs none: the ring's colors and the sunrise/sunset marks already tell its course.
+     */
+    private fun drawSkyBodies(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        bands: RingBands,
+        settings: WidgetSettings,
+        now: ZonedDateTime,
+    ) {
+        val sky = skyBandFor(radius, bands, settings)
+        val latitude = settings.place.latitude
+        val longitude = settings.place.longitude
+        val sunAltitude = { instant: Instant -> SunMoonCalculator.sunAltitudeDegrees(instant, latitude, longitude) }
+        val moonAltitude = { instant: Instant -> SunMoonCalculator.moonAltitudeDegrees(instant, latitude, longitude) }
+        val band = Path().apply {
+            fillType = Path.FillType.EVEN_ODD
+            addCircle(cx, cy, radius * bands.sunInner, Path.Direction.CW)
+            addCircle(cx, cy, radius * bands.sunOuter, Path.Direction.CW)
+        }
+
+        if (settings.showMoonInRing && settings.showMoonPathInRing) {
+            canvas.withClip(band) { drawAltitudePath(this, cx, cy, radius, sky, settings, now, moonAltitude) }
+        }
+
+        val instant = now.toInstant()
+        val angle = dialAngle(now, settings.displayMode)
+        val discRadius = radius * SKY_DISC_SIZE
+        val dotRadius = radius * SKY_DOT_SIZE
+
+        /** Where a body at [altitude] (not below the horizon) goes: radius, and whether a disc or a dot at the far edge. */
+        fun placement(altitude: Double): Pair<Float, Boolean> =
+            if (altitude > sky.topElevation) sky.fromTop(dotRadius) to false else sky.radiusFor(altitude) to true
+
+        val moon = if (settings.showMoonInRing) moonAltitude(instant).takeIf { it >= 0.0 }?.let(::placement) else null
+        val sun = if (settings.showSunInRing) sunAltitude(instant).takeIf { it >= 0.0 }?.let(::placement) else null
+        // Two dots at the far edge would hide each other: set them apart along the edge.
+        val apart = moon != null && sun != null && !moon.second && !sun.second
+        fun angleFor(r: Float, side: Float): Double =
+            if (apart) angle + Math.toDegrees((side * dotRadius * 1.15f / r).toDouble()) else angle
+
+        moon?.let { (r, disc) ->
+            val (x, y) = pointOnDial(cx, cy, r, angleFor(r, -1f))
+            val illumination = SunMoonCalculator.moonIllumination(instant)
+            if (disc) {
+                canvas.withClip(band) { drawMoonPhase(this, x, y, discRadius, illumination, moonLitColor(true), moonShadowColor(true)) }
+            } else {
+                drawSkyDot(canvas, x, y, dotRadius, moonLitColor(true), moonShadowColor(true))
+            }
+        }
+        sun?.let { (r, disc) ->
+            val (x, y) = pointOnDial(cx, cy, r, angleFor(r, 1f))
+            if (disc) {
+                canvas.withClip(band) { drawSunSymbol(this, x, y, discRadius * SUN_SYMBOL_SCALE) }
+            } else {
+                drawSkyDot(canvas, x, y, dotRadius, SUN_COLOR, null)
+            }
+        }
+    }
+
+    /**
+     * A body's altitude ([altitudeAt]) across the ring as a thin line in [MARK_COLOR]. Broken
+     * where the shown window has its seam (oldest next to newest time). Altitudes far outside the
+     * band are capped so the line stays nearby, for the caller's clip to cut.
+     */
+    private fun drawAltitudePath(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        sky: SkyBand,
+        settings: WidgetSettings,
+        now: ZonedDateTime,
+        altitudeAt: (Instant) -> Double,
+    ) {
+        val window = shownWindow(settings, now).let { (start, end) -> Duration.between(start, end) }
+        val maxStep = window.dividedBy(SKY_PATH_SAMPLES.toLong()).multipliedBy(2)
+        val path = Path()
+        var previous: Instant? = null
+        for (i in 0..SKY_PATH_SAMPLES) {
+            val angle = 360.0 * i / SKY_PATH_SAMPLES
+            val instant = resolveInstantForAngle(angle, settings, now)
+            val (x, y) = pointOnDial(cx, cy, sky.radiusFor(altitudeAt(instant), overshoot = 0.5), angle)
+            val step = previous?.let { Duration.between(it, instant) }
+            if (step != null && !step.isNegative && step <= maxStep) path.lineTo(x, y) else path.moveTo(x, y)
+            previous = instant
+        }
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            // The grey of the sun marks: visible on the bright day sky and the dark night alike.
+            color = MARK_COLOR
+            style = Paint.Style.STROKE
+            strokeWidth = radius * SKY_PATH_WIDTH
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+        }
+        canvas.drawPath(path, paint)
+    }
+
+    /** A filled circle, with a thin [rimColor] edge unless null: the dots of bodies beyond the far edge. */
+    private fun drawSkyDot(canvas: Canvas, x: Float, y: Float, r: Float, fillColor: Int, rimColor: Int?) {
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = fillColor; style = Paint.Style.FILL }
+        canvas.drawCircle(x, y, r, paint)
+        if (rimColor == null) return
+        paint.apply { color = rimColor; style = Paint.Style.STROKE; strokeWidth = r * 0.16f }
+        canvas.drawCircle(x, y, r - paint.strokeWidth / 2f, paint)
+    }
+
+    /** [SUN_SYMBOL] centered on ([x], [y]), its rays reaching about [r] from the center. */
+    private fun drawSunSymbol(canvas: Canvas, x: Float, y: Float, r: Float) {
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = SUN_COLOR; textAlign = Paint.Align.CENTER; textSize = 100f }
+        val bounds = Rect().also { paint.getTextBounds(SUN_SYMBOL, 0, SUN_SYMBOL.length, it) }
+        paint.textSize = 100f * 2f * r / maxOf(bounds.width(), bounds.height(), 1)
+        paint.getTextBounds(SUN_SYMBOL, 0, SUN_SYMBOL.length, bounds)
+        canvas.drawText(SUN_SYMBOL, x, y - bounds.exactCenterY(), paint)
+    }
+
+    /** The point [r] px from the center at dial [angleDeg] (0 = top, clockwise). */
+    private fun pointOnDial(cx: Float, cy: Float, r: Float, angleDeg: Double): Pair<Float, Float> {
+        val rad = Math.toRadians(angleDeg - 90.0)
+        return cx + (cos(rad) * r).toFloat() to cy + (sin(rad) * r).toFloat()
     }
 
     /** Dial angle at which [instant] appears on the ring right now, or null if it is outside the shown window. */
@@ -685,7 +852,7 @@ object ClockFaceRenderer {
      */
     fun ringColor(altitudeDeg: Double, settings: WidgetSettings): Int = when (settings.ringStyle) {
         // A single representative color: the sky about halfway up the band.
-        RingStyle.SKY -> skyColors(altitudeDeg)[SkyGradientTable.STOPS / 2]
+        RingStyle.SKY -> skyColors(altitudeDeg, settings.skyTopElevationDeg.toDouble())[SKY_STOPS / 2]
         RingStyle.GRADIENT -> gradientColor(altitudeDeg)
         RingStyle.BANDS -> bandColor(SunMoonCalculator.classify(altitudeDeg))
     }
