@@ -322,10 +322,7 @@ object ClockFaceRenderer {
             }
             for (instant in events.filterNotNull()) {
                 val angle = visibleAngleFor(instant, settings, now) ?: continue
-                val rad = Math.toRadians(angle - 90.0)
-                val dx = cos(rad).toFloat()
-                val dy = sin(rad).toFloat()
-                canvas.drawLine(cx + dx * inner, cy + dy * inner, cx + dx * outer, cy + dy * outer, paint)
+                drawRadialLine(canvas, cx, cy, angle, inner, outer, paint)
             }
         }
     }
@@ -508,6 +505,13 @@ object ClockFaceRenderer {
         return cx + (cos(rad) * r).toFloat() to cy + (sin(rad) * r).toFloat()
     }
 
+    /** A line along dial [angleDeg] from [inner] to [outer] px from the center: ticks, marks and hands. */
+    private fun drawRadialLine(canvas: Canvas, cx: Float, cy: Float, angleDeg: Double, inner: Float, outer: Float, paint: Paint) {
+        val (x0, y0) = pointOnDial(cx, cy, inner, angleDeg)
+        val (x1, y1) = pointOnDial(cx, cy, outer, angleDeg)
+        canvas.drawLine(x0, y0, x1, y1, paint)
+    }
+
     /** Dial angle at which [instant] appears on the ring right now, or null if it is outside the shown window. */
     private fun visibleAngleFor(instant: Instant, settings: WidgetSettings, now: ZonedDateTime): Double? {
         val angle = dialAngle(instant.atZone(now.zone), settings.displayMode)
@@ -656,7 +660,6 @@ object ClockFaceRenderer {
         PrecipitationIntensity.HEAVY to 0.42f,
     )
 
-
     /** Cloud layer color; lighter on a [dark] background so clouds stay visible. Also used by the config app's weather chart. */
     internal fun cloudColor(condition: WeatherCondition, dark: Boolean): Int {
         val base = if (dark) CLOUD_ON_DARK else CLOUD_ON_LIGHT
@@ -784,10 +787,8 @@ object ClockFaceRenderer {
                 is TemperaturePlacement.Between -> placement.radius
                 is TemperaturePlacement.Outside -> placement.edge + labelExtent(paint, label, angle)
             }
-            val rad = Math.toRadians(angle - 90.0)
-            val x = cx + (cos(rad) * distance).toFloat()
-            val y = cy + (sin(rad) * distance).toFloat() + halfHeight
-            canvas.drawText(label, x, y, paint)
+            val (x, y) = pointOnDial(cx, cy, distance, angle)
+            canvas.drawText(label, x, y + halfHeight, paint)
         }
     }
 
@@ -908,12 +909,10 @@ object ClockFaceRenderer {
         }
 
         for ((angleDeg, label) in labels) {
-            val rad = Math.toRadians(angleDeg - 90.0)
-            val dx = cos(rad).toFloat()
-            val dy = sin(rad).toFloat()
-            canvas.drawLine(cx + dx * tickInner, cy + dy * tickInner, cx + dx * tickOuter, cy + dy * tickOuter, tickPaint)
+            drawRadialLine(canvas, cx, cy, angleDeg, tickInner, tickOuter, tickPaint)
             textPaint.getTextBounds(label, 0, label.length, bounds)
-            canvas.drawText(label, cx + dx * numeralRadius, cy + dy * numeralRadius + bounds.height() / 2f, textPaint)
+            val (x, y) = pointOnDial(cx, cy, numeralRadius, angleDeg)
+            canvas.drawText(label, x, y + bounds.height() / 2f, textPaint)
         }
 
         if (settings.showMinuteTicks) {
@@ -956,13 +955,7 @@ object ClockFaceRenderer {
         alarm: Instant,
     ) {
         val angle = visibleAngleFor(alarm, settings, now) ?: return
-        val paint = hourTickPaint(radius, ALARM_COLOR)
-        val rad = Math.toRadians(angle - 90.0)
-        val dx = cos(rad).toFloat()
-        val dy = sin(rad).toFloat()
-        val inner = radius * layout.hourTickInner
-        val outer = radius * layout.tickOuter
-        canvas.drawLine(cx + dx * inner, cy + dy * inner, cx + dx * outer, cy + dy * outer, paint)
+        drawRadialLine(canvas, cx, cy, angle, radius * layout.hourTickInner, radius * layout.tickOuter, hourTickPaint(radius, ALARM_COLOR))
     }
 
     /** 60 short ticks for the minute hand; every fifth is skipped since hour ticks (both modes) sit on multiples of 30°. */
@@ -976,10 +969,7 @@ object ClockFaceRenderer {
         val inner = radius * layout.minuteTickInner
         for (minute in 0 until 60) {
             if (minute % 5 == 0) continue
-            val rad = Math.toRadians(minute * 6.0 - 90.0)
-            val dx = cos(rad).toFloat()
-            val dy = sin(rad).toFloat()
-            canvas.drawLine(cx + dx * inner, cy + dy * inner, cx + dx * outer, cy + dy * outer, paint)
+            drawRadialLine(canvas, cx, cy, minute * 6.0, inner, outer, paint)
         }
     }
 
@@ -990,8 +980,9 @@ object ClockFaceRenderer {
      * [MoonStyle.ON_HOUR_HAND] the disc is drawn together with the hands, see [drawMoonOnHourHand]).
      * The angle of each point comes from [moonPointAt]. The distance from the center shows the moon's
      * altitude: a faint circle marks the horizon, above it the moon climbs outward, below it sinks
-     * inward (drawn dashed and fainter). Path and horizon are drawn in the chrome [color]. The path covers the same time window as the day/night ring (the active
-     * 12h or 24h window, moving with it), so it always contains the current point. With
+     * inward (drawn dashed and fainter). Path and horizon are drawn in the chrome [color]. The path
+     * covers the same time window as the day/night ring (the active 12h or 24h window, moving with
+     * it), so it always contains the current point. With
      * [WidgetSettings.showMoonCompass], a dot and letter mark where the moon passes north, east,
      * south or west.
      */
@@ -1094,14 +1085,14 @@ object ClockFaceRenderer {
         canvas.restore()
     }
 
-    /**
-     * Moon azimuths (SunCalc convention: from south, positive toward west) labeled on the path, with
-     * their letter. North appears twice so that crossings from either side of ±180° are found.
-     */
     /** Distance of a compass letter's center from its dot, and the least gap to the numerals, as fractions of the dial radius. */
     private const val COMPASS_LABEL_OFFSET = 0.06f
     private const val COMPASS_LABEL_CLEARANCE = 0.015f
 
+    /**
+     * Moon azimuths (SunCalc convention: from south, positive toward west) labeled on the path, with
+     * their letter. North appears twice so that crossings from either side of ±180° are found.
+     */
     private val COMPASS_POINTS = listOf(
         -180.0 to R.string.compass_north,
         -90.0 to R.string.compass_east,
@@ -1204,9 +1195,8 @@ object ClockFaceRenderer {
         }
         val angle = dialAngle(dialTime, settings.displayMode)
         val position = SunMoonCalculator.moonPosition(time.toInstant(), settings.place.latitude, settings.place.longitude)
-        val r = radius * moonOrbitRadiusFactor(position.altitudeDegrees, settings, layout)
-        val rad = Math.toRadians(angle - 90.0)
-        return MoonPoint(cx + (cos(rad) * r).toFloat(), cy + (sin(rad) * r).toFloat(), position.altitudeDegrees > 0.0, position.azimuthDegrees)
+        val (x, y) = pointOnDial(cx, cy, radius * moonOrbitRadiusFactor(position.altitudeDegrees, settings, layout), angle)
+        return MoonPoint(x, y, position.altitudeDegrees > 0.0, position.azimuthDegrees)
     }
 
     private fun moonLitColor(dark: Boolean): Int = if (dark) Color.rgb(235, 235, 225) else Color.rgb(250, 250, 245)
@@ -1305,18 +1295,11 @@ object ClockFaceRenderer {
             strokeCap = Paint.Cap.ROUND
         }
 
-        drawHand(canvas, cx, cy, hourAngle, radius * layout.hourHand, hourPaint)
+        drawRadialLine(canvas, cx, cy, hourAngle, 0f, radius * layout.hourHand, hourPaint)
         if (settings.showMoon && settings.moonStyle == MoonStyle.ON_HOUR_HAND) {
             drawMoonOnHourHand(canvas, cx, cy, radius, settings, layout, handTime, dark, color)
         }
-        drawHand(canvas, cx, cy, minuteAngle, radius * layout.minuteHand, minutePaint)
-    }
-
-    private fun drawHand(canvas: Canvas, cx: Float, cy: Float, angleDeg: Double, length: Float, paint: Paint) {
-        val rad = Math.toRadians(angleDeg - 90.0)
-        val ex = cx + (cos(rad) * length).toFloat()
-        val ey = cy + (sin(rad) * length).toFloat()
-        canvas.drawLine(cx, cy, ex, ey, paint)
+        drawRadialLine(canvas, cx, cy, minuteAngle, 0f, radius * layout.minuteHand, minutePaint)
     }
 
     private fun drawCenterPin(canvas: Canvas, cx: Float, cy: Float, radius: Float, color: Int) {
