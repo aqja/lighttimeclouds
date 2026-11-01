@@ -39,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.umfluten.lighttimeclouds.R
+import com.umfluten.lighttimeclouds.data.RingStyle
 import com.umfluten.lighttimeclouds.data.SummaryPosition
 import com.umfluten.lighttimeclouds.data.WeatherRepository
 import com.umfluten.lighttimeclouds.data.WidgetSettings
@@ -65,9 +66,10 @@ private data class PreviewFrame(
 
 /**
  * The widget as drawn with the current (possibly not yet saved) settings, with sliders for latitude,
- * longitude, day of the year and time of day. The sliders only affect the preview; the time stays
- * in the time zone of the widget's place. Values start at the place and the current time, and
- * start over when another place is chosen.
+ * longitude, day of the year, time of day and, while the ring shows the sky, the elevation at the
+ * ring's far edge. The sliders only affect the preview; the time stays in the time zone of the
+ * widget's place. Values start at the place, the current time and the set elevation, and start
+ * over when another place (or elevation) is chosen in the settings.
  */
 @Composable
 internal fun PreviewTab(settings: WidgetSettings, padding: PaddingValues) {
@@ -82,8 +84,12 @@ internal fun PreviewTab(settings: WidgetSettings, padding: PaddingValues) {
     var minuteOfDay by rememberSaveable(place) {
         mutableIntStateOf(ZonedDateTime.now(place.zone).let { it.hour * 60 + it.minute })
     }
+    var skyTopElevation by rememberSaveable(place, settings.skyTopElevationDeg) {
+        mutableIntStateOf(settings.skyTopElevationDeg)
+    }
     fun reset() {
         val now = ZonedDateTime.now(place.zone)
+        skyTopElevation = settings.skyTopElevationDeg
         latitude = place.latitude.toFloat()
         longitude = place.longitude.toFloat()
         dayOfYear = now.dayOfYear
@@ -108,7 +114,10 @@ internal fun PreviewTab(settings: WidgetSettings, padding: PaddingValues) {
     }
     val frame by rememberUpdatedState(
         PreviewFrame(
-            settings.copy(place = place.copy(latitude = latitude.toDouble(), longitude = longitude.toDouble())),
+            settings.copy(
+                place = place.copy(latitude = latitude.toDouble(), longitude = longitude.toDouble()),
+                skyTopElevationDeg = skyTopElevation,
+            ),
             now,
             weather,
             nextAlarm,
@@ -197,6 +206,16 @@ internal fun PreviewTab(settings: WidgetSettings, padding: PaddingValues) {
             range = 0f..(24 * 60 - 1).toFloat(),
             onChange = { minuteOfDay = it.roundToInt() },
         )
+        if (settings.ringStyle == RingStyle.SKY || settings.showSunInRing || settings.showMoonInRing) {
+            LabeledSlider(
+                label = stringResource(R.string.sky_top_elevation_label),
+                value = stringResource(R.string.sky_top_elevation_value, skyTopElevation),
+                position = skyTopElevation.toFloat(),
+                range = SKY_TOP_ELEVATION_MIN.toFloat()..SKY_TOP_ELEVATION_MAX.toFloat(),
+                steps = (SKY_TOP_ELEVATION_MAX - SKY_TOP_ELEVATION_MIN) / SKY_TOP_ELEVATION_STEP - 1,
+                onChange = { skyTopElevation = it.roundToInt() },
+            )
+        }
         TextButton(onClick = ::reset, modifier = Modifier.align(Alignment.End)) {
             Text(stringResource(R.string.preview_reset))
         }

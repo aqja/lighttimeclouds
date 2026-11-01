@@ -529,6 +529,6 @@ private fun SwitchTimeRow(label: String, minutesOfDay: Int, onPicked: (Int) -> U
 }
 
 /** Range and step (degrees) of the elevation shown at the far edge of the ring. */
-private const val SKY_TOP_ELEVATION_MIN = 10
-private const val SKY_TOP_ELEVATION_MAX = SkyProjection.MAX_TOP_ELEVATION_DEG.toInt()
-private const val SKY_TOP_ELEVATION_STEP = 5
+internal const val SKY_TOP_ELEVATION_MIN = 10
+internal const val SKY_TOP_ELEVATION_MAX = SkyProjection.MAX_TOP_ELEVATION_DEG.toInt()
+internal const val SKY_TOP_ELEVATION_STEP = 5
