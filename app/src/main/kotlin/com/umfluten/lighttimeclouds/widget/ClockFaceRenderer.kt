@@ -312,7 +312,7 @@ object ClockFaceRenderer {
             val events = buildList {
                 if (settings.showSolarMarks) {
                     add(times.solarNoon)
-                    add(times.nadir)
+                    add(times.solarMidnight)
                 }
                 if (settings.showSunriseSunsetMarks) {
                     // Null during polar day/night, when the sun never crosses the horizon.
@@ -1090,7 +1090,7 @@ object ClockFaceRenderer {
     private const val COMPASS_LABEL_CLEARANCE = 0.015f
 
     /**
-     * Moon azimuths (SunCalc convention: from south, positive toward west) labeled on the path, with
+     * Moon azimuths (from south, positive toward west, as in [SunMoonCalculator]) labeled on the path, with
      * their letter. North appears twice so that crossings from either side of ±180° are found.
      */
     private val COMPASS_POINTS = listOf(

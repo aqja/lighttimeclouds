@@ -40,35 +40,26 @@ object SolarDay {
         fun timesFor(date: LocalDate) =
             SunMoonCalculator.sunTimes(date.atTime(12, 0).atZone(zone).toInstant(), latitude, longitude)
 
-        var date = now.atZone(zone).toLocalDate()
-        var times = timesFor(date)
-        var next = timesFor(date.plusDays(1))
-        if (times.nadir?.isAfter(now) == true) {
-            date = date.minusDays(1)
-            next = times
-            times = timesFor(date)
-        } else if (next.nadir?.isAfter(now) == false) {
-            date = date.plusDays(1)
-            times = next
-            next = timesFor(date.plusDays(1))
-        }
+        val date = now.atZone(zone).toLocalDate()
+        val times = listOf(date.minusDays(1), date, date.plusDays(1)).map(::timesFor)
+            .first { !it.solarMidnight.isAfter(now) && it.nextSolarMidnight.isAfter(now) }
 
         return listOf(
-            SolarEvent(SolarEventType.SOLAR_MIDNIGHT, times.nadir),
-            SolarEvent(SolarEventType.ASTRONOMICAL_DAWN, times.nightEnd),
+            SolarEvent(SolarEventType.SOLAR_MIDNIGHT, times.solarMidnight),
+            SolarEvent(SolarEventType.ASTRONOMICAL_DAWN, times.astronomicalDawn),
             SolarEvent(SolarEventType.NAUTICAL_DAWN, times.nauticalDawn),
-            SolarEvent(SolarEventType.CIVIL_DAWN, times.dawn),
+            SolarEvent(SolarEventType.CIVIL_DAWN, times.civilDawn),
             SolarEvent(SolarEventType.SUNRISE, times.sunrise),
             SolarEvent(SolarEventType.SUNRISE_END, times.sunriseEnd),
             SolarEvent(SolarEventType.GOLDEN_HOUR_END, times.goldenHourEnd),
             SolarEvent(SolarEventType.SOLAR_NOON, times.solarNoon),
-            SolarEvent(SolarEventType.GOLDEN_HOUR_START, times.goldenHour),
+            SolarEvent(SolarEventType.GOLDEN_HOUR_START, times.goldenHourStart),
             SolarEvent(SolarEventType.SUNSET_START, times.sunsetStart),
             SolarEvent(SolarEventType.SUNSET, times.sunset),
-            SolarEvent(SolarEventType.CIVIL_DUSK, times.dusk),
+            SolarEvent(SolarEventType.CIVIL_DUSK, times.civilDusk),
             SolarEvent(SolarEventType.NAUTICAL_DUSK, times.nauticalDusk),
-            SolarEvent(SolarEventType.ASTRONOMICAL_DUSK, times.night),
-            SolarEvent(SolarEventType.SOLAR_MIDNIGHT, next.nadir),
+            SolarEvent(SolarEventType.ASTRONOMICAL_DUSK, times.astronomicalDusk),
+            SolarEvent(SolarEventType.SOLAR_MIDNIGHT, times.nextSolarMidnight),
         )
     }
 

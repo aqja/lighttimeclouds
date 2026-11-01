@@ -87,6 +87,7 @@ class SunMoonCalculatorTest {
         assertEquals(12.0, SunMoonCalculator.moonLagHours(fullMoon), 1.0)
     }
 
+    /** The times themselves are checked against DE440s in [EphemerisReferenceTest]. */
     @Test
     fun `moonrise and moonset are horizon crossings in the right direction`() {
         val lat = 52.5208
@@ -97,8 +98,9 @@ class SunMoonCalculatorTest {
         val set = requireNotNull(times.set)
 
         fun alt(instant: Instant) = SunMoonCalculator.moonAltitudeDegrees(instant, lat, lon)
-        assertEquals(0.133, alt(rise), 0.3)
-        assertEquals(0.133, alt(set), 0.3)
+        // Upper limb on the horizon: the center is about a quarter degree below it.
+        assertEquals(-0.25, alt(rise), 0.1)
+        assertEquals(-0.25, alt(set), 0.1)
         assertTrue(alt(rise.plusSeconds(1800)) > alt(rise.minusSeconds(1800)))
         assertTrue(alt(set.plusSeconds(1800)) < alt(set.minusSeconds(1800)))
     }
