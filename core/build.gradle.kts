@@ -22,7 +22,7 @@ dependencies {
 
 // The sky color table is computed from SkyModel at build time instead of living in the source
 // tree as a binary (F-Droid builds everything from source). Reruns only when the code changes.
-val generateSkyTable by tasks.registering(JavaExec::class) {
+val generateSkyTable = tasks.register<JavaExec>("generateSkyTable") {
     description = "Computes the sky color table resource from SkyModel."
     val outputDir = layout.buildDirectory.dir("generated/skyTable")
     classpath = sourceSets.main.get().output.classesDirs + configurations.runtimeClasspath.get()
