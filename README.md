@@ -48,7 +48,7 @@ Voraussetzungen:
 
 ```sh
 ./gradlew :core:test        # Unit-Tests der Astronomie-, Zeit-, Wetter- und Himmelslogik
-./gradlew :app:testDebugUnitTest  # Renderer-Tests; rendert Vorschaubilder nach app/build/previews/ (Robolectric)
+./gradlew :app:testDebugUnitTest  # Renderer-Tests; rendert Vorschaubilder nach app/build/previews/<Gruppe>/ (Robolectric)
 ./gradlew assembleDebug     # APK unter app/build/outputs/apk/debug/
 ./gradlew installDebug      # direkt auf ein per adb verbundenes Gerät
 ```
