@@ -250,6 +250,17 @@ class ClockFacePreviewTest {
         render("moon_on_hour_hand_24h_low", onHand.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR), null, darkBackground = true, at = lowMoon)
         render("moon_separate_hand_24h", separate.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR), null, darkBackground = true, at = waningGibbous)
         render("moon_on_hour_hand_no_compass", onHand.copy(showMoonCompass = false), null, darkBackground = true, at = waningGibbous)
+        // High moon passing south at the bottom numeral: the letter moves inside the path, clear of the "12".
+        val highMoon = ZonedDateTime.of(2026, 11, 1, 15, 0, 0, 0, Place.DEFAULT.zone)
+        val separate24 = separate.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR)
+        render("moon_separate_hand_24h_high_south", separate24, null, darkBackground = true, at = highMoon)
+        render(
+            "moon_separate_hand_24h_high_south_temperature",
+            weatherSettings.copy(colorMode = ColorMode.DARK, moonStyle = MoonStyle.SEPARATE_HAND, displayMode = DisplayMode.TWENTY_FOUR_HOUR),
+            mixedForecast(),
+            darkBackground = true,
+            at = highMoon,
+        )
     }
 
     @Test

@@ -41,6 +41,7 @@ import java.time.LocalTime
 import java.time.ZonedDateTime
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.roundToInt
@@ -895,11 +896,7 @@ object ClockFaceRenderer {
         color: Int,
     ) {
         val tickPaint = hourTickPaint(radius, color)
-        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            this.color = color
-            textSize = radius * layout.numeralSize
-            textAlign = Paint.Align.CENTER
-        }
+        val textPaint = numeralPaint(radius, layout, color)
         val tickOuter = radius * layout.tickOuter
         val tickInner = radius * layout.hourTickInner
         val numeralRadius = radius * layout.numeralRadius
@@ -923,6 +920,19 @@ object ClockFaceRenderer {
             drawMinuteTicks(canvas, cx, cy, radius, layout, color)
         }
     }
+
+    private fun numeralPaint(radius: Float, layout: DialLayout, color: Int) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        this.color = color
+        textSize = radius * layout.numeralSize
+        textAlign = Paint.Align.CENTER
+    }
+
+    /**
+     * How close to the center (px) the numerals reach at [angleDeg], taking each as wide as two
+     * digits; something reaching only up to here stays clear of them.
+     */
+    private fun numeralsInnerEdge(radius: Float, layout: DialLayout, angleDeg: Double): Float =
+        radius * layout.numeralRadius - labelExtent(numeralPaint(radius, layout, Color.BLACK), "00", angleDeg)
 
     /** Signal red, clearly apart from the chrome and the weather colors on light and dark backgrounds. */
     private val ALARM_COLOR = Color.rgb(225, 45, 45)
@@ -1059,7 +1069,7 @@ object ClockFaceRenderer {
                 pathEffect = null
             },
         )
-        drawCompassPoints(context, canvas, cx, cy, radius, color, compassPoints.map { (time, label) -> pointAt(time) to label })
+        drawCompassPoints(context, canvas, cx, cy, radius, layout, color, compassPoints.map { (time, label) -> pointAt(time) to label })
         if (settings.moonStyle != MoonStyle.SEPARATE_HAND) return
 
         // Hand and phase disc at the current position; faded while the moon is below the horizon.
@@ -1088,6 +1098,10 @@ object ClockFaceRenderer {
      * Moon azimuths (SunCalc convention: from south, positive toward west) labeled on the path, with
      * their letter. North appears twice so that crossings from either side of ±180° are found.
      */
+    /** Distance of a compass letter's center from its dot, and the least gap to the numerals, as fractions of the dial radius. */
+    private const val COMPASS_LABEL_OFFSET = 0.06f
+    private const val COMPASS_LABEL_CLEARANCE = 0.015f
+
     private val COMPASS_POINTS = listOf(
         -180.0 to R.string.compass_north,
         -90.0 to R.string.compass_east,
@@ -1096,13 +1110,18 @@ object ClockFaceRenderer {
         180.0 to R.string.compass_north,
     )
 
-    /** A dot on the path at each of [points], with its letter just outside it (away from the center). */
+    /**
+     * A dot on the path at each of [points], with its letter just outside it (away from the center),
+     * or just inside it where the letter would otherwise run into the numerals, as when the moon
+     * passes south high up.
+     */
     private fun drawCompassPoints(
         context: Context,
         canvas: Canvas,
         cx: Float,
         cy: Float,
         radius: Float,
+        layout: DialLayout,
         color: Int,
         points: List<Pair<MoonPoint, Int>>,
     ) {
@@ -1122,8 +1141,11 @@ object ClockFaceRenderer {
             val dx = point.x - cx
             val dy = point.y - cy
             val distance = hypot(dx, dy).coerceAtLeast(1f)
-            val offset = radius * 0.06f
             val label = context.getString(labelRes)
+            val angle = Math.toDegrees(atan2(dx.toDouble(), -dy.toDouble()))
+            val outward = distance + COMPASS_LABEL_OFFSET * radius + labelExtent(textPaint, label, angle) <=
+                numeralsInnerEdge(radius, layout, angle) - COMPASS_LABEL_CLEARANCE * radius
+            val offset = radius * COMPASS_LABEL_OFFSET * (if (outward) 1f else -1f)
             textPaint.getTextBounds(label, 0, label.length, bounds)
             canvas.drawText(label, point.x + dx / distance * offset, point.y + dy / distance * offset + bounds.height() / 2f, textPaint)
         }
