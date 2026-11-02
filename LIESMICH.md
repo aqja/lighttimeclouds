@@ -1,5 +1,7 @@
 # LightTimeClouds
 
+[English](README.md) | **Deutsch**
+
 Android-Homescreen-Widget: eine analoge Sonnen- und Monduhr, inspiriert von [sunclock.net](https://sunclock.net).
 
 Ein Ring um ein gewöhnliches Zifferblatt zeigt den Tagesverlauf von Nacht über Dämmerung bis Tag am aktuellen Standort, ergänzt um einen Mond-Marker mit aktueller Phase. Anders als die 24h-Vorlage nutzt LightTimeClouds standardmäßig ein normales **12-Stunden-Zifferblatt** (optional auch 24h).
@@ -23,7 +25,6 @@ Ein Ring um ein gewöhnliches Zifferblatt zeigt den Tagesverlauf von Nacht über
 - Optionaler Wetter-Ring innerhalb des Tag/Nacht-Rings oder ganz außen: Bewölkung als Grauton (bei klarem Himmel durchsichtig), darüber Niederschlag in Blau (Schnee violett) – je dunkler, desto mehr; je deckender, desto wahrscheinlicher. Vergangene Stunden abgeschwächt. Vorhersage von Open-Meteo, etwa alle zwei Stunden im Hintergrund geladen (nicht bei niedrigem Akkustand), nur wenn ein Widget den Ring nutzt; dafür werden die Koordinaten des Orts an open-meteo.com übertragen
 - Optional Luft- oder gefühlte Temperatur (Mittelwert je Abschnitt) zwischen den Stundenziffern oder als Skala um den äußersten Ring
 - „Wetter in Worten“ im Tab „Wetter“ und optional links, rechts oder unter der Uhr: Vergleich mit gestern um dieselbe Zeit, eine deutlich abweichende gefühlte Temperatur und Regen oder Schnee in den nächsten 3 bzw. 6 Stunden, nach festen Regeln aus der Vorhersage
-- Geplant: genauere Astronomie nach Meeus
 
 ## Projektstruktur
 
@@ -72,7 +73,7 @@ Alle UI-Texte liegen in `app/src/main/res/values/strings.xml` (Englisch, zugleic
 
 ## Credits
 
-Die Sonnen- und Mondberechnung (`core/.../astro/`) beruht direkt auf den Primärquellen: der Mond auf der Mondtheorie ELP 2000-82B (M. Chapront-Touzé, J. Chapront, A&A 124, 50, 1983 und A&A 190, 342, 1988), die Sonne auf der Planetentheorie VSOP87 (P. Bretagnon, G. Francou, A&A 202, 309, 1988), beide in der Fassung des [IMCCE](https://www.imcce.fr/) (Observatoire de Paris) und für die App auf etwa 10″ gekürzt; Nutation, Schiefe der Ekliptik und Sternzeit folgen den IERS Conventions 2010 (IERS Technical Note 36), die Refraktion Sæmundsson (1986). Geprüft wird gegen die JPL-Ephemeride DE440s. Angeregt wurden Umfang und Auswahl der Sonnenereignisse von [SunCalc](https://github.com/mourner/suncalc) von Vladimir Agafonkin, das frühere Versionen der App portiert hatten.
+Die Sonnen- und Mondberechnung (`core/.../astro/`) beruht direkt auf den Primärquellen: der Mond auf der Mondtheorie ELP 2000-82B (M. Chapront-Touzé, J. Chapront, A&A 124, 50, 1983 und A&A 190, 342, 1988), die Sonne auf der Planetentheorie VSOP87 (P. Bretagnon, G. Francou, A&A 202, 309, 1988), beide in der Fassung des [IMCCE](https://www.imcce.fr/) (Observatoire de Paris) und für die App gekürzt (zwischen 2000 und 2050 höchstens 4″ Fehler beim Mond, 2″ bei der Sonne); Nutation, Schiefe der Ekliptik und Sternzeit folgen den IERS Conventions 2010 (IERS Technical Note 36), die Refraktion Sæmundsson (1986). Geprüft wird gegen die JPL-Ephemeride DE440s. Angeregt wurden Umfang und Auswahl der Sonnenereignisse von [SunCalc](https://github.com/mourner/suncalc) von Volodymyr Agafonkin, das frühere Versionen der App portiert hatten.
 
 Die Himmelsfarben des Rings (Darstellung „Himmel“) berechnet `core/.../sky/SkyModel.kt`, eine Portierung von [Horizon](https://github.com/dnlzro/horizon) von Daniel Lazaro (MIT-Lizenz), das auf [„Production Sky Rendering“](https://www.shadertoy.com/view/slSXRW) von Andrew Helmer (MIT laut Autor) und dem Artikel von Sébastien Hillaire (2020) beruht, erweitert um Mehrfachstreuung nach Hillaire (2020) und eine spektrale Rechnung mit Sonnenspektrum und Ozon-Absorptionsquerschnitten aus [Precomputed Atmospheric Scattering](https://github.com/ebruneton/precomputed_atmospheric_scattering) von Eric Bruneton (BSD-3-Clause); Lizenztexte in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
