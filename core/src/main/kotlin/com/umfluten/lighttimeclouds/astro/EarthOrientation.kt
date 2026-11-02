@@ -31,7 +31,8 @@ internal class EarthOrientation private constructor(
             val d = (1072260.70369 + (1602961601.2090 - 6.3706 * t) * t) * ARCSEC
             val omega = (450160.398036 + (-6962890.5431 + 7.4722 * t) * t) * ARCSEC
 
-            // Largest terms of the IAU 2000A lunisolar nutation (IERS TN36 tables 5.3a and 5.3b), arcseconds.
+            // Largest terms of the IAU 2000A lunisolar nutation (Mathews et al. 2002, MHB2000 values as in
+            // SOFA nut00a; IERS TN36 tables 5.3a/5.3b list the IAU 2000A_R06 values, a few µas apart), arcseconds.
             val a1 = omega
             val a2 = 2 * f - 2 * d + 2 * omega
             val a3 = 2 * f + 2 * omega

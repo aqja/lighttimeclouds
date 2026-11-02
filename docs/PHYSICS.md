@@ -114,12 +114,16 @@ D  &= 1\,072\,260.70369 + 1\,602\,961\,601.2090\,T - 6.3706\,T^2 &&\text{(mean e
 \end{aligned}
 ```
 
+The constant terms of $l'$ and $D$ are rounded to five decimals as in the MHB2000 code, which TN36
+mentions right below eq. 5.43 (a difference of 2 µas).
 The Moon's mean anomaly $l$ is not needed, since none of the nutation terms used depends on it.
 
 ### 3.2 Nutation
 
-The largest terms of the IAU 2000A lunisolar nutation (Mathews, Herring, Buffett 2002 [7]; TN36
-tables 5.3a/5.3b [4]), in arcseconds:
+The largest terms of the IAU 2000A lunisolar nutation (Mathews, Herring, Buffett 2002 [7]) in the
+original MHB2000 version, as also used by the SOFA routine `nut00a`, in arcseconds. TN36, tables
+5.3a/5.3b [4], lists the same terms in the version adjusted to IAU 2006, IAU 2000A_R06; its
+coefficients differ by at most a few µas (time terms: a few µas per century).
 
 ```math
 \begin{aligned}
@@ -146,7 +150,8 @@ Mean obliquity, IAU 2006 (Capitaine, Wallace, Chapront 2003 [8]; TN36 eq. 5.40 [
 
 ### 3.4 Sidereal time
 
-Earth rotation angle (Capitaine, Guinot, McCarthy 2000 [9]; TN36 eq. 5.15 [4]) with
+Earth rotation angle (Capitaine, Guinot, McCarthy 2000 [9]; TN36 eq. 5.14 [4]; the code uses the
+equivalent form eq. 5.15) with
 $D_U = \mathrm{JD}_\mathrm{UT1} - 2\,451\,545.0$:
 
 ```math
@@ -533,8 +538,8 @@ Horizon.
 
 ### 9.1 Atmosphere
 
-A spherical shell between ground radius $R_g = 6360\,\mathrm{km}$ and top $R_t = 6460\,\mathrm{km}$
-(100 km of atmosphere) [24; 26]. Three constituents with relative density profiles over the
+A spherical shell between ground radius $R_g = 6360\,\mathrm{km}$ [24; 26] and top
+$R_t = 6460\,\mathrm{km}$ (100 km of atmosphere) [24]; Bruneton [26] puts the top at 6420 km. Three constituents with relative density profiles over the
 height $h$:
 
 ```math
@@ -551,11 +556,11 @@ Coefficients at the ground or at the ozone peak (in 1/m):
 | Quantity | Value | Origin |
 |---|---|---|
 | Rayleigh scattering $\beta_R$ | 5.802·10⁻⁶ / 13.558·10⁻⁶ / 33.1·10⁻⁶ (R/G/B) | $1.24062\cdot10^{-6}\,(\lambda/\mu\mathrm{m})^{-4}$ at 680/550/440 nm [24; 26] |
-| Mie extinction $\beta_M^\mathrm{ext}$ | 4.44·10⁻⁶ | Ångström β 5.328·10⁻³ / 1.2 km [26] |
+| Mie extinction $\beta_M^\mathrm{ext}$ | 4.44·10⁻⁶ | Ångström β 5.328·10⁻³ / 1.2 km [26]; likewise Hillaire's reference code [24]. Table 1 of the paper gives a Mie absorption of 4.40·10⁻⁶ instead of 0.444·10⁻⁶ |
 | Mie scattering $\beta_M$ | 3.996·10⁻⁶ | single-scattering albedo 0.9 · extinction [24; 26] |
 | Ozone absorption $\beta_O$ (RGB) | 0.65·10⁻⁶ / 1.881·10⁻⁶ / 0.085·10⁻⁶ | [24] |
 | Ozone absorption $\beta_O$ (spectral) | $\sigma_{O_3}(\lambda)\cdot n_\mathrm{max}$ | section [10.1](#101-spectral-data) |
-| Ground albedo $a$ | 0.3 | the app's value (multiple scattering only) |
+| Ground albedo $a$ | 0.3 | as in Hillaire's paper [24] (multiple scattering only) |
 
 Rayleigh scatters without absorbing, ozone only absorbs, aerosol does both (gray, i.e. independent
 of wavelength).
@@ -677,7 +682,8 @@ three wavelengths it turns into a purple.
 ### 10.2 Spectrum → color
 
 The radiance $L(\lambda)$ is integrated to XYZ with the CIE 1931 color matching functions. These are
-replaced by the analytic multi-lobe Gaussian fit of Wyman, Sloan and Shirley (2013) [32]:
+replaced by the analytic multi-lobe Gaussian fit of Wyman, Sloan and Shirley (2013) [32, sec. 2.2]. The widths $\sigma_1, \sigma_2$ are given here in nm;
+table 1 of the paper lists their reciprocals:
 
 ```math
 X = \sum_\lambda L(\lambda)\,\bar x(\lambda)\,\Delta\lambda \ \ (\text{likewise } Y, Z),\qquad
@@ -925,10 +931,10 @@ time of day. Precipitation is checked for the next 3 and 6 hours; snow takes pre
 2. S. E. Urban, P. K. Seidelmann (eds.): *Explanatory Supplement to the Astronomical Almanac*,
    3rd ed., University Science Books, Mill Valley 2013.
 3. International Astronomical Union: Resolution B2 (2012), re-definition of the astronomical unit.
-   <https://www.iau.org/static/resolutions/IAU2012_English.pdf>
+   <https://syrte.obspm.fr/IAU_resolutions/Res_IAU2012_B2.pdf>
 4. G. Petit, B. Luzum (eds.): *IERS Conventions (2010)*, IERS Technical Note No. 36,
    Verlag des Bundesamts für Kartographie und Geodäsie, Frankfurt am Main 2010.
-   <https://www.iers.org/IERS/EN/Publications/TechnicalNotes/tn36.html>
+   <https://www.iers.org/TN36>
 5. IERS Earth Orientation Centre: *Bulletin C* (leap seconds, TAI − UTC).
    <https://hpiers.obspm.fr/eoppc/bul/bulc/>
 6. J. L. Simon, P. Bretagnon, J. Chapront, M. Chapront-Touzé, G. Francou, J. Laskar: Numerical
@@ -952,7 +958,7 @@ time of day. Precipitation is checked for the next 3 and 6 hours; snow takes pre
 14. IMCCE, Observatoire de Paris: data server for ELP 2000-82B and VSOP87.
     <https://ftp.imcce.fr/pub/ephem/moon/elp82b/>, <https://ftp.imcce.fr/pub/ephem/planets/vsop87/>
 15. National Imagery and Mapping Agency: *Department of Defense World Geodetic System 1984*,
-    NIMA TR8350.2, 3rd ed. (2000).
+    NIMA TR8350.2, 3rd ed., Amendment 1 (3 January 2000).
 16. Þ. Sæmundsson: Astronomical Refraction. *Sky and Telescope* 72, 70 (July 1986).
 17. U.S. Naval Observatory, Astronomical Applications Department: Rise, Set, and Twilight
     Definitions. <https://aa.usno.navy.mil/faq/RST_defs>
@@ -987,8 +993,8 @@ time of day. Precipitation is checked for the next 3 and 6 hours; snow takes pre
 29. Á. González: Measurement of Areas on a Sphere Using Fibonacci and Latitude–Longitude Lattices.
     *Mathematical Geosciences* 42, 49–64 (2010). <https://doi.org/10.1007/s11004-009-9257-x>
 30. ASTM G173-03: *Standard Tables for Reference Solar Spectral Irradiances: Direct Normal and
-    Hemispherical on 37° Tilted Surface*, ASTM International. Data: NREL,
-    <https://www.nrel.gov/grid/solar-resource/spectra-am1.5.html>
+    Hemispherical on 37° Tilted Surface*, ASTM International. Data: National Laboratory of the
+    Rockies (formerly NREL), <https://www.nlr.gov/grid/solar-resource/spectra-am1.5>
 31. A. Serdyuchenko, V. Gorshelev, M. Weber, W. Chehade, J. P. Burrows: High spectral resolution
     ozone absorption cross-sections – Part 2: Temperature dependence. *Atmospheric Measurement
     Techniques* 7, 625–636 (2014). <https://doi.org/10.5194/amt-7-625-2014>; data: IUP Bremen,
