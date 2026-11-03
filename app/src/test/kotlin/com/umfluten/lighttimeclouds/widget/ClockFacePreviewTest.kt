@@ -121,7 +121,11 @@ class ClockFacePreviewTest {
     private fun renderClock(settings: WidgetSettings, weather: WeatherForecast?, at: ZonedDateTime = now, alarm: ZonedDateTime? = null): Bitmap =
         ClockFaceRenderer.render(RuntimeEnvironment.getApplication(), 600, settings, weather, at, alarm?.toInstant())
 
-    private val weatherSettings = WidgetSettings(widgetId = 1, showWeather = true, temperatureDisplay = TemperatureDisplay.AIR)
+    /** Weather ring and temperatures inside the dial, which the scenarios below vary from. */
+    private val weatherSettings = WidgetSettings(
+        widgetId = 1, showWeather = true, weatherRingPosition = WeatherRingPosition.INSIDE,
+        temperatureDisplay = TemperatureDisplay.AIR, temperaturePosition = TemperaturePosition.BETWEEN_NUMERALS,
+    )
 
     @Test
     fun ringPreviews() {

@@ -3,7 +3,7 @@
 <ul>
 <li><b>Himmelsring:</b> Jeder Abschnitt des Rings zeigt den Himmel vom Horizont nach oben zu dieser Tageszeit. Tag, Morgen- und Abendrot stammen aus einem physikalischen Streuungsmodell, dazu kommen die blaue Stunde und das Nachtlila der Dämmerung. Alternativ ein einfacher Verlauf oder feste Farben je Phase.</li>
 <li><b>Mond:</b> mit Phase am Stundenzeiger oder als eigener Zeiger; der Abstand zur Mitte zeigt die Höhe des Mondes, dazu seine Tagesbahn.</li>
-<li><b>Optionaler Wetterring</b> (Vorhersage von Open-Meteo): Bewölkung als Grau, Niederschlag in Blau (Schnee violett), je dunkler, desto mehr, je deckender, desto wahrscheinlicher. Optional Luft- oder gefühlte Temperatur zwischen den Ziffern oder als Skala um den Rand, und das Wetter in Worten neben oder unter der Uhr („Etwas kühler als gestern um diese Zeit. Kein Regen in den nächsten 6 Stunden erwartet.“).</li>
+<li><b>Optionaler Wetterring</b> (Vorhersage von Open-Meteo): Bewölkung als Grau, Niederschlag in Blau (Schnee violett), je dunkler, desto mehr, je deckender, desto wahrscheinlicher. Luft- oder gefühlte Temperatur als Skala um den Rand oder zwischen den Ziffern, und das Wetter in Worten neben oder unter der Uhr („Etwas kühler als gestern um diese Zeit. Kein Regen in den nächsten 6 Stunden erwartet.“).</li>
 <li>Markierungen für Sonnenmittag und -mitternacht, Sonnenauf- und -untergang sowie optional den nächsten Wecker.</li>
 <li>Gespeicherte Orte mit eigener Zeitzone: Mehrere Widgets ergeben eine Weltuhr.</li>
 <li>Tab „Zeiten“ in der App mit allen Sonnenereignissen des Tages, Mondphase, Mondauf- und -untergang.</li>

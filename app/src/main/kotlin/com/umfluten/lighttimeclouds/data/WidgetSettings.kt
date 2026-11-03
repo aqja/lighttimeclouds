@@ -84,9 +84,10 @@ data class WidgetSettings(
     val showNextAlarm: Boolean = false,
     /** Weather ring from an online forecast; off by default so nothing is fetched without the user opting in. */
     val showWeather: Boolean = false,
-    val weatherRingPosition: WeatherRingPosition = WeatherRingPosition.INSIDE,
-    val temperatureDisplay: TemperatureDisplay = TemperatureDisplay.NONE,
-    val temperaturePosition: TemperaturePosition = TemperaturePosition.BETWEEN_NUMERALS,
+    /** Cloud cover and temperatures default to the outside of the day/night ring, leaving the dial uncluttered. */
+    val weatherRingPosition: WeatherRingPosition = WeatherRingPosition.OUTSIDE,
+    val temperatureDisplay: TemperatureDisplay = TemperatureDisplay.AIR,
+    val temperaturePosition: TemperaturePosition = TemperaturePosition.OUTSIDE,
     /** Only with the weather ring, whose forecast it is based on. */
     val summaryPosition: SummaryPosition = SummaryPosition.NONE,
     val labelPosition: LabelPosition = LabelPosition.NONE,
