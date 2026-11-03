@@ -932,12 +932,27 @@ object ClockFaceRenderer {
 
     /**
      * Ring color for a sun altitude under [settings] (ring style only - the color mode never tints
-     * the ring); also used by the config app's time list.
+     * the ring); also used by the config app's weather chart.
      */
     fun ringColor(altitudeDeg: Double, settings: WidgetSettings): Int = when (settings.ringStyle) {
         // A single representative color: the sky about halfway up the band.
         RingStyle.SKY -> skyColors(altitudeDeg, settings.skyTopElevationDeg.toDouble())[SKY_STOPS / 2]
         RingStyle.BANDS -> bandColor(SunMoonCalculator.classify(altitudeDeg))
+    }
+
+    /**
+     * The ring's colors for a sun altitude under [settings], from the horizon up to
+     * [topElevationDeg] (by default the far edge's elevation, whichever side of the ring that is):
+     * the sky's gradient in the sky style, a single color with fixed colors. The config app's time
+     * list shows them as a slice of the ring.
+     */
+    fun ringColorsUpward(
+        altitudeDeg: Double,
+        settings: WidgetSettings,
+        topElevationDeg: Double = settings.skyTopElevationDeg.toDouble(),
+    ): IntArray = when (settings.ringStyle) {
+        RingStyle.SKY -> skyColors(altitudeDeg, topElevationDeg)
+        RingStyle.BANDS -> intArrayOf(bandColor(SunMoonCalculator.classify(altitudeDeg)))
     }
 
     /** Color of numerals, ticks and hands under [settings]; also used for the place name next to the clock. */

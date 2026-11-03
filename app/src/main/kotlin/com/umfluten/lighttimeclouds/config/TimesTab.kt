@@ -11,16 +11,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.astro.MoonEventType
@@ -71,10 +77,12 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
         }
         items(events.size) { index ->
             val event = events[index]
-            // Dot in the ring color of the phase that begins at this event (just after it).
-            val dotColor = event.instant?.let { instant ->
+            // A slice of the sky at the phase that begins at this event (just after it), with the
+            // horizon at the bottom, where twilight shows its colors.
+            val skySlice = event.instant?.let { instant ->
                 val altitude = SunMoonCalculator.sunAltitudeDegrees(instant.plusSeconds(60), place.latitude, place.longitude)
-                Color(ClockFaceRenderer.ringColor(altitude, settings))
+                val colors = ClockFaceRenderer.ringColorsUpward(altitude, settings, SKY_SLICE_TOP_DEG).map(::Color).reversed()
+                colors.singleOrNull()?.let(::SolidColor) ?: Brush.verticalGradient(colors)
             }
             EventRow(
                 label = stringResource(solarEventLabel(event.type)),
@@ -83,7 +91,9 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
                 formats = formats,
                 isNext = index == nextIndex,
                 showDate = event.instant?.atZone(now.zone)?.toLocalDate() != firstDate,
-                dotColor = dotColor,
+                marker = skySlice,
+                markerShape = SKY_SLICE_SHAPE,
+                markerSize = SKY_SLICE_SIZE,
             )
         }
 
@@ -123,13 +133,30 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
                 formats = formats,
                 isNext = index == nextMoonIndex,
                 showDate = event.instant.atZone(now.zone).toLocalDate() != firstDate,
-                dotColor = Color(ClockFaceRenderer.MARK_COLOR),
+                marker = SolidColor(Color(ClockFaceRenderer.MARK_COLOR)),
+                markerShape = CircleShape,
+                markerSize = MOON_DOT_SIZE,
             )
         }
     }
 }
 
-/** One event line: color dot, label, optional date, and time; dimmed if past, highlighted if next. */
+/** Sun events: a square slice of the ring, so the horizon at its bottom edge stands out. */
+private val SKY_SLICE_SHAPE = RoundedCornerShape(3.dp)
+
+/**
+ * How high the slices reach above the horizon, the same for every widget, so the list always shows
+ * twilight's colors at the horizon about equally large.
+ */
+private const val SKY_SLICE_TOP_DEG = 30.0
+private val SKY_SLICE_SIZE = 24.dp
+private val MOON_DOT_SIZE = 14.dp
+
+/**
+ * One event line: [marker] (nothing while null) in [markerShape], centered in the width of the
+ * largest marker so all labels line up; label, optional date, and time; dimmed if past,
+ * highlighted if next.
+ */
 @Composable
 private fun EventRow(
     label: String,
@@ -138,7 +165,9 @@ private fun EventRow(
     formats: UiFormats,
     isNext: Boolean,
     showDate: Boolean,
-    dotColor: Color?,
+    marker: Brush?,
+    markerShape: Shape,
+    markerSize: Dp,
 ) {
     val local = instant?.atZone(now.zone)
     val isPast = instant?.isAfter(now.toInstant()) == false
@@ -146,12 +175,16 @@ private fun EventRow(
     val weight = if (isNext) FontWeight.Bold else null
     ListItem(
         leadingContent = {
-            Box(
-                Modifier
-                    .size(14.dp)
-                    .background(dotColor ?: Color.Transparent, CircleShape)
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
-            )
+            Box(Modifier.size(SKY_SLICE_SIZE), contentAlignment = Alignment.Center) {
+                // The outline lies around the fill, not over its edge, which keeps the horizon in view.
+                Box(
+                    Modifier
+                        .size(markerSize)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, markerShape)
+                        .padding(1.dp)
+                        .then(if (marker != null) Modifier.background(marker, markerShape) else Modifier),
+                )
+            }
         },
         headlineContent = { Text(label, color = contentColor, fontWeight = weight) },
         supportingContent = when {
