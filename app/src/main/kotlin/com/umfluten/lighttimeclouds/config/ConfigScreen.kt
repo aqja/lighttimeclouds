@@ -49,6 +49,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -154,14 +155,19 @@ private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
     }
 
     // Tabs and pager share one state, so a tab can be chosen by tapping it or by swiping. The weather
-    // tab only exists while the weather ring is on, since only then is a forecast downloaded.
+    // tab only exists while the weather ring is on, since only then is a forecast downloaded. What
+    // the place looks like today comes first, so the app opens on it; the widget's setup follows.
     val tabs = buildList {
+        if (settings.showWeather) add(R.string.tab_weather)
+        add(R.string.tab_times)
         add(R.string.tab_settings)
         add(R.string.tab_preview)
-        add(R.string.tab_times)
-        if (settings.showWeather) add(R.string.tab_weather)
     }
-    val pagerState = rememberPagerState { tabs.size }
+    // Page count and page keys read the same state, so the pager never sees a count and keys from
+    // two different tab lists while the weather tab comes or goes.
+    val currentTabs by rememberUpdatedState(tabs)
+    val pagerState = rememberPagerState { currentTabs.size }
+    val currentTab = tabs.getOrNull(pagerState.currentPage)
     val scope = rememberCoroutineScope()
     ConfigScaffold(
         subtitle = subtitle,
@@ -184,7 +190,7 @@ private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
             }
         },
         bottomBar = {
-            if (pagerState.currentPage == 0) {
+            if (currentTab == R.string.tab_settings) {
                 Surface(tonalElevation = 3.dp) {
                     Button(
                         onClick = { viewModel.save(onDone) },
@@ -199,8 +205,15 @@ private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
             }
         },
     ) { padding ->
-        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.Top) { page ->
-            when (tabs[page]) {
+        // Keyed by tab, so switching the weather ring on or off (which adds or removes the first tab)
+        // keeps the settings tab in view instead of shifting to its neighbor.
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+            key = { page -> currentTabs[page] },
+            verticalAlignment = Alignment.Top,
+        ) { page ->
+            when (currentTabs[page]) {
                 R.string.tab_preview -> PreviewTab(settings, padding)
                 R.string.tab_times -> TimesTab(settings, padding)
                 R.string.tab_weather -> WeatherTab(settings, padding)
