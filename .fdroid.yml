@@ -1,0 +1,28 @@
+Categories:
+  - Clock
+  - Weather
+License: MIT
+AuthorName: aqja
+SourceCode: https://github.com/aqja/lighttimeclouds
+IssueTracker: https://github.com/aqja/lighttimeclouds/issues
+
+AutoName: LightTimeClouds
+
+RepoType: git
+Repo: https://github.com/aqja/lighttimeclouds.git
+Binaries: https://github.com/aqja/lighttimeclouds/releases/download/v%v/lighttimeclouds-%v.apk
+
+Builds:
+  - versionName: 0.1.0
+    versionCode: 1
+    commit: v0.1.0
+    subdir: app
+    gradle:
+      - yes
+
+AllowedAPKSigningKeys: 7c3337a547565f9fb8c3220b84d2164fd51c6ede05a39d383c1e66fc8cb4b18f
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 0.1.0
+CurrentVersionCode: 1
