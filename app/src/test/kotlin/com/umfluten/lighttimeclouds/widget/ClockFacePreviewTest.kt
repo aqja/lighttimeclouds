@@ -34,6 +34,7 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.sin
 
@@ -232,6 +233,48 @@ class ClockFacePreviewTest {
         }
     }
 
+    /**
+     * While the moon stands higher than the ring's far edge shows, its path runs along that edge
+     * instead of leaving the ring: found as the difference to the same dial without the path, just
+     * inside the far edge (24h dial from midnight, so an angle is a time of day).
+     */
+    @Test
+    fun moonPathFollowsTheFarEdgeAboveItsElevation() {
+        val top = 20
+        val base = WidgetSettings(
+            widgetId = 1, displayMode = DisplayMode.TWENTY_FOUR_HOUR, colorMode = ColorMode.DARK, skyTopElevationDeg = top,
+            showMoon = false, showSunInRing = false, showSolarMarks = false, showSunriseSunsetMarks = false,
+        )
+        val size = 600
+        val app = RuntimeEnvironment.getApplication()
+        val dialRadius = size / 2.0 * 0.96
+        // A day with the moon high in the south in the afternoon.
+        val at = ZonedDateTime.of(2026, 11, 1, 15, 0, 0, 0, Place.DEFAULT.zone)
+        val midnight = at.truncatedTo(ChronoUnit.DAYS)
+        val highAngles = (0 until 360 step 3).filter { degrees ->
+            val instant = midnight.plusMinutes(degrees * 4L).toInstant()
+            SunMoonCalculator.moonAltitudeDegrees(instant, Place.DEFAULT.latitude, Place.DEFAULT.longitude) > top + 5
+        }
+        assertTrue("the moon never climbs above $top° on this day", highAngles.size > 10)
+        for (horizon in SkyHorizon.entries) {
+            val settings = base.copy(skyHorizon = horizon)
+            val withPath = ClockFaceRenderer.render(app, size, settings, null, at)
+            val withoutPath = ClockFaceRenderer.render(app, size, settings.copy(showMoonPathInRing = false), null, at)
+            // Far edge of the day/night ring (0.82 to 1 of the dial radius): the outer one with the horizon inside.
+            val edge = if (horizon == SkyHorizon.INNER) 0.99 else 0.83
+            val missing = highAngles.filter { degrees ->
+                val angle = Math.toRadians(degrees - 90.0)
+                (-2..2).none { step ->
+                    val r = (edge + step * 0.004) * dialRadius
+                    val x = (size / 2.0 + r * cos(angle)).toInt()
+                    val y = (size / 2.0 + r * sin(angle)).toInt()
+                    withPath.getPixel(x, y) != withoutPath.getPixel(x, y)
+                }
+            }
+            assertTrue("moon path missing at the far edge with horizon $horizon at $missing°", missing.isEmpty())
+        }
+    }
+
     @Test
     fun moonPreviews() {
         val onHand = WidgetSettings(widgetId = 1, colorMode = ColorMode.DARK, moonStyle = MoonStyle.ON_HOUR_HAND)
@@ -255,6 +298,8 @@ class ClockFacePreviewTest {
         val highMoon = ZonedDateTime.of(2026, 11, 1, 15, 0, 0, 0, Place.DEFAULT.zone)
         val separate24 = separate.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR)
         render("moon", "moon_separate_hand_24h_high_south", separate24, null, darkBackground = true, at = highMoon)
+        // Sky in the ring only up to 20°: the moon path runs along the far edge while the moon is higher.
+        render("moon", "moon_path_capped_24h", onHand.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR, skyTopElevationDeg = 20), null, darkBackground = true, at = highMoon)
         render(
             "moon",
             "moon_separate_hand_24h_high_south_temperature",

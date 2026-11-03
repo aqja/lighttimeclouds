@@ -44,6 +44,8 @@ import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.hypot
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -346,6 +348,10 @@ object ClockFaceRenderer {
 
         /** [distance] px into the band from the far edge. */
         fun fromTop(distance: Float): Float = top + if (top > horizon) -distance else distance
+
+        /** [r], but at least [margin] px inside the far edge: whatever lies beyond it runs along that edge. */
+        fun capAtTop(r: Float, margin: Float): Float =
+            if (top > horizon) min(r, top - margin) else max(r, top + margin)
     }
 
     private fun skyBandFor(radius: Float, bands: RingBands, settings: WidgetSettings): SkyBand {
@@ -444,8 +450,9 @@ object ClockFaceRenderer {
 
     /**
      * A body's altitude ([altitudeAt]) across the ring as a thin line in [MARK_COLOR]. Broken
-     * where the shown window has its seam (oldest next to newest time). Altitudes far outside the
-     * band are capped so the line stays nearby, for the caller's clip to cut.
+     * where the shown window has its seam (oldest next to newest time). Above the far edge's
+     * elevation the line follows that edge, just inside it; below the horizon it is capped so it
+     * stays nearby, for the caller's clip to cut.
      */
     private fun drawAltitudePath(
         canvas: Canvas,
@@ -459,12 +466,14 @@ object ClockFaceRenderer {
     ) {
         val window = shownWindow(settings, now).let { (start, end) -> Duration.between(start, end) }
         val maxStep = window.dividedBy(SKY_PATH_SAMPLES.toLong()).multipliedBy(2)
+        val strokeWidth = radius * SKY_PATH_WIDTH
         val path = Path()
         var previous: Instant? = null
         for (i in 0..SKY_PATH_SAMPLES) {
             val angle = 360.0 * i / SKY_PATH_SAMPLES
             val instant = resolveInstantForAngle(angle, settings, now)
-            val (x, y) = pointOnDial(cx, cy, sky.radiusFor(altitudeAt(instant), overshoot = 0.5), angle)
+            val r = sky.capAtTop(sky.radiusFor(altitudeAt(instant), overshoot = 0.5), strokeWidth / 2f)
+            val (x, y) = pointOnDial(cx, cy, r, angle)
             val step = previous?.let { Duration.between(it, instant) }
             if (step != null && !step.isNegative && step <= maxStep) path.lineTo(x, y) else path.moveTo(x, y)
             previous = instant
@@ -473,7 +482,7 @@ object ClockFaceRenderer {
             // The grey of the sun marks: visible on the bright day sky and the dark night alike.
             color = MARK_COLOR
             style = Paint.Style.STROKE
-            strokeWidth = radius * SKY_PATH_WIDTH
+            this.strokeWidth = strokeWidth
             strokeCap = Paint.Cap.ROUND
             strokeJoin = Paint.Join.ROUND
         }

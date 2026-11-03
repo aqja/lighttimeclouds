@@ -820,7 +820,9 @@ $u = \tan h / \tan e_t$. Die Körper stehen also genau dort, wo ihre Höhe im Hi
 Unter dem Horizont ($h < 0$) werden sie nicht gezeichnet, über $e_t$ als kleiner Punkt am Rand
 gegenüber dem Horizont. Die Sonne nutzt die geometrische Höhe (wie die Ringfarbe), der Mond die
 gesehene, mit Refraktion. Die optionale Mondbahn ist $h_\mathrm{Mond}(t)$ über den angezeigten
-Zeitraum, außerhalb des Bands begrenzt auf $u \in [-0{,}5;\ 1{,}5]$.
+Zeitraum. Unter dem Horizont verlässt sie das Band (begrenzt auf $u \ge -0{,}5$ und am Rand
+abgeschnitten), über $e_t$ läuft sie am Rand gegenüber dem Horizont entlang ($u = 1$), wo dann
+auch der Punkt des Mondes sitzt.
 
 ### 12.3 Mondbahn mit eigenem Zeiger oder am Stundenzeiger
 
