@@ -71,9 +71,9 @@ import com.umfluten.lighttimeclouds.data.TapAction
 import com.umfluten.lighttimeclouds.data.TemperatureDisplay
 import com.umfluten.lighttimeclouds.data.TemperaturePosition
 import com.umfluten.lighttimeclouds.data.WeatherRingPosition
-import com.umfluten.lighttimeclouds.data.WidgetPrefsRepository
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.sky.SkyProjection
+import com.umfluten.lighttimeclouds.widget.ClockWidgetProvider
 import com.umfluten.lighttimeclouds.widget.WidgetIds
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -110,8 +110,7 @@ private fun WidgetPickerScreen(widgetIds: List<Int>, onPicked: (Int) -> Unit) {
     val context = LocalContext.current
     var settingsById by remember { mutableStateOf<Map<Int, WidgetSettings>>(emptyMap()) }
     LaunchedEffect(widgetIds) {
-        val repository = WidgetPrefsRepository(context)
-        settingsById = widgetIds.associateWith { repository.load(it) }
+        settingsById = widgetIds.associateWith { ClockWidgetProvider.effectiveSettings(context, it) }
     }
     ConfigScaffold(subtitle = stringResource(R.string.picker_subtitle)) { padding ->
         LazyColumn(contentPadding = padding) {

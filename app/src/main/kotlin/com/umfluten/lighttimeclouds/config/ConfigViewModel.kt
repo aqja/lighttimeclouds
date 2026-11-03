@@ -37,7 +37,8 @@ class ConfigViewModel(application: Application, private val widgetId: Int) : And
 
     init {
         viewModelScope.launch {
-            _settings.value = repository.load(widgetId)
+            // What the widget currently shows, so a never-saved widget opens with the template.
+            _settings.value = ClockWidgetProvider.effectiveSettings(application, widgetId)
             refreshPlaces()
         }
     }
