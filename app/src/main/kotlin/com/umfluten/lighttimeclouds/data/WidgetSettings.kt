@@ -14,10 +14,9 @@ enum class LabelPosition { NONE, ABOVE, BELOW }
 
 /**
  * How the day/night ring is colored: [SKY] shows the modeled sky from the horizon upward across
- * the ring's width (see [SkyHorizon]); [GRADIENT] one color per sun altitude; [BANDS] one fixed
- * color per sky phase.
+ * the ring's width (see [SkyHorizon]); [BANDS] one fixed color per sky phase.
  */
-enum class RingStyle { SKY, GRADIENT, BANDS }
+enum class RingStyle { SKY, BANDS }
 
 /** Whether the horizon is at the inner or the outer edge of the ring (sky gradient, sun and moon in the ring). */
 enum class SkyHorizon { INNER, OUTER }

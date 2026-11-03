@@ -30,7 +30,6 @@
     <string name="display_mode_24h">24 Stunden</string>
     <string name="ring_style_label">Tag/Nacht-Ring</string>
     <string name="ring_style_sky">Himmel</string>
-    <string name="ring_style_gradient">Verlauf</string>
     <string name="ring_style_bands">Feste Farben</string>
     <string name="sky_horizon_label">Horizont im Ring</string>
     <string name="sky_horizon_inner">Innen</string>

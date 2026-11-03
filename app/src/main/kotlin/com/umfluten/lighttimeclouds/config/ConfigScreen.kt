@@ -256,7 +256,6 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
         SegmentedChoice(
             options = listOf(
                 RingStyle.SKY to R.string.ring_style_sky,
-                RingStyle.GRADIENT to R.string.ring_style_gradient,
                 RingStyle.BANDS to R.string.ring_style_bands,
             ),
             selected = settings.ringStyle,

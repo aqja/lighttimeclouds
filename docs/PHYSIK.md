@@ -404,7 +404,7 @@ Konvergenz der reinen Regula falsi. Abbruch, sobald das Intervall kürzer als 0,
 
 ### 6.4 Himmelszustand
 
-Für die Ringstile „Verlauf“ und „Phasenfarben“ ordnet `classify` die Sonnenhöhe einer Stufe zu:
+Für den Ringstil „Phasenfarben“ ordnet `classify` die Sonnenhöhe einer Stufe zu:
 Nacht (< −18°), astronomische (−18…−12°), nautische (−12…−6°) und bürgerliche Dämmerung
 (−6…−0,833°), goldene Stunde (−0,833…6°) und Tag (≥ 6°).
 
@@ -809,9 +809,9 @@ $h_\odot(t)$ am Ort berechnet, und:
   Horizont bis $e_t$, per *Screen*-Mischung $1 - (1 - a)(1 - b)$ über eine dunkle Nachtfarbe gelegt.
   Bei $h_\odot \le -18°$ (Ende der astronomischen Dämmerung) bleibt nur die Nachtfarbe. Mondlicht,
   Sterne und Airglow kommen im Modell nicht vor; die Nachtfarbe steht dafür ein.
-- **„Verlauf“ / „Phasenfarben“:** gestaltete Farben, linear interpoliert zwischen Stützstellen an
-  den physikalischen Schwellen −18°, −12°, −6°, −0,833°, 6° und 90°, bzw. eine feste Farbe je
-  Himmelszustand (Abschnitt [6.4](#64-himmelszustand)).
+- **„Phasenfarben“:** eine feste Farbe je Himmelszustand (Abschnitt [6.4](#64-himmelszustand)),
+  entnommen einer gestalteten Palette, die zwischen Stützstellen an den physikalischen Schwellen
+  −18°, −12°, −6°, −0,833°, 6° und 90° linear interpoliert ist.
 
 ### 12.2 Sonne und Mond im Ring
 

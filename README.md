@@ -9,7 +9,7 @@ A ring around an ordinary clock face shows the course of the day at the current 
 ## Features
 
 - Analog 12-hour or 24-hour clock face, updated every minute, without a second hand, optionally with minute ticks
-- Day/twilight/night ring following the current position of the sun at the configured location, shown as "Sky" (default), "Gradient" or in fixed colors. "Sky" shows in every section of the ring the sky from the horizon upwards (horizon inside or outside, as you choose): daylight, sunrise and sunset colors and the blue of twilight, from a physical scattering model (spectral, with multiple scattering and the eye's adaptation to darkness)
+- Day/twilight/night ring following the current position of the sun at the configured location, shown as "Sky" (default) or in fixed colors. "Sky" shows in every section of the ring the sky from the horizon upwards (horizon inside or outside, as you choose): daylight, sunrise and sunset colors and the blue of twilight, from a physical scattering model (spectral, with multiple scattering and the eye's adaptation to darkness)
 - Sun and moon (with phase) in the ring at the current time, as far from the horizon edge as they stand above the horizon; higher than shown as a small dot at the edge opposite the horizon; not at all below the horizon. Optionally the moon's path over the whole displayed period as a thin gray line. How high above the horizon the outer edge reaches (10°–80°) is adjustable; the sky gradient adapts
 - Configurable strategy for advancing the ring: fixed times (12 hours: two, by default 6:00 and 18:00; 24 hours: one, by default midnight) or continuously trailing the hand
 - Optional marks for solar noon and midnight and for sunrise and sunset

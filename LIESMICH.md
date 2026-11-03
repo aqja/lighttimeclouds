@@ -9,7 +9,7 @@ Ein Ring um ein gewöhnliches Zifferblatt zeigt den Tagesverlauf von Nacht über
 ## Features
 
 - Analoges 12h- oder 24h-Zifferblatt, minutengenau, ohne Sekundenzeiger, optional mit Minutenstrichen
-- Tag/Dämmerung/Nacht-Ring nach aktuellem Sonnenstand am konfigurierten Standort, wahlweise als „Himmel“ (Standard), Verlauf oder in festen Phasenfarben. „Himmel“ zeigt in jedem Ringabschnitt den Himmel vom Horizont nach oben (Horizont innen oder außen einstellbar): Tag, Morgen-/Abendrot und das Blau der Dämmerung aus einem physikalischen Streuungsmodell (spektral, mit Mehrfachstreuung und Augenanpassung an die Dunkelheit)
+- Tag/Dämmerung/Nacht-Ring nach aktuellem Sonnenstand am konfigurierten Standort, wahlweise als „Himmel“ (Standard) oder in festen Phasenfarben. „Himmel“ zeigt in jedem Ringabschnitt den Himmel vom Horizont nach oben (Horizont innen oder außen einstellbar): Tag, Morgen-/Abendrot und das Blau der Dämmerung aus einem physikalischen Streuungsmodell (spektral, mit Mehrfachstreuung und Augenanpassung an die Dunkelheit)
 - Sonne und Mond (mit Phase) im Ring zur aktuellen Uhrzeit, so weit vom Horizontrand entfernt, wie sie über dem Horizont stehen; höher als dargestellt als kleiner Punkt am Rand gegenüber dem Horizont; unter dem Horizont gar nicht. Optional die Bahn des Mondes über den ganzen angezeigten Zeitraum als dünne graue Linie. Wie hoch über dem Horizont der äußere Rand reicht (10°–80°), ist einstellbar; der Himmelsverlauf passt sich an
 - Konfigurierbare Umschalt-Strategie für den Ring: feste Uhrzeiten (12h: zwei, Standard 6 und 18 Uhr; 24h: eine, Standard Mitternacht) oder kontinuierlich hinter dem Zeiger herlaufend
 - Optionale Markierungen für Sonnenmittag/-mitternacht und Sonnenauf-/untergang

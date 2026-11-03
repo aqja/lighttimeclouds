@@ -9,7 +9,6 @@ import com.umfluten.lighttimeclouds.data.ColorMode
 import com.umfluten.lighttimeclouds.data.DisplayMode
 import com.umfluten.lighttimeclouds.data.MoonStyle
 import com.umfluten.lighttimeclouds.data.Place
-import com.umfluten.lighttimeclouds.data.RingStyle
 import com.umfluten.lighttimeclouds.data.SkyHorizon
 import com.umfluten.lighttimeclouds.data.SwitchStrategyType
 import com.umfluten.lighttimeclouds.data.TemperatureDisplay
@@ -133,7 +132,6 @@ class ClockFacePreviewTest {
         val fullDay = plain.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR)
         // Afternoon, sun about 25° high, waxing moon low in the south-east.
         render("rings", "sky_24h", fullDay, null, darkBackground = true)
-        render("rings", "sky_24h_gradient", fullDay.copy(ringStyle = RingStyle.GRADIENT), null, darkBackground = true)
         // Late evening with the seam trailing the hour hand: tomorrow's sunrise already shows ahead of it.
         val lateEvening = ZonedDateTime.of(2026, 10, 17, 22, 0, 0, 0, Place.DEFAULT.zone)
         render("rings", "sky_24h_trailing", fullDay.copy(switchStrategyType = SwitchStrategyType.TRAILING_OFFSET), null, darkBackground = true, at = lateEvening)

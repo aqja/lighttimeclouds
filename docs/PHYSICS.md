@@ -398,7 +398,7 @@ regula falsi. The search stops once the interval is shorter than 0.5 s (at most 
 
 ### 6.4 Sky state
 
-For the ring styles "gradient" and "phase colors", `classify` maps the Sun's altitude to a
+For the ring style "phase colors", `classify` maps the Sun's altitude to a
 bucket: night (< −18°), astronomical (−18…−12°), nautical (−12…−6°) and civil twilight
 (−6…−0.833°), golden hour (−0.833…6°) and day (≥ 6°).
 
@@ -800,9 +800,9 @@ the place is computed, and:
   to $e_t$, laid over a dark night color with a *screen* blend $1 - (1 - a)(1 - b)$. At
   $h_\odot \le -18°$ (end of astronomical twilight) only the night color remains. Moonlight, stars
   and airglow are not in the model; the night color stands in for them.
-- **"Gradient" / "phase colors":** designed colors, linearly interpolated between stops at the
-  physical thresholds −18°, −12°, −6°, −0.833°, 6° and 90°, or one fixed color per sky state
-  (section [6.4](#64-sky-state)).
+- **"Phase colors":** one fixed color per sky state (section [6.4](#64-sky-state)), taken from a
+  designed palette that is interpolated linearly between stops at the physical thresholds −18°,
+  −12°, −6°, −0.833°, 6° and 90°.
 
 ### 12.2 Sun and Moon in the ring
 

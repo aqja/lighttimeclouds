@@ -842,8 +842,8 @@ object ClockFaceRenderer {
     }
 
     /**
-     * One fixed color per sky phase, for [RingStyle.BANDS]. Sampled from [gradientColor] at a
-     * representative altitude inside each phase, so both ring styles share one palette.
+     * One fixed color per sky phase, for [RingStyle.BANDS]: [gradientColor] at a representative
+     * altitude inside each phase.
      */
     private fun bandColor(state: SunMoonCalculator.SkyState): Int = gradientColor(
         when (state) {
@@ -863,7 +863,6 @@ object ClockFaceRenderer {
     fun ringColor(altitudeDeg: Double, settings: WidgetSettings): Int = when (settings.ringStyle) {
         // A single representative color: the sky about halfway up the band.
         RingStyle.SKY -> skyColors(altitudeDeg, settings.skyTopElevationDeg.toDouble())[SKY_STOPS / 2]
-        RingStyle.GRADIENT -> gradientColor(altitudeDeg)
         RingStyle.BANDS -> bandColor(SunMoonCalculator.classify(altitudeDeg))
     }
 
