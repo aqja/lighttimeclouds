@@ -27,20 +27,16 @@ class TemperatureLabelSpansTest {
         assertEquals("to", to.toInstant(), span.to)
     }
 
-    private val trailing = WidgetSettings(
-        widgetId = 1,
-        switchStrategyType = SwitchStrategyType.TRAILING_OFFSET,
-        trailingOffsetMinutes = 30,
-    )
+    private val trailing = WidgetSettings(widgetId = 1, switchStrategyType = SwitchStrategyType.TRAILING)
 
     @Test
-    fun `trailing window - the label behind the seam shows the current hour, not the night 12 h later`() {
-        // 14:40 with 30 min offset: the window runs 14:10 - 02:10, its seam sits at the "2:10" position.
+    fun `trailing window - the seam at the hand cuts the labels on either side of it`() {
+        // 14:40: the window runs 14:40 - 02:40, its seam sits at the hour hand, at the "2:40" position.
         val now = at(17, 14, 40)
-        // "2:30" position, just past the seam: 14:30 today, averaged from the window start on.
-        assertSpan(span(trailing, now, 75.0), mid = at(17, 14, 30), from = at(17, 14, 10), to = at(17, 15, 0))
-        // "1:30" position, before the seam: the end of the window, 01:30 tomorrow.
-        assertSpan(span(trailing, now, 45.0), mid = at(18, 1, 30), from = at(18, 1, 0), to = at(18, 2, 0))
+        // "2:30" position, just behind the hand: the end of the window, 02:30 tomorrow, up to the seam.
+        assertSpan(span(trailing, now, 75.0), mid = at(18, 2, 30), from = at(18, 2, 0), to = at(18, 2, 40))
+        // "3:30" position, ahead of the hand: 15:30 today, a whole span inside the window.
+        assertSpan(span(trailing, now, 105.0), mid = at(17, 15, 30), from = at(17, 15, 0), to = at(17, 16, 0))
     }
 
     @Test

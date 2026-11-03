@@ -80,10 +80,9 @@
     <string name="switch_time">Umschaltzeit</string>
     <string name="switch_time_1">Umschaltzeit 1</string>
     <string name="switch_time_2">Umschaltzeit 2</string>
-    <plurals name="trailing_offset">
-        <item quantity="one">Vorlauf: %1$d Minute</item>
-        <item quantity="other">Vorlauf: %1$d Minuten</item>
-    </plurals>
+    <string name="ring_end_fade_label">Ringende ausblenden</string>
+    <string name="ring_end_fade_value">%1$d°</string>
+    <string name="ring_end_fade_hint">Lässt den Tag/Nacht-Ring auf seinem letzten Stück durchsichtig auslaufen, damit das Ende der gezeigten Zeitspanne nicht mit der Zeit direkt nach ihrem Anfang verwechselt wird. Nie vor der aktuellen Uhrzeit.</string>
 
     <!-- Color mode and tap action -->
     <string name="section_color_mode">Farbmodus</string>

@@ -6,12 +6,16 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.DashPathEffect
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import android.graphics.RadialGradient
 import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Shader
+import android.graphics.SweepGradient
 import android.os.Build
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withClip
@@ -37,6 +41,7 @@ import com.umfluten.lighttimeclouds.weather.WeatherCondition
 import com.umfluten.lighttimeclouds.weather.WeatherForecast
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import kotlin.math.PI
@@ -185,9 +190,14 @@ object ClockFaceRenderer {
 
         val bands = ringBandsFor(settings)
 
-        drawDayNightRing(canvas, cx, cy, radius, bands, settings, now)
-        if (settings.showSolarMarks || settings.showSunriseSunsetMarks) {
-            drawSolarMarks(canvas, cx, cy, radius, bands, settings, now)
+        withRingEndFade(canvas, cx, cy, settings, now) {
+            drawDayNightRing(canvas, cx, cy, radius, bands, settings, now)
+            if (settings.showSolarMarks || settings.showSunriseSunsetMarks) {
+                drawSolarMarks(canvas, cx, cy, radius, bands, settings, now)
+            }
+            if (settings.showMoonInRing && settings.showMoonPathInRing) {
+                drawMoonPathInRing(canvas, cx, cy, radius, bands, settings, now)
+            }
         }
         if (settings.showSunInRing || settings.showMoonInRing) {
             drawSkyBodies(canvas, cx, cy, radius, bands, settings, now)
@@ -219,6 +229,48 @@ object ClockFaceRenderer {
     }
 
     // --- Day/twilight/night ring -------------------------------------------------
+
+    /**
+     * Draws [content] (the ring and what lies in it) so that it fades out to transparent over the
+     * last [WidgetSettings.ringEndFadeDeg] dial degrees before the shown window's seam, marking
+     * where the window ends. The fade never starts before the current time, so the part of the
+     * ring at the hand always shows in full.
+     */
+    private inline fun withRingEndFade(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        settings: WidgetSettings,
+        now: ZonedDateTime,
+        content: () -> Unit,
+    ) {
+        val mapper = mapperFor(settings)
+        val local = now.toLocalDateTime()
+        val windowStart = mapper.localWindowStart(local)
+        // Wall-clock time left until the seam, in dial degrees, like the hour hand counts it.
+        val untilSeam = Duration.between(local, windowStart.plusHours(mapper.dialHours.toLong())).seconds /
+            (mapper.dialHours * 3600.0) * 360.0
+        val fade = min(settings.ringEndFadeDeg.toDouble(), untilSeam)
+        if (fade <= 0.0) {
+            content()
+            return
+        }
+        val layer = canvas.saveLayer(null, null)
+        content()
+        val seamAngle = dialAngle(windowStart, settings.displayMode)
+        val mask = Paint().apply {
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
+            // Positions count clockwise from the seam, where the window starts, round to the seam
+            // again, where it ends. The sweep starts at 3 o'clock, dial angles at 12 o'clock.
+            shader = SweepGradient(
+                cx, cy,
+                intArrayOf(Color.BLACK, Color.BLACK, Color.TRANSPARENT),
+                floatArrayOf(0f, (1.0 - fade / 360.0).toFloat(), 1f),
+            ).apply { setLocalMatrix(Matrix().apply { setRotate((seamAngle - 90.0).toFloat(), cx, cy) }) }
+        }
+        canvas.drawPaint(mask)
+        canvas.restoreToCount(layer)
+    }
 
     private fun drawDayNightRing(
         canvas: Canvas,
@@ -385,10 +437,8 @@ object ClockFaceRenderer {
      * [WidgetSettings.skyTopElevationDeg] at the far edge. A disc (the moon with its phase) while
      * within that range, clipped by the band's edges like a body setting behind the horizon;
      * above it a small dot at the far edge. Below the horizon neither shows: the hour hand already
-     * points there, and the ring's colors tell whether the sun is up. With
-     * [WidgetSettings.showMoonPathInRing], the moon's altitude over the whole shown time span as a
-     * thin line, which leaves the band where the moon sets or climbs beyond the far edge. The sun
-     * needs none: the ring's colors and the sunrise/sunset marks already tell its course.
+     * points there, and the ring's colors tell whether the sun is up. The moon's course over the
+     * shown time span is [drawMoonPathInRing].
      */
     private fun drawSkyBodies(
         canvas: Canvas,
@@ -404,16 +454,8 @@ object ClockFaceRenderer {
         val longitude = settings.place.longitude
         val sunAltitude = { instant: Instant -> SunMoonCalculator.sunAltitudeDegrees(instant, latitude, longitude) }
         val moonAltitude = { instant: Instant -> SunMoonCalculator.moonAltitudeDegrees(instant, latitude, longitude) }
-        val band = Path().apply {
-            fillType = Path.FillType.EVEN_ODD
-            addCircle(cx, cy, radius * bands.sunInner, Path.Direction.CW)
-            addCircle(cx, cy, radius * bands.sunOuter, Path.Direction.CW)
-        }
 
-        if (settings.showMoonInRing && settings.showMoonPathInRing) {
-            canvas.withClip(band) { drawAltitudePath(this, cx, cy, radius, sky, settings, now, moonAltitude) }
-        }
-
+        val band = ringBandPath(cx, cy, radius, bands)
         val instant = now.toInstant()
         val angle = dialAngle(now, settings.displayMode)
         val discRadius = radius * SKY_DISC_SIZE
@@ -445,6 +487,38 @@ object ClockFaceRenderer {
             } else {
                 drawSkyDot(canvas, x, y, dotRadius, SUN_COLOR, null)
             }
+        }
+    }
+
+    /** The day/night ring's area, to clip what is drawn in it. */
+    private fun ringBandPath(cx: Float, cy: Float, radius: Float, bands: RingBands) = Path().apply {
+        fillType = Path.FillType.EVEN_ODD
+        addCircle(cx, cy, radius * bands.sunInner, Path.Direction.CW)
+        addCircle(cx, cy, radius * bands.sunOuter, Path.Direction.CW)
+    }
+
+    /**
+     * With [WidgetSettings.showMoonPathInRing], the moon's altitude over the whole shown time span
+     * as a thin line, read like the moon in the ring (see [drawSkyBodies]): it leaves the band
+     * where the moon sets and runs along the far edge while the moon stands higher than that edge
+     * shows. The sun needs none: the ring's colors and the sunrise/sunset marks already tell its
+     * course.
+     */
+    private fun drawMoonPathInRing(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        bands: RingBands,
+        settings: WidgetSettings,
+        now: ZonedDateTime,
+    ) {
+        val sky = skyBandFor(radius, bands, settings)
+        val moonAltitude = { instant: Instant ->
+            SunMoonCalculator.moonAltitudeDegrees(instant, settings.place.latitude, settings.place.longitude)
+        }
+        canvas.withClip(ringBandPath(cx, cy, radius, bands)) {
+            drawAltitudePath(this, cx, cy, radius, sky, settings, now, moonAltitude)
         }
     }
 
@@ -544,7 +618,7 @@ object ClockFaceRenderer {
                 }
                 DialTimeMapper.FixedTimes(minutes.map { LocalTime.ofSecondOfDay((it * 60L).coerceIn(0, 86399)) }, dialHours)
             }
-            SwitchStrategyType.TRAILING_OFFSET -> DialTimeMapper.TrailingOffset(settings.trailingOffsetMinutes, dialHours)
+            SwitchStrategyType.TRAILING -> DialTimeMapper.TrailingOffset(0, dialHours)
         }
     }
 
@@ -1230,7 +1304,10 @@ object ClockFaceRenderer {
     }
 
     /** Dial angle (0..360, 0 = top) at which [time] appears on the dial. */
-    private fun dialAngle(time: ZonedDateTime, mode: DisplayMode): Double {
+    private fun dialAngle(time: ZonedDateTime, mode: DisplayMode): Double = dialAngle(time.toLocalDateTime(), mode)
+
+    /** Dial angle (0..360, 0 = top) at which the wall-clock [time] appears on the dial. */
+    private fun dialAngle(time: LocalDateTime, mode: DisplayMode): Double {
         val hours = time.hour + time.minute / 60.0 + time.second / 3600.0
         return when (mode) {
             DisplayMode.TWELVE_HOUR -> (hours % 12.0) * 30.0

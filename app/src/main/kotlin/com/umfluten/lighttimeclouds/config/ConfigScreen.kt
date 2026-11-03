@@ -35,7 +35,6 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -54,7 +53,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -459,7 +457,10 @@ private fun WeatherSetting(settings: WidgetSettings, viewModel: ConfigViewModel)
 private fun hasNetworkPermission(context: Context): Boolean =
     context.checkSelfPermission(Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED
 
-/** Where the ring's shown window begins: at fixed times (two on the 12h dial, one on the 24h dial) or trailing behind now. */
+/**
+ * Where the ring's shown window begins: at fixed times (two on the 12h dial, one on the 24h dial) or
+ * at the hand; and how far before its end the ring fades out.
+ */
 @Composable
 private fun RingSwitchSetting(settings: WidgetSettings, viewModel: ConfigViewModel) {
     val twelveHour = settings.displayMode == DisplayMode.TWELVE_HOUR
@@ -467,7 +468,7 @@ private fun RingSwitchSetting(settings: WidgetSettings, viewModel: ConfigViewMod
     SegmentedChoice(
         options = listOf(
             SwitchStrategyType.FIXED_TIMES to R.string.switch_fixed_times,
-            SwitchStrategyType.TRAILING_OFFSET to R.string.switch_trailing,
+            SwitchStrategyType.TRAILING to R.string.switch_trailing,
         ),
         selected = settings.switchStrategyType,
         onSelect = { viewModel.update { s -> s.copy(switchStrategyType = it) } },
@@ -491,17 +492,18 @@ private fun RingSwitchSetting(settings: WidgetSettings, viewModel: ConfigViewMod
                 onPicked = { m -> viewModel.update { s -> s.copy(switchTime24hMinutes = m) } },
             )
         }
-        SwitchStrategyType.TRAILING_OFFSET -> {
-            val minutes = settings.trailingOffsetMinutes
-            Text(pluralStringResource(R.plurals.trailing_offset, minutes, minutes), style = MaterialTheme.typography.bodyLarge)
-            Slider(
-                value = settings.trailingOffsetMinutes.toFloat(),
-                onValueChange = { v -> viewModel.update { s -> s.copy(trailingOffsetMinutes = v.toInt()) } },
-                valueRange = 0f..180f,
-                steps = 35,
-            )
-        }
+        SwitchStrategyType.TRAILING -> Unit
     }
+    val fade = settings.ringEndFadeDeg
+    LabeledSlider(
+        label = stringResource(R.string.ring_end_fade_label),
+        value = if (fade == 0) stringResource(R.string.label_position_none) else stringResource(R.string.ring_end_fade_value, fade),
+        position = fade.toFloat(),
+        range = 0f..WidgetSettings.MAX_RING_END_FADE_DEG.toFloat(),
+        steps = WidgetSettings.MAX_RING_END_FADE_DEG / RING_END_FADE_STEP - 1,
+        onChange = { viewModel.update { s -> s.copy(ringEndFadeDeg = it.roundToInt()) } },
+    )
+    Hint(stringResource(R.string.ring_end_fade_hint))
 }
 
 /** Shows a switch time; tapping it opens a time picker dialog in the device's 12/24-hour format. */
@@ -543,3 +545,4 @@ private fun SwitchTimeRow(label: String, minutesOfDay: Int, onPicked: (Int) -> U
 internal const val SKY_TOP_ELEVATION_MIN = 10
 internal const val SKY_TOP_ELEVATION_MAX = SkyProjection.MAX_TOP_ELEVATION_DEG.toInt()
 internal const val SKY_TOP_ELEVATION_STEP = 5
+private const val RING_END_FADE_STEP = 5

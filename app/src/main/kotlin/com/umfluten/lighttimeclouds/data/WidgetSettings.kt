@@ -7,7 +7,8 @@ enum class TapAction { OWN_APP, SYSTEM_CLOCK }
 /** Light/dark variant of the dial chrome (numerals, ticks, hands); [AUTO] follows the system dark mode. */
 enum class ColorMode { LIGHT, DARK, AUTO }
 
-enum class SwitchStrategyType { FIXED_TIMES, TRAILING_OFFSET }
+/** Where the shown window begins: at fixed times, or right at the current time, so that the hand always sits at its start. */
+enum class SwitchStrategyType { FIXED_TIMES, TRAILING }
 
 /** Where the place name is shown in the widget, if at all. */
 enum class LabelPosition { NONE, ABOVE, BELOW }
@@ -57,7 +58,12 @@ data class WidgetSettings(
     val switchTime2Minutes: Int = 18 * 60,
     /** The one fixed switch time of the 24h dial, where its shown day begins. */
     val switchTime24hMinutes: Int = 0,
-    val trailingOffsetMinutes: Int = 30,
+    /**
+     * Dial degrees (0..[MAX_RING_END_FADE_DEG]) before the end of the shown window over which the
+     * day/night ring fades out, so its last stretch is not mistaken for the time right after its
+     * start; never before the current time.
+     */
+    val ringEndFadeDeg: Int = 15,
     val ringStyle: RingStyle = RingStyle.SKY,
     val skyHorizon: SkyHorizon = SkyHorizon.INNER,
     /**
@@ -95,5 +101,7 @@ data class WidgetSettings(
         // Deliberately the same value as AppWidgetManager.INVALID_APPWIDGET_ID: real widget
         // ids are always > 0, so 0 doubles as both "no specific widget" and "template".
         const val DEFAULT_WIDGET_ID = 0
+
+        const val MAX_RING_END_FADE_DEG = 30
     }
 }

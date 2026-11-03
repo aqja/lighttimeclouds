@@ -132,9 +132,10 @@ class ClockFacePreviewTest {
         val fullDay = plain.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR)
         // Afternoon, sun about 25° high, waxing moon low in the south-east.
         render("rings", "sky_24h", fullDay, null, darkBackground = true)
+        render("rings", "sky_24h_end_fade_30", fullDay.copy(ringEndFadeDeg = 30), null, darkBackground = true)
         // Late evening with the seam trailing the hour hand: tomorrow's sunrise already shows ahead of it.
         val lateEvening = ZonedDateTime.of(2026, 10, 17, 22, 0, 0, 0, Place.DEFAULT.zone)
-        render("rings", "sky_24h_trailing", fullDay.copy(switchStrategyType = SwitchStrategyType.TRAILING_OFFSET), null, darkBackground = true, at = lateEvening)
+        render("rings", "sky_24h_trailing", fullDay.copy(switchStrategyType = SwitchStrategyType.TRAILING), null, darkBackground = true, at = lateEvening)
         // Evening in the 18:00-06:00 window: sunset around 18:30 with the twilight right after, no sun in the ring.
         val evening = ZonedDateTime.of(2026, 10, 17, 19, 10, 0, 0, Place.DEFAULT.zone)
         render("rings", "sky_12h_evening", plain, null, darkBackground = true, at = evening)
@@ -155,7 +156,7 @@ class ClockFacePreviewTest {
         render(
             "rings",
             "temperature_trailing_seam",
-            weatherSettings.copy(colorMode = ColorMode.DARK, switchStrategyType = SwitchStrategyType.TRAILING_OFFSET),
+            weatherSettings.copy(colorMode = ColorMode.DARK, switchStrategyType = SwitchStrategyType.TRAILING),
             mixedForecast(),
             darkBackground = true,
             at = now.withMinute(40),
@@ -275,6 +276,43 @@ class ClockFacePreviewTest {
             }
             assertTrue("moon path missing at the far edge with horizon $horizon at $missing°", missing.isEmpty())
         }
+    }
+
+    @Test
+    fun ringFadesOutBeforeTheSeamButNotBeforeNow() {
+        val settings = WidgetSettings(
+            widgetId = 1, displayMode = DisplayMode.TWENTY_FOUR_HOUR, colorMode = ColorMode.DARK, ringEndFadeDeg = 30,
+            showMoon = false, showSunInRing = false, showMoonInRing = false, showSolarMarks = false, showSunriseSunsetMarks = false,
+        )
+        val size = 600
+        val app = RuntimeEnvironment.getApplication()
+        fun alphaAt(clock: Bitmap, degrees: Double): Int {
+            // Middle of the day/night ring (0.82 to 1 of the dial radius).
+            val r = 0.91 * size / 2.0 * 0.96
+            val angle = Math.toRadians(degrees - 90.0)
+            return Color.alpha(clock.getPixel((size / 2.0 + r * cos(angle)).toInt(), (size / 2.0 + r * sin(angle)).toInt()))
+        }
+        fun render(settings: WidgetSettings, hour: Int, minute: Int) =
+            ClockFaceRenderer.render(app, size, settings, null, ZonedDateTime.of(2026, 11, 3, hour, minute, 0, 0, Place.DEFAULT.zone))
+
+        // Seam at midnight, the top: opaque after it and until 30° before it, half faded halfway, gone just before it.
+        val fixed = render(settings, 15, 0)
+        assertEquals(255, alphaAt(fixed, 1.0))
+        assertEquals(255, alphaAt(fixed, 325.0))
+        assertTrue("half way: ${alphaAt(fixed, 345.0)}", alphaAt(fixed, 345.0) in 100..155)
+        assertTrue("just before the seam: ${alphaAt(fixed, 359.0)}", alphaAt(fixed, 359.0) < 20)
+        assertEquals("without fade", 255, alphaAt(render(settings.copy(ringEndFadeDeg = 0), 15, 0), 359.0))
+
+        // 23:30, the hand 7.5° before the seam: the ring up to the hand stays opaque, only the rest fades.
+        val late = render(settings, 23, 30)
+        assertEquals(255, alphaAt(late, 350.0))
+        assertTrue("after the hand: ${alphaAt(late, 358.0)}", alphaAt(late, 358.0) < 120)
+
+        // Trailing: the seam is at the hand (15:00, 225°), the fade lies just behind it.
+        val trailing = render(settings.copy(switchStrategyType = SwitchStrategyType.TRAILING), 15, 0)
+        assertEquals(255, alphaAt(trailing, 227.0))
+        assertEquals(255, alphaAt(trailing, 190.0))
+        assertTrue("just behind the hand: ${alphaAt(trailing, 223.0)}", alphaAt(trailing, 223.0) < 40)
     }
 
     @Test

@@ -81,10 +81,9 @@
     <string name="switch_time">Switch time</string>
     <string name="switch_time_1">Switch time 1</string>
     <string name="switch_time_2">Switch time 2</string>
-    <plurals name="trailing_offset">
-        <item quantity="one">Lead: %1$d minute</item>
-        <item quantity="other">Lead: %1$d minutes</item>
-    </plurals>
+    <string name="ring_end_fade_label">Fade out ring end</string>
+    <string name="ring_end_fade_value">%1$d°</string>
+    <string name="ring_end_fade_hint">Lets the day/night ring fade out over its last stretch, so that the end of the shown span is not mistaken for the time right after its start. Never before the current time.</string>
 
     <!-- Color mode and tap action -->
     <string name="section_color_mode">Color mode</string>
