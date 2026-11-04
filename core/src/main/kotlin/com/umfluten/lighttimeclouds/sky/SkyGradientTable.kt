@@ -4,7 +4,7 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 
 /**
- * Precomputed [SkyModel.averagedGradient] gradients for sun altitudes from [MIN_ALTITUDE] to 90° in
+ * Precomputed [SkyModel.ringGradient] gradients for sun altitudes from [MIN_ALTITUDE] to 90° in
  * [ALTITUDE_STEP] steps, each at view elevations from the horizon up to
  * [SkyProjection.MAX_TOP_ELEVATION_DEG] in [ELEVATION_STEP] steps ([STOPS] colors, horizon first),
  * so drawing the ring needs no scattering integration. Stored as the resource [RESOURCE]
@@ -29,8 +29,8 @@ object SkyGradientTable {
     fun compute(rows: Iterable<Int> = 0 until ROWS): ByteArray {
         val bytes = ByteArray(ROWS * STOPS * 3)
         val elevations = DoubleArray(STOPS) { it * ELEVATION_STEP }
-        for (row in rows) {
-            SkyModel.averagedGradient(MIN_ALTITUDE + row * ALTITUDE_STEP, elevations).forEachIndexed { stop, rgb ->
+        rows.toList().parallelStream().forEach { row ->
+            SkyModel.ringGradient(MIN_ALTITUDE + row * ALTITUDE_STEP, elevations).forEachIndexed { stop, rgb ->
                 val i = (row * STOPS + stop) * 3
                 bytes[i] = (rgb shr 16).toByte()
                 bytes[i + 1] = (rgb shr 8).toByte()
@@ -44,7 +44,7 @@ object SkyGradientTable {
      * [stops] sky colors (packed 0xRRGGBB) from the horizon up to [topElevationDeg] (at most
      * [SkyProjection.MAX_TOP_ELEVATION_DEG]), evenly spaced in [SkyProjection], for the sun at
      * [sunAltitudeDeg]; bilinearly interpolated in the table. Sun altitudes below [MIN_ALTITUDE]
-     * count as [MIN_ALTITUDE] (dark).
+     * count as [MIN_ALTITUDE]: by then only the night sky's own glow is left.
      */
     fun colors(sunAltitudeDeg: Double, topElevationDeg: Double, stops: Int): IntArray {
         require(stops >= 2) { "need at least two stops" }

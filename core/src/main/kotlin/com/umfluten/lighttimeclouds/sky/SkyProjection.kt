@@ -1,7 +1,5 @@
 package com.umfluten.lighttimeclouds.sky
 
-import kotlin.math.atan
-import kotlin.math.tan
 
 /**
  * How elevations above the horizon spread across a band from the horizon (0) to a far edge (1)

@@ -5,7 +5,8 @@
 This document describes every physical and astronomical computation in the app: what is computed,
 with which formulas and constants, where it lives in the code, where model and numbers come from,
 and which simplifications were made on purpose. Sources are numbered at the end
-([Sources](#15-sources)); references in the text look like this: [7].
+([Sources](#15-sources)); references in the text look like this: [7]. How the computed light is
+turned into colors as a human eye sees them is described in [PHYSIOLOGY.md](PHYSIOLOGY.md).
 
 Almost all of the computation is in the `core` module (plain Kotlin/JVM, no Android):
 
@@ -17,6 +18,7 @@ Almost all of the computation is in the `core` module (plain Kotlin/JVM, no Andr
 | Observer's place, horizontal coordinates, refraction | [`astro/Topocentric.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/astro/Topocentric.kt) |
 | Events, moon phase, public API | [`astro/SunMoonCalculator.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/astro/SunMoonCalculator.kt), [`astro/SolarDay.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/astro/SolarDay.kt) |
 | Atmospheric scattering model | [`sky/SkyModel.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyModel.kt) |
+| Aerosols (Mie theory, size distribution) | [`sky/Mie.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Mie.kt), [`sky/Aerosol.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Aerosol.kt) |
 | Spectrum and colorimetry | [`sky/Spectrum.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Spectrum.kt) |
 | Mapping elevation → ring | [`sky/SkyProjection.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyProjection.kt) |
 | Precomputed color table | [`sky/SkyGradientTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyGradientTable.kt), [`sky/SkyTableGenerator.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyTableGenerator.kt) |
@@ -520,18 +522,22 @@ Code: [`SkyModel.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/S
 The model is a port of *Horizon* (Daniel Lazaro) [22], which derives from *Production Sky
 Rendering* (Andrew Helmer) [23]. Physics and parameters come from Hillaire (2020) [24], who builds
 on Bruneton and Neyret (2008) [25]. The app extends the original with multiple scattering after
-Hillaire [24, sec. 5.5] and with a spectral computation using data from Bruneton's implementation
-[26] (section [10](#10-sky-colors-spectrum-colorimetry-image-processing)).
+Hillaire [24, sec. 5.5], with a spectral computation using data from Bruneton's implementation
+[26] (section [10](#10-sky-colors-spectrum-colorimetry-image-processing)), with aerosols from Mie
+theory and measured size distributions (section [9.6](#96-aerosols-mie-theory-and-a-measured-size-distribution))
+and with the night sky's own glow (section [9.7](#97-the-night-sky)).
 
 There are two configurations of the same computation:
 
-| | `gradient` (original) | `averagedGradient` (the app's ring) |
+| | `gradient` (original) | `ringGradient` (the app's ring) |
 |---|---|---|
 | Wavelengths | 3 (680, 550, 440 nm ≙ R, G, B) | 48 (360–830 nm, 10 nm steps) |
 | Solar spectrum | white (1, 1, 1) | ASTM G-173 above the atmosphere |
+| Aerosols | gray, Cornette-Shanks phase function, optical thickness 0.005 | urban aerosol from Mie theory, τ(440 nm) = 0.2 |
 | Scattering orders | single | single + multiple |
+| Integration along the view ray | 32 even steps | 32 steps growing with distance |
 | View direction | 90° to the side of the Sun | mean over 12 azimuths |
-| Exposure | fixed | with eye adaptation |
+| Exposure | fixed | seen by the eye ([PHYSIOLOGY.md](PHYSIOLOGY.md)) |
 
 The original serves as a reference: a test checks that the port yields the same colors as
 Horizon.
@@ -556,14 +562,16 @@ Coefficients at the ground or at the ozone peak (in 1/m):
 | Quantity | Value | Origin |
 |---|---|---|
 | Rayleigh scattering $\beta_R$ | 5.802·10⁻⁶ / 13.558·10⁻⁶ / 33.1·10⁻⁶ (R/G/B) | $1.24062\cdot10^{-6}\,(\lambda/\mu\mathrm{m})^{-4}$ at 680/550/440 nm [24; 26] |
-| Mie extinction $\beta_M^\mathrm{ext}$ | 4.44·10⁻⁶ | Ångström β 5.328·10⁻³ / 1.2 km [26]; likewise Hillaire's reference code [24]. Table 1 of the paper gives a Mie absorption of 4.40·10⁻⁶ instead of 0.444·10⁻⁶ |
-| Mie scattering $\beta_M$ | 3.996·10⁻⁶ | single-scattering albedo 0.9 · extinction [24; 26] |
+| Mie extinction $\beta_M^\mathrm{ext}$ (original) | 4.44·10⁻⁶ | Ångström β 5.328·10⁻³ / 1.2 km [26]; likewise Hillaire's reference code [24]. Table 1 of the paper gives a Mie absorption of 4.40·10⁻⁶ instead of 0.444·10⁻⁶ |
+| Mie scattering $\beta_M$ (original) | 3.996·10⁻⁶ | single-scattering albedo 0.9 · extinction [24; 26] |
 | Ozone absorption $\beta_O$ (RGB) | 0.65·10⁻⁶ / 1.881·10⁻⁶ / 0.085·10⁻⁶ | [24] |
 | Ozone absorption $\beta_O$ (spectral) | $\sigma_{O_3}(\lambda)\cdot n_\mathrm{max}$ | section [10.1](#101-spectral-data) |
 | Ground albedo $a$ | 0.3 | as in Hillaire's paper [24] (multiple scattering only) |
 
-Rayleigh scatters without absorbing, ozone only absorbs, aerosol does both (gray, i.e. independent
-of wavelength).
+Rayleigh scatters without absorbing, ozone only absorbs, aerosol does both: in the original gray,
+i.e. independent of wavelength, with an optical thickness of only 0.005 (a very clean atmosphere);
+for the ring with the spectral coefficients of section [9.6](#96-aerosols-mie-theory-and-a-measured-size-distribution),
+with the same height profile.
 
 ### 9.2 Phase functions
 
@@ -581,7 +589,9 @@ P_M(\theta) = \frac{3}{8\pi}\,
   \frac{(1 - g^2)(1 + \cos^2\theta)}{(2 + g^2)\,(1 + g^2 - 2g\cos\theta)^{3/2}} .
 ```
 
-$\theta$ is the angle between the view and Sun directions.
+$\theta$ is the angle between the view and Sun directions. This is the original's; it is smooth
+near the Sun (only twice as strong at 0° as at 10°). The ring uses the phase function of a measured
+aerosol from Mie theory instead, with a real forward peak (section [9.6](#96-aerosols-mie-theory-and-a-measured-size-distribution)).
 
 ### 9.3 Transmittance
 
@@ -612,6 +622,11 @@ L(\lambda) = E_\odot(\lambda)\sum_{j} T(c \to x_j)\Bigl[
 $T(c \to x_j)$ follows without another integration as the ratio of two transmittances to the top,
 $T(c \to \mathrm{top}) / T(x_j \to \mathrm{top})$ (inverted when looking down). $\Psi_\mathrm{ms}$
 is the contribution of multiple scattering (next section; 0 in the original).
+
+For the ring the steps grow with the square of the distance, $s_j = s_\mathrm{top}\,(j/32)^2$, and
+$T(c \to x_j)$ is the optical depth summed along the way. Looking along the horizon, the first
+step is then about 1 km long instead of 35 km: the haze near the ground lies within the first few
+steps, which with even steps gave a wrong, brownish hue to the horizon.
 
 ### 9.5 Multiple scattering (Hillaire 2020)
 
@@ -646,6 +661,76 @@ $\Psi_\mathrm{ms}$ is precomputed per spectral band as a table: local Sun altitu
 steps × 32 heights, denser toward the ground ($h = u^2 \cdot 100\,\mathrm{km}$, $u$ evenly spaced).
 It is looked up bilinearly. Hillaire lays out the same table over $\cos$(Sun zenith angle) and
 height [24].
+
+### 9.6 Aerosols: Mie theory and a measured size distribution
+
+Code: [`Mie.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Mie.kt),
+[`Aerosol.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Aerosol.kt).
+The original's aerosol is very thin and its phase function smooth. Real haze is up to ten times
+thicker, scatters more toward the side and has a sharp forward peak, which makes the bright
+aureole around the Sun. The ring's aerosol is computed from a measured particle population.
+
+**Size distribution.** AERONET, the worldwide network of sun photometers, derives the aerosol's
+volume size distribution from measurements of the sky around the Sun. Dubovik et al. [43] tabulate
+it for typical aerosol types as two lognormal modes whose parameters grow with the optical
+thickness $\tau_{440}$ at 440 nm:
+
+```math
+\frac{dV}{d\ln r} = \sum_{i=1}^{2}\frac{C_i}{\sqrt{2\pi}\,\sigma_i}
+  \exp\!\left(-\frac{(\ln r - \ln r_i)^2}{2\sigma_i^2}\right).
+```
+
+The app takes the urban aerosol of Créteil near Paris (1999) [43, table 1], the closest site in the
+table to a European city, with $\tau_{440} = 0.2$, a fairly clear day (the mean measured there was
+0.26, the table's range 0.1 to 0.9):
+
+| Mode | Volume $C_i$ (µm³/µm²) | Median radius $r_i$ (µm) | $\sigma_i$ |
+|---|---|---|---|
+| fine | $0.01 + 0.12\,\tau_{440}$ | $0.11 + 0.13\,\tau_{440}$ | 0.43 |
+| coarse | $0.01 + 0.05\,\tau_{440}$ | $2.76 + 0.48\,\tau_{440}$ | 0.79 |
+
+with the refractive index $1.40 + 0.009i$, taken as independent of the wavelength.
+
+**Mie theory.** Each particle is a homogeneous sphere. Its extinction and scattering efficiencies
+$Q_\mathrm{ext}, Q_\mathrm{sca}$ and its scattering amplitudes $S_1, S_2$ follow from the
+Lorenz-Mie series, computed with the algorithm BHMIE of Bohren and Huffman [42] (logarithmic
+derivative by downward recursion, Riccati-Bessel functions upward, angular functions $\pi_n, \tau_n$).
+Summed over 160 radii from 0.01 to 20 µm (evenly in $\ln r$), for each of the 48 wavelengths:
+
+```math
+\tau_\mathrm{ext}(\lambda) = \int \frac{dV/d\ln r}{\tfrac43\pi r^3}\,\pi r^2\,Q_\mathrm{ext}\,d\ln r,\qquad
+P_M(\theta,\lambda) = \frac{\int N(r)\,\tfrac12\bigl(|S_1|^2 + |S_2|^2\bigr)\,d\ln r}{k^2\int N(r)\,\pi r^2 Q_\mathrm{sca}\,d\ln r},
+```
+
+likewise $\tau_\mathrm{sca}$ with $Q_\mathrm{sca}$; $N(r)$ is the number of particles per $d\ln r$,
+$k = 2\pi/\lambda$. The phase function is tabulated at 721 angles, densest near 0°. Tests check the
+algorithm against the example run of Bohren and Huffman ($Q = 3.10543$, backscatter 2.92534), the
+normalization $\int P\,d\Omega = 1$ and the Rayleigh limit.
+
+**Result** for $\tau_{440} = 0.2$, compared with the values Dubovik et al. measured at Créteil:
+
+| Quantity | Model | Measured [43] |
+|---|---|---|
+| Optical thickness at 440 / 550 / 670 nm | 0.208 / 0.136 / 0.092 | 0.2 (given) |
+| Single-scattering albedo at 440 / 670 nm | 0.92 / 0.89 | 0.94 / 0.93 ± 0.03 |
+| Asymmetry parameter $g$ at 440 / 670 nm | 0.67 / 0.57 | 0.68 / 0.61 ± 0.07 |
+| Ångström exponent 440–670 nm | 1.93 | 1.2 to 2.3 |
+| Phase function at 550 nm, 0° / 3° / 10° / 90° | 6.0 / 1.8 / 0.57 / 0.026 sr⁻¹ | |
+
+**In the model** the aerosol keeps the original's height profile: $\beta(h) = \tau(\lambda)/H \cdot e^{-h/H}$
+with $H = 1.2$ km. Looking along the horizon, the line of sight thus crosses about 100 times the
+vertical optical thickness. At sunset this haze near the ground is hardly lit any more: the
+horizon itself darkens under a brighter band, as on hazy evenings. The share of light from the
+Sun's surroundings out to 2.5° (circumsolar ratio, in luminance) comes out at 0.4 % with the Sun
+at 40°, 1.4 % at 10° and 5.7 % at 2°.
+
+### 9.7 The night sky
+
+Without the Sun the sky still glows: airglow, starlight, zodiacal light. The model adds the natural
+night sky brightness that Falchi et al. [44] assume for the background away from the Milky Way at
+low solar activity, 22.0 mag/arcsec² or 174 µcd/m², everywhere in the sky and with the Sun's
+spectrum. Light pollution is not included. This glow sets the night's color
+([PHYSIOLOGY.md](PHYSIOLOGY.md), section 5).
 
 ---
 
@@ -716,27 +801,19 @@ XYZ → linear sRGB with the matrix for the sRGB/Rec. 709 primaries and white po
 Unfiltered sunlight is thus exactly white (1, 1, 1), as in the original with its white sun. The
 colors are therefore relative to sunlight, not to D65.
 
-### 10.3 Exposure and eye adaptation
+### 10.3 Exposure
 
-The code computes luminance in linear RGB with the Rec. 709 weights [35]:
-$Y = 0.2126R + 0.7152G + 0.0722B$.
-
-- **Original:** fixed exposure 25.
-- **Ring:** the exposure is scaled so that the horizon at a Sun altitude of 10° is as bright as in
-  the original: $E_\mathrm{ring} = 25 \cdot Y_\mathrm{orig}(10°)/Y_\mathrm{ring}(10°)$. On top of
-  that comes a partial, capped **adaptation to the dark**, with $Y_h$ = luminance of the horizon:
-
-  ```math
-  A = \operatorname{clamp}\!\left(\left(\frac{Y_\mathrm{ref}}{Y_h}\right)^{0.5},\ 1,\ 1000\right).
-  ```
-
-  This is not a physiological model but a heuristic: like the eye, it lifts the blue of deep
-  twilight into view, while the sky as a whole still darkens toward night (exponent < 1, at most
-  1000-fold).
+- **Original:** fixed exposure 25 on linear RGB. The code computes luminance there with the
+  Rec. 709 weights [35]: $Y = 0.2126R + 0.7152G + 0.0722B$.
+- **Ring:** no fixed exposure. The light is taken in absolute units (photopic and scotopic
+  luminance in cd/m²) and turned into display colors as an eye adapted to the whole sky sees them:
+  the brightness after Stevens' law, the hue with the rods' contribution in dim light, the colors
+  fading as it gets dark. All of it is described in [PHYSIOLOGY.md](PHYSIOLOGY.md).
 
 ### 10.4 Tone mapping
 
-After exposure, per channel:
+In the original, after exposure, per channel (the ring uses steps 2 and 3, see
+[PHYSIOLOGY.md](PHYSIOLOGY.md), section 6):
 
 1. **Warm bias for dark skies** (taken from Horizon, purely aesthetic): with $w = 1/(1 + 2Y)$,
    $R \cdot (1 + 0.05w)$, $G \cdot (1 - 0.05w)$, $B \cdot (1 + 0.1w)$.
@@ -751,7 +828,7 @@ After exposure, per channel:
 ### 10.5 Averaging over azimuth
 
 The ring has no compass direction. For each elevation the sky is therefore averaged all around: the
-**linear** RGB (before tone mapping) is averaged over 12 azimuths. Since the sky is mirror-symmetric
+spectral radiance (before anything nonlinear) is averaged over 12 azimuths. Since the sky is mirror-symmetric
 about the plane through Sun and zenith, only 6 are computed (15°, 45°, …, 165° from the Sun). This
 brings in the red glow on the Sun's side without the solar disc itself dominating, since no sample
 lies at 0°.
@@ -778,10 +855,15 @@ $e_t = 37.5°$ (half of a vertical field of view of 75°).
 
 Code: [`SkyGradientTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyGradientTable.kt).
 The scattering computation is too expensive for every minute. The Gradle task
-`:core:generateSkyTable` therefore builds a table at build time: Sun altitude −18°…90° in 0.5°
-steps (217 rows) × view elevation 0°…80° in 1° steps (81 columns), 3 bytes of sRGB each. At run
-time it is interpolated bilinearly. Sun altitudes below −18° count as −18°. A test checks that the
-bundled table matches the model.
+`:core:generateSkyTable` therefore builds the table at build time:
+
+- **Sky colors:** Sun altitude −18°…90° in 0.5° steps (217 rows) × view elevation 0°…80° in 1°
+  steps (81 columns), 3 bytes of sRGB each, interpolated bilinearly at run time. Sun altitudes
+  below −18° count as −18°: by then only the night sky's own glow is left.
+
+A test checks that the bundled table matches the model. As F-Droid rebuilds the app and compares it
+byte for byte, the sky model computes with `java.lang.StrictMath`, whose results are the same on
+every machine, instead of the platform's math functions, which may differ in the last bit.
 
 ---
 
@@ -797,9 +879,8 @@ Each ring segment stands for a moment $t$. For it, the **geometric** Sun altitud
 the place is computed, and:
 
 - **"Sky":** 24 colors from the table (section [11.2](#112-precomputed-table)) from the horizon up
-  to $e_t$, laid over a dark night color with a *screen* blend $1 - (1 - a)(1 - b)$. At
-  $h_\odot \le -18°$ (end of astronomical twilight) only the night color remains. Moonlight, stars
-  and airglow are not in the model; the night color stands in for them.
+  to $e_t$. The night's color is the night sky's own glow as the eye sees it (section
+  [9.7](#97-the-night-sky)); moonlight is not in the model.
 - **"Phase colors":** one fixed color per sky state (section [6.4](#64-sky-state)), taken from a
   designed palette that is interpolated linearly between stops at the physical thresholds −18°,
   −12°, −6°, −0.833°, 6° and 90°.
@@ -918,9 +999,11 @@ time of day. Precipitation is checked for the next 3 and 6 hours; snow takes pre
 | Standard atmosphere for refraction (10 °C, 1010 hPa) | at the horizon the true refraction varies by several arcminutes | [5.3](#53-refraction) |
 | Moon phase from geocentric positions | difference from the topocentric phase negligible | [7.2](#72-illuminated-fraction-and-phase) |
 | Tilt of the crescent from geocentric positions | difference from the topocentric view through the lunar parallax (≤ 1°), somewhat more for a thin crescent | [7.4](#74-tilt-of-the-crescent) |
-| Sky without clouds, fixed aerosols and 300 DU of ozone, without moonlight and night sky | the sky color is that of a clear standard sky | [9](#9-sky-colors-the-scattering-model), [12.1](#121-ring-color) |
+| Sky without clouds, 300 DU of ozone, without moonlight | the sky color is that of a cloudless standard sky | [9](#9-sky-colors-the-scattering-model), [12.1](#121-ring-color) |
+| One urban aerosol of fixed amount (τ₄₄₀ = 0.2), spherical, refractive index independent of the wavelength, same height profile everywhere | haze, horizon and aureole of a fairly clear day; real haze varies from day to day | [9.6](#96-aerosols-mie-theory-and-a-measured-size-distribution) |
+| Night sky uniform, with the Sun's spectrum, without light pollution | the night of a natural, moonless sky | [9.7](#97-the-night-sky) |
 | Multiple scattering isotropic and locally homogeneous (Hillaire) | small errors in the brightness distribution of deep twilight | [9.5](#95-multiple-scattering-hillaire-2020) |
-| Eye adaptation, warm bias, tone mapping | aesthetic, not photometric | [10.3](#103-exposure-and-eye-adaptation), [10.4](#104-tone-mapping) |
+| Seeing the sky (adaptation, brightness, colors in dim light) | see [PHYSIOLOGY.md](PHYSIOLOGY.md), section 8 | [10.3](#103-exposure) |
 
 ---
 
@@ -1027,3 +1110,15 @@ time of day. Precipitation is checked for the next 3 and 6 hours; snow takes pre
 
 41. G. G. Bennett: The Calculation of Astronomical Refraction in Marine Navigation. *Journal of
     Navigation* 35 (2), 255–259 (1982). <https://doi.org/10.1017/S0373463300022037>
+
+**Supplement: aerosols and night sky**
+
+42. C. F. Bohren, D. R. Huffman: *Absorption and Scattering of Light by Small Particles*, Wiley
+    1983, appendix A (BHMIE).
+43. O. Dubovik, B. N. Holben, T. F. Eck, A. Smirnov, Y. J. Kaufman, M. D. King, D. Tanré,
+    I. Slutsker: Variability of Absorption and Optical Properties of Key Aerosol Types Observed in
+    Worldwide Locations. *Journal of the Atmospheric Sciences* 59, 590–608 (2002).
+    <https://doi.org/10.1175/1520-0469(2002)059<0590:VOAAOP>2.0.CO;2>
+44. F. Falchi, P. Cinzano, D. Duriscoe, C. C. M. Kyba, C. D. Elvidge, K. Baugh, B. A. Portnov,
+    N. A. Rybnikova, R. Furgoni: The new world atlas of artificial night sky brightness.
+    *Science Advances* 2, e1600377 (2016). <https://doi.org/10.1126/sciadv.1600377>

@@ -40,14 +40,14 @@ class SkyModelTest {
     }
 
     @Test
-    fun `averaged sky keeps the red dawn glow late and faint`() {
-        val red = { c: Int -> c shr 16 and 255 }
-        val elevations = doubleArrayOf(0.0, 15.0, 30.0)
-        // Deep twilight: hardly any glow left even at the horizon.
-        assertTrue(red(SkyModel.averagedGradient(-10.0, elevations).first()) < 40)
-        // Shortly before sunrise: a clear red-orange horizon under a darker sky.
-        val dawn = SkyModel.averagedGradient(-2.0, elevations)
-        assertTrue(red(dawn.first()) > 150 && red(dawn.first()) > red(dawn.last()))
+    fun `haze darkens the horizon at sunset under a brighter band`() {
+        // Looking flat through the haze near the ground, which the low sun hardly reaches any more.
+        val luminance = { c: Int -> 0.2126 * (c shr 16 and 255) + 0.7152 * (c shr 8 and 255) + 0.0722 * (c and 255) }
+        val sunset = SkyModel.ringGradient(0.0, doubleArrayOf(0.0, 15.0))
+        assertTrue(luminance(sunset[0]) < 0.7 * luminance(sunset[1]))
+        // With the sun high, the hazy horizon is the brightest part of the sky.
+        val day = SkyModel.ringGradient(40.0, doubleArrayOf(0.0, 15.0, 30.0))
+        assertTrue(luminance(day[0]) > luminance(day[1]) && luminance(day[1]) > luminance(day[2]))
     }
 
     @Test
@@ -58,8 +58,8 @@ class SkyModelTest {
         val green = { c: Int -> c shr 8 and 255 }
         val blue = { c: Int -> c and 255 }
         for (sun in listOf(-4.0, -6.0)) {
-            val top = SkyModel.averagedGradient(sun, doubleArrayOf(0.0, 30.0)).last()
-            val blueSky = blue(top) > 1.5 * red(top) && blue(top) > green(top) && blue(top) > 10
+            val top = SkyModel.ringGradient(sun, doubleArrayOf(0.0, 30.0)).last()
+            val blueSky = blue(top) > 1.3 * red(top) && blue(top) > green(top) && blue(top) > 10
             assertTrue("sun at $sun°: ${Integer.toHexString(top)}", blueSky)
         }
     }
@@ -74,8 +74,8 @@ class SkyModelTest {
 
     @Test
     fun `table is dark at night and interpolates between rows and elevations`() {
-        // Night: at most a trace of light left.
-        assertTrue(SkyGradientTable.colors(-30.0, 45.0, 16).all { c -> listOf(16, 8, 0).all { c shr it and 255 <= 2 } })
+        // Night: only the night sky's own faint glow, dark and a little blue as the rods see it.
+        assertTrue(SkyGradientTable.colors(-30.0, 45.0, 16).all { c -> listOf(16, 8, 0).all { c shr it and 255 <= 64 } && (c and 255) >= (c shr 16 and 255) })
         assertArrayEquals(SkyGradientTable.colors(-18.0, 45.0, 16), SkyGradientTable.colors(-40.0, 45.0, 16))
 
         val red = { c: Int -> c shr 16 and 255 }

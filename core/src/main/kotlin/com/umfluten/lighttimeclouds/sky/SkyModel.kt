@@ -1,28 +1,23 @@
 package com.umfluten.lighttimeclouds.sky
 
 import kotlin.math.abs
-import kotlin.math.acos
-import kotlin.math.cos
-import kotlin.math.exp
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.pow
 import kotlin.math.roundToInt
-import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
  * Physically based sky colors (Rayleigh and Mie scattering, ozone absorption) for a given sun
- * altitude, as a vertical gradient upward from the horizon. [gradient] is the original: looking at
- * right angles to the sun with a fixed exposure, up to [TOP_ELEVATION_DEG]; three wavelengths
- * (one per RGB channel), single scattering. [averagedGradient] is our extension for the dial
- * ring, which has no compass direction: the sky at given elevations (spread across the ring by
- * [SkyProjection]), averaged all around, with a partial, capped eye adaptation as it gets darker;
- * computed over the visible [Spectrum] and with multiple scattering, which both matter in
- * twilight: when only the high atmosphere is still sunlit, its light reaches the shadowed air
- * below by scattering more than once, and the blue of the sky above comes from ozone absorbing
- * across a broad band of the spectrum, which three wavelengths render as a purple.
+ * altitude, as a vertical gradient upward from the horizon.
+ *
+ * [gradient] is the original: looking at right angles to the sun with a fixed exposure, up to
+ * [TOP_ELEVATION_DEG]; three wavelengths (one per RGB channel), single scattering. The rest is our
+ * extension for the dial ring ([RING]): over the visible [Spectrum], with multiple scattering, with
+ * the aerosols of an urban [Aerosol] (Mie scattering), averaged over all view azimuths (the ring
+ * has no compass direction) and seen by a human eye adapted to the whole sky ([ringGradient]):
+ * cones and rods, the hue shift of dim light and the brightness the eye perceives, mapped onto a
+ * display. The physics is described in docs/PHYSICS.md, the vision in docs/PHYSIOLOGY.md.
  *
  * Port of "Horizon" by Daniel Lazaro (https://github.com/dnlzro/horizon, MIT License), whose
  * implementation derives from "Production Sky Rendering" by Andrew Helmer
@@ -33,11 +28,11 @@ import kotlin.math.sqrt
  */
 object SkyModel {
 
-    // Coefficients of media components (1/m); Rayleigh and ozone per RGB channel (680, 550, 440 nm).
+    // Coefficients of media components (1/m) of the original; Rayleigh and ozone per RGB channel (680, 550, 440 nm).
     private val RAYLEIGH_SCATTER = doubleArrayOf(5.802e-6, 13.558e-6, 33.1e-6)
     private const val MIE_SCATTER = 3.996e-6
 
-    /** Mie extinction (scattering plus absorption). */
+    /** Mie extinction (scattering plus absorption) of the original. */
     private const val MIE_EXTINCTION = 4.44e-6
     private val OZONE_ABSORB = doubleArrayOf(0.65e-6, 1.881e-6, 0.085e-6)
 
@@ -69,23 +64,31 @@ object SkyModel {
     private const val FOV_DEG = 75.0
     const val TOP_ELEVATION_DEG = FOV_DEG / 2.0
 
-    // Post-processing
+    // Post-processing of the original
     private const val EXPOSURE = 25.0
-
-    /** [averagedGradient]: azimuths averaged, and the partial eye adaptation (exposure ∝ (reference / L)^exponent, capped). */
-    private const val AVERAGE_AZIMUTHS = 12
-    private const val ADAPTATION_EXPONENT = 0.5
-    private const val MAX_ADAPTATION = 1000.0
-    private const val ADAPTATION_REFERENCE_ALTITUDE = 10.0
     private const val GAMMA = 2.2
     private const val SUNSET_BIAS_STRENGTH = 0.1
+
+    /** View azimuths averaged for the ring; mirror-symmetric about the sun, so half are computed. */
+    private const val AVERAGE_AZIMUTHS = 12
 
     private const val ISOTROPIC_PHASE = 1.0 / (4.0 * Math.PI)
 
     /**
+     * Aerosol optical thickness at 440 nm of the ring's atmosphere: a fairly clear day, below the
+     * mean of 0.26 that AERONET measured at Créteil near Paris in 1999 and within the range its size
+     * distribution was derived from (0.1 to 0.9; Dubovik et al. 2002).
+     */
+    private const val AEROSOL_TAU_440 = 0.2
+
+    /**
      * What a model run computes: the light at the wavelengths with these [rayleigh] and [ozone]
      * coefficients, from a sun of [sun] irradiance, turned into linear RGB by [toLinearRgb]; with
-     * [multiple] scattering or single scattering only.
+     * [multiple] scattering or single scattering only. Aerosols scatter with [mieScattering] and
+     * attenuate with [mieExtinction] (per band, at the ground) and the phase function [miePhase]
+     * (band, scattering angle in radians). With [marched], [inscattered] accumulates the optical
+     * depth along the view ray in steps that are short near the observer, where a flat view runs
+     * through the dense air and haze near the ground, instead of the original's even steps.
      */
     private class Physics(
         val rayleigh: DoubleArray,
@@ -93,6 +96,10 @@ object SkyModel {
         val sun: DoubleArray,
         val multiple: Boolean,
         val toLinearRgb: (DoubleArray) -> DoubleArray,
+        val mieScattering: DoubleArray,
+        val mieExtinction: DoubleArray,
+        val miePhase: (Int, Double) -> Double,
+        val marched: Boolean,
     ) {
         val bands get() = rayleigh.size
 
@@ -105,26 +112,31 @@ object SkyModel {
                 multipleScatteringAt(this, f * f * (TOP_RADIUS - GROUND_RADIUS), altitude)
             }
         }
-
-        val adaptationReference: Double by lazy {
-            luminance(averagedLinear(this, ADAPTATION_REFERENCE_ALTITUDE, doubleArrayOf(0.0)).first())
-        }
-
-        /**
-         * [averagedGradient]'s exposure: [EXPOSURE], which was tuned for the [ORIGINAL] model,
-         * scaled so that the horizon at [ADAPTATION_REFERENCE_ALTITUDE] is as bright as there.
-         */
-        val exposure: Double by lazy { EXPOSURE * ORIGINAL.adaptationReference / adaptationReference }
     }
 
     /** The original's: three wavelengths standing for the RGB channels, a white sun, single scattering. */
-    private val ORIGINAL = Physics(RAYLEIGH_SCATTER, OZONE_ABSORB, doubleArrayOf(1.0, 1.0, 1.0), multiple = false) { it }
-
-    /** The dial ring's: the visible spectrum, multiple scattering. */
-    private val RING = Physics(
-        Spectrum.rayleighScattering, Spectrum.ozoneAbsorption, Spectrum.solarIrradiance, multiple = true,
-        Spectrum::toLinearSrgb,
+    private val ORIGINAL = Physics(
+        rayleigh = RAYLEIGH_SCATTER, ozone = OZONE_ABSORB, sun = doubleArrayOf(1.0, 1.0, 1.0), multiple = false, toLinearRgb = { it },
+        mieScattering = DoubleArray(3) { MIE_SCATTER }, mieExtinction = DoubleArray(3) { MIE_EXTINCTION },
+        miePhase = { _, angle -> cornetteShanksPhase(angle) }, marched = false,
     )
+
+    /**
+     * The dial ring's: the visible spectrum, multiple scattering, and the aerosols of an
+     * [Aerosol] of optical thickness [AEROSOL_TAU_440], spread over the height with
+     * [MIE_SCALE_HEIGHT] like the original's.
+     */
+    private val RING: Physics by lazy {
+        val aerosol = Aerosol(AEROSOL_TAU_440)
+        Physics(
+            rayleigh = Spectrum.rayleighScattering, ozone = Spectrum.ozoneAbsorption, sun = Spectrum.solarIrradiance, multiple = true,
+            toLinearRgb = Spectrum::toLinearSrgb,
+            mieScattering = DoubleArray(Spectrum.wavelengthsNm.size) { aerosol.scatteringDepth[it] / MIE_SCALE_HEIGHT },
+            mieExtinction = DoubleArray(Spectrum.wavelengthsNm.size) { aerosol.extinctionDepth[it] / MIE_SCALE_HEIGHT },
+            miePhase = aerosol::phaseAt,
+            marched = true,
+        )
+    }
 
     /**
      * [stops] sRGB colors (packed 0xRRGGBB) from the horizon (index 0) up to [TOP_ELEVATION_DEG]
@@ -137,35 +149,151 @@ object SkyModel {
         return linearGradient(ORIGINAL, sunAltitudeDeg, elevations, azimuthDeg = 90.0).map { toSrgb(it, EXPOSURE) }.toIntArray()
     }
 
+    // --- Seeing the sky ------------------------------------------------------------------
+
     /**
-     * Sky colors (packed 0xRRGGBB) at [elevationsDeg] above the horizon, whose first entry must be
-     * the horizon (0°), for the sun at [sunAltitudeDeg]: averaged over all view azimuths (the glow
-     * on the sun's side included, without the sun itself dominating), and with an exposure that
-     * rises as the horizon darkens: by (reference / L)^[ADAPTATION_EXPONENT], at most
-     * [MAX_ADAPTATION]-fold, where L is the horizon luminance and the reference that at
-     * [ADAPTATION_REFERENCE_ALTITUDE]. The adaptation lifts the blue of deep twilight into view
-     * while the sky still darkens towards night. Over the visible spectrum and with multiple
-     * scattering (see [RING]).
+     * Luminance (cd/m²) of the natural night sky without moon: 22.0 mag/arcsec², as Falchi et al.
+     * (2016) assume for the background away from the Milky Way at low solar activity. Taken as
+     * the same everywhere in the sky and with the sun's spectrum (stars and zodiacal light), not
+     * the airglow's lines.
      */
-    fun averagedGradient(sunAltitudeDeg: Double, elevationsDeg: DoubleArray): IntArray {
-        require(elevationsDeg.firstOrNull() == 0.0) { "the first elevation must be the horizon" }
-        val linear = averagedLinear(RING, sunAltitudeDeg, elevationsDeg)
-        val horizon = luminance(linear.first()).coerceAtLeast(1e-12)
-        val adaptation = (RING.adaptationReference / horizon).pow(ADAPTATION_EXPONENT).coerceIn(1.0, MAX_ADAPTATION)
-        return linear.map { toSrgb(it, RING.exposure * adaptation) }.toIntArray()
+    private const val NIGHT_SKY_LUMINANCE = 174e-6
+
+    /** Spectral radiance of the natural night sky: the sun's spectrum scaled to [NIGHT_SKY_LUMINANCE]. */
+    private val nightSky: DoubleArray by lazy {
+        val scale = NIGHT_SKY_LUMINANCE / Spectrum.photopicLuminance(Spectrum.solarIrradiance)
+        DoubleArray(Spectrum.solarIrradiance.size) { Spectrum.solarIrradiance[it] * scale }
     }
 
     /**
-     * Mean of [linearGradient] over [AVERAGE_AZIMUTHS] view azimuths, as linear RGB;
-     * mirror-symmetric about the sun, so half are computed.
+     * The display the sky is shown on and the eye looking at it, as in the revised operator of
+     * Tumblin and Rushmeier (Tumblin, Hodgins and Guenter 1999): maximum luminance (cd/m²), the
+     * luminance the eye is adapted to there (a little below half the maximum, which Ward and
+     * Ferwerda et al. take), and the display's contrast ratio, as of a common LCD panel. The
+     * contrast sets how far the night lies below the day: at 1/√[DISPLAY_CONTRAST] of the
+     * adaptation level.
      */
-    private fun averagedLinear(physics: Physics, sunAltitudeDeg: Double, elevationsDeg: DoubleArray): List<DoubleArray> {
-        val sum = List(elevationsDeg.size) { DoubleArray(3) }
+    private const val DISPLAY_MAX_LUMINANCE = 100.0
+    private const val DISPLAY_ADAPTATION = 40.0
+    private const val DISPLAY_CONTRAST = 1000.0
+
+    /** Elevations (degrees) at which the whole sky's mean luminance is sampled. */
+    private const val HEMISPHERE_ELEVATIONS = 12
+
+    /**
+     * What the eye has adapted to with the sun at a given altitude: the mean [photopic] and
+     * [scotopic] luminance (cd/m²) of the whole sky, weighted by solid angle.
+     */
+    private class Adaptation(val photopic: Double, val scotopic: Double)
+
+    private fun adaptation(sunAltitudeDeg: Double): Adaptation {
+        val n = HEMISPHERE_ELEVATIONS
+        val elevations = DoubleArray(n) { (it + 0.5) * 90.0 / n }
+        val hemisphere = skySpectra(sunAltitudeDeg, elevations)
+        val weights = elevations.map { cos(Math.toRadians(it)) }
+        val total = weights.sum()
+        return Adaptation(
+            photopic = hemisphere.indices.sumOf { Spectrum.photopicLuminance(hemisphere[it]) * weights[it] } / total,
+            scotopic = hemisphere.indices.sumOf { Spectrum.scotopicLuminance(hemisphere[it]) * weights[it] } / total,
+        )
+    }
+
+    /** Mean photopic and scotopic luminance (cd/m²) of the whole sky with the sun at [sunAltitudeDeg] ([adaptation]). */
+    internal fun skyLuminance(sunAltitudeDeg: Double): Pair<Double, Double> =
+        adaptation(sunAltitudeDeg).let { it.photopic to it.scotopic }
+
+    /** [averagedSpectra] of the [RING] atmosphere with the night sky's glow added. */
+    private fun skySpectra(sunAltitudeDeg: Double, elevationsDeg: DoubleArray): List<DoubleArray> =
+        averagedSpectra(RING, sunAltitudeDeg, elevationsDeg).map { s -> DoubleArray(s.size) { s[it] + nightSky[it] } }
+
+    /**
+     * Sky colors (packed 0xRRGGBB) at [elevationsDeg] above the horizon for the sun at
+     * [sunAltitudeDeg]: the [RING] atmosphere averaged over all view azimuths (the glow on the
+     * sun's side included, without the sun itself), with the night sky's glow, as an eye adapted
+     * to the whole sky sees it ([perceive]).
+     */
+    fun ringGradient(sunAltitudeDeg: Double, elevationsDeg: DoubleArray): IntArray {
+        val adaptation = adaptation(sunAltitudeDeg)
+        return skySpectra(sunAltitudeDeg, elevationsDeg).map { perceive(it, adaptation) }.toIntArray()
+    }
+
+    /**
+     * The spectral [radiance] (W/(m²·sr·nm) per [Spectrum.wavelengthsNm]) as packed sRGB on the
+     * display, for an eye in the given [adaptation]:
+     *  - the hue from the cones, with the rods' signal entering their channels as Cao et al.
+     *    (2008) measured ([rodIntrusion]), which shifts it towards blue as the light fades;
+     *  - colors fading as the cones lose sensitivity (Wanat and Mantiuk 2014, [saturationFactor]);
+     *  - the brightness from Stevens' brightness law, matched between the sky and the display by
+     *    the revised operator of Tumblin and Rushmeier (Tumblin, Hodgins and Guenter 1999);
+     *  - highlights compressed by the ACES curve, then gamma-encoded.
+     */
+    private fun perceive(radiance: DoubleArray, adaptation: Adaptation): Int {
+        val rgb = RING.toLinearRgb(radiance)
+        val (k1, k2) = rodIntrusion(adaptation.photopic)
+        val rods = Spectrum.photoreceptors(radiance)[3]
+        val intrusion = Spectrum.linearSrgbOfCones(doubleArrayOf(k1 * rods, k1 * rods, k2 * rods))
+        val seen = DoubleArray(3) { rgb[it] + intrusion[it] }
+        val seenLuminance = luminance(seen).coerceAtLeast(1e-300)
+        val saturation = saturationFactor(adaptation.photopic) / saturationFactor(DISPLAY_ADAPTATION)
+
+        val world = stevensGamma(adaptation.photopic)
+        val display = stevensGamma(DISPLAY_ADAPTATION)
+        val m = DISPLAY_CONTRAST.pow((world / display - 1.0) / 2.0)
+        val brightness = DISPLAY_ADAPTATION * m * (Spectrum.photopicLuminance(radiance) / adaptation.photopic).pow(world / display)
+
+        fun channel(i: Int): Int {
+            val c = (seen[i].coerceAtLeast(0.0) / seenLuminance).pow(saturation) * brightness / DISPLAY_MAX_LUMINANCE
+            return (aces(c).pow(1.0 / GAMMA) * 255.0).roundToInt().coerceIn(0, 255)
+        }
+        return (channel(0) shl 16) or (channel(1) shl 8) or channel(2)
+    }
+
+    /**
+     * Exponent of Stevens' brightness law for an eye adapted to [adaptation] cd/m², as the revised
+     * operator of Tumblin and Rushmeier uses it (Tumblin, Hodgins and Guenter 1999).
+     */
+    private fun stevensGamma(adaptation: Double): Double =
+        if (adaptation > 100.0) 2.655 else 1.855 + 0.4 * log10(adaptation + 2.3e-5)
+
+    /**
+     * Weights (k₁ for the L and M cones' channels, k₂ for the S cones') with which the rods'
+     * signal enters the cones' channels at a luminance of [luminance] cd/m², as measured by Cao,
+     * Pokorny, Smith and Zele (2008) and tabulated by Wanat and Mantiuk (2014): none at 10 cd/m²,
+     * (0.0173, 0.0101) at 0.62 and (0.173, 0.357) at 0.1; linear in between, held below 0.1.
+     */
+    private fun rodIntrusion(luminance: Double): Pair<Double, Double> {
+        val l = luminance.coerceIn(0.1, 10.0)
+        return if (l >= 0.62) {
+            val t = (10.0 - l) / (10.0 - 0.62)
+            0.0173 * t to 0.0101 * t
+        } else {
+            val t = (0.62 - l) / (0.62 - 0.1)
+            0.0173 + (0.173 - 0.0173) * t to 0.0101 + (0.357 - 0.0101) * t
+        }
+    }
+
+    /**
+     * Saturation matching factor s(Y) = Y / (Y + 0.108) of Wanat and Mantiuk (2014, eq. 26), held
+     * below 0.1 cd/m² like [rodIntrusion].
+     */
+    private fun saturationFactor(luminance: Double): Double {
+        val l = luminance.coerceAtLeast(0.1)
+        return l / (l + 0.108)
+    }
+
+    /** ACES filmic curve (Narkowicz 2016). */
+    private fun aces(c: Double) = ((c * (2.51 * c + 0.03)) / (c * (2.43 * c + 0.59) + 0.14)).coerceIn(0.0, 1.0)
+
+    // --- Scattering -------------------------------------------------------------------------
+
+    /** Mean spectral radiance (per band of [physics]) over [AVERAGE_AZIMUTHS] view azimuths at each of [elevationsDeg]. */
+    private fun averagedSpectra(physics: Physics, sunAltitudeDeg: Double, elevationsDeg: DoubleArray): List<DoubleArray> {
+        val sum = List(elevationsDeg.size) { DoubleArray(physics.bands) }
         val half = AVERAGE_AZIMUTHS / 2
         for (i in 0 until half) {
             val azimuth = (i + 0.5) * 360.0 / AVERAGE_AZIMUTHS
-            linearGradient(physics, sunAltitudeDeg, elevationsDeg, azimuth).forEachIndexed { k, c ->
-                for (j in 0..2) sum[k][j] += c[j] / half
+            spectralGradient(physics, sunAltitudeDeg, elevationsDeg, azimuth).forEachIndexed { k, c ->
+                for (j in c.indices) sum[k][j] += c[j] / half
             }
         }
         return sum
@@ -173,6 +301,14 @@ object SkyModel {
 
     /** Linear RGB of the inscattered light at each of [elevationsDeg], viewing [azimuthDeg] away from the sun's direction. */
     private fun linearGradient(
+        physics: Physics,
+        sunAltitudeDeg: Double,
+        elevationsDeg: DoubleArray,
+        azimuthDeg: Double,
+    ): List<DoubleArray> = spectralGradient(physics, sunAltitudeDeg, elevationsDeg, azimuthDeg).map(physics.toLinearRgb)
+
+    /** Spectral radiance (per band of [physics]) of the inscattered light at each of [elevationsDeg], viewing [azimuthDeg] away from the sun's direction. */
+    private fun spectralGradient(
         physics: Physics,
         sunAltitudeDeg: Double,
         elevationsDeg: DoubleArray,
@@ -186,56 +322,72 @@ object SkyModel {
         return elevationsDeg.map { elevationDeg ->
             val elevation = Math.toRadians(elevationDeg)
             val view = doubleArrayOf(cos(elevation) * cos(azimuth), sin(elevation), cos(elevation) * sin(azimuth))
-            physics.toLinearRgb(inscattered(physics, camera, view, sunDirection))
+            inscattered(physics, camera, view, sunDirection)
         }
     }
 
     private fun luminance(c: DoubleArray) = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
 
-    /** Light scattered towards the camera along [view], per band of [physics] (before exposure). */
+    /**
+     * Light scattered towards the camera along [view], per band of [physics] (before exposure).
+     * The original takes even steps and the transmittance from the camera to each step as the ratio
+     * of two transmittances to the top of the atmosphere; with [Physics.marched], the steps grow
+     * with the square of the distance (the first ones a few hundred meters long even for a view
+     * along the horizon) and the optical depth is summed along the way.
+     */
     private fun inscattered(physics: Physics, camera: DoubleArray, view: DoubleArray, sunDirection: DoubleArray): DoubleArray {
         val bands = physics.bands
         val result = DoubleArray(bands)
         val tExitTop = intersectSphere(camera, view, TOP_RADIUS) ?: return result
         if (tExitTop <= 0.0) return result
 
-        val segmentLength = tExitTop / SAMPLES
-        var tRay = segmentLength * 0.5
-
         val originRadius = length(camera)
         val downward = dot(camera, view) / originRadius < 0.0
         val startHeight = originRadius - GROUND_RADIUS
         val startCos = (dot(camera, view) / originRadius).coerceIn(-1.0, 1.0)
-        val cameraToSpace = transmittance(physics, startHeight, acos(abs(startCos)))
+        val cameraToSpace = if (physics.marched) null else transmittance(physics, startHeight, acos(abs(startCos)))
 
         val sunViewAngle = acos(dot(sunDirection, view).coerceIn(-1.0, 1.0))
         val phaseR = rayleighPhase(sunViewAngle)
-        val phaseM = miePhase(sunViewAngle)
+        val phaseM = DoubleArray(bands) { k -> physics.miePhase(k, sunViewAngle) }
+        val opticalDepth = DoubleArray(bands)
 
-        repeat(SAMPLES) {
+        for (i in 0 until SAMPLES) {
+            val (tRay, segmentLength) = if (physics.marched) {
+                val start = tExitTop * (i.toDouble() / SAMPLES).pow(2)
+                val end = tExitTop * ((i + 1.0) / SAMPLES).pow(2)
+                (start + end) / 2 to end - start
+            } else {
+                tExitTop / SAMPLES * (i + 0.5) to tExitTop / SAMPLES
+            }
             val pos = DoubleArray(3) { k -> camera[k] + view[k] * tRay }
             val radius = length(pos)
             val up = DoubleArray(3) { k -> pos[k] / radius }
             val height = radius - GROUND_RADIUS
 
-            val viewAngle = acos(abs(dot(up, view).coerceIn(-1.0, 1.0)))
             val sunAngle = acos(dot(up, sunDirection).coerceIn(-1.0, 1.0))
-
-            val toSpace = transmittance(physics, height, viewAngle)
             val light = transmittance(physics, height, sunAngle)
+            val toSpace = if (cameraToSpace != null) transmittance(physics, height, acos(abs(dot(up, view).coerceIn(-1.0, 1.0)))) else null
             val higher = if (physics.multiple) multipleScattering(physics, height, 90.0 - Math.toDegrees(sunAngle)) else null
             val densityR = exp(-height / RAYLEIGH_SCALE_HEIGHT)
             val densityM = exp(-height / MIE_SCALE_HEIGHT)
+            val densityO = ozoneDensity(height)
 
             for (k in 0 until bands) {
-                val cameraToSample = if (downward) toSpace[k] / cameraToSpace[k] else cameraToSpace[k] / toSpace[k]
                 val scatteringR = physics.rayleigh[k] * densityR
-                val scatteringM = MIE_SCATTER * densityM
-                val single = light[k] * (scatteringR * phaseR + scatteringM * phaseM)
+                val scatteringM = physics.mieScattering[k] * densityM
+                val cameraToSample = if (cameraToSpace != null && toSpace != null) {
+                    if (downward) toSpace[k] / cameraToSpace[k] else cameraToSpace[k] / toSpace[k]
+                } else {
+                    val extinction = physics.rayleigh[k] * densityR + physics.mieExtinction[k] * densityM + physics.ozone[k] * densityO
+                    val depth = opticalDepth[k] + extinction * segmentLength / 2
+                    opticalDepth[k] += extinction * segmentLength
+                    exp(-depth)
+                }
+                val single = light[k] * (scatteringR * phaseR + scatteringM * phaseM[k])
                 val higherOrders = if (higher == null) 0.0 else higher[k] * (scatteringR + scatteringM)
                 result[k] += cameraToSample * (single + higherOrders) * segmentLength
             }
-            tRay += segmentLength
         }
         for (k in 0 until bands) result[k] *= physics.sun[k]
         return result
@@ -297,8 +449,8 @@ object SkyModel {
                 val densityO = ozoneDensity(h)
                 val toSun = sunTransmittance(physics, pos, sun)
                 for (k in 0 until bands) {
-                    val extinction = physics.rayleigh[k] * densityR + MIE_EXTINCTION * densityM + physics.ozone[k] * densityO
-                    val scattering = physics.rayleigh[k] * densityR + MIE_SCATTER * densityM
+                    val extinction = physics.rayleigh[k] * densityR + physics.mieExtinction[k] * densityM + physics.ozone[k] * densityO
+                    val scattering = physics.rayleigh[k] * densityR + physics.mieScattering[k] * densityM
                     val toOrigin = exp(-(opticalDepth[k] + extinction * step / 2))
                     second[k] += toOrigin * scattering * toSun[k] * ISOTROPIC_PHASE * step
                     transfer[k] += toOrigin * scattering * step
@@ -329,18 +481,18 @@ object SkyModel {
     }
 
     /** Transmittance from [height] to the top of the atmosphere along a ray at [angle] from the vertical, per band. */
-    private fun transmittance(physics: Physics, height: Double, angle: Double): DoubleArray {
+    private fun transmittance(physics: Physics, height: Double, angle: Double, samples: Int = SAMPLES): DoubleArray {
         val origin = doubleArrayOf(0.0, GROUND_RADIUS + height, 0.0)
         val direction = doubleArrayOf(sin(angle), cos(angle), 0.0)
         val distance = intersectSphere(origin, direction, TOP_RADIUS)
         if (distance == null || distance == 0.0) return DoubleArray(physics.bands) { 1.0 }
 
-        val segmentLength = distance / SAMPLES
+        val segmentLength = distance / samples
         var t = 0.5 * segmentLength
         var odRayleigh = 0.0
         var odMie = 0.0
         var odOzone = 0.0
-        repeat(SAMPLES) {
+        repeat(samples) {
             val x = origin[0] + direction[0] * t
             val y = origin[1] + direction[1] * t
             val h = sqrt(x * x + y * y) - GROUND_RADIUS
@@ -350,14 +502,14 @@ object SkyModel {
             t += segmentLength
         }
         return DoubleArray(physics.bands) { k ->
-            exp(-(physics.rayleigh[k] * odRayleigh + MIE_EXTINCTION * odMie + physics.ozone[k] * odOzone))
+            exp(-(physics.rayleigh[k] * odRayleigh + physics.mieExtinction[k] * odMie + physics.ozone[k] * odOzone))
         }
     }
 
     /** Ozone: triangular profile centered at 25 km, 30 km wide, relative to its peak. */
     private fun ozoneDensity(height: Double) = 1.0 - min(abs(height - 25e3) / 15e3, 1.0)
 
-    /** Exposure, a gentle warm bias for dark (twilight) skies, ACES tone mapping and gamma, to packed sRGB. */
+    /** The original's post-processing: exposure, a gentle warm bias for dark skies, ACES tone mapping and gamma, to packed sRGB. */
     private fun toSrgb(linear: DoubleArray, exposure: Double): Int {
         var r = linear[0] * exposure
         var g = linear[1] * exposure
@@ -369,16 +521,14 @@ object SkyModel {
         g = max(0.0, g * (1.0 - 0.5 * SUNSET_BIAS_STRENGTH * w))
         b = max(0.0, b * (1.0 + 1.0 * SUNSET_BIAS_STRENGTH * w))
 
-        fun channel(c: Double): Int {
-            val toneMapped = ((c * (2.51 * c + 0.03)) / (c * (2.43 * c + 0.59) + 0.14)).coerceIn(0.0, 1.0)
-            return (toneMapped.pow(1.0 / GAMMA) * 255.0).roundToInt().coerceIn(0, 255)
-        }
+        fun channel(c: Double): Int = (aces(c).pow(1.0 / GAMMA) * 255.0).roundToInt().coerceIn(0, 255)
         return (channel(r) shl 16) or (channel(g) shl 8) or channel(b)
     }
 
     private fun rayleighPhase(angle: Double): Double = 3.0 * (1.0 + cos(angle).pow(2)) / (16.0 * Math.PI)
 
-    private fun miePhase(angle: Double): Double {
+    /** The original's aerosol phase function (Cornette-Shanks, g = 0.8). */
+    private fun cornetteShanksPhase(angle: Double): Double {
         val g = 0.8
         val num = (1 - g * g) * (1 + cos(angle).pow(2))
         val denom = (2 + g * g) * (1 + g * g - 2 * g * cos(angle)).pow(1.5)

@@ -9,7 +9,10 @@ import java.io.File
  */
 fun main(args: Array<String>) {
     val outputDir = File(requireNotNull(args.singleOrNull()) { "usage: SkyTableGenerator <output directory>" })
-    val file = File(outputDir, SkyGradientTable.RESOURCE.removePrefix("/"))
-    file.parentFile.mkdirs()
-    file.writeBytes(SkyGradientTable.compute())
+    fun write(resource: String, bytes: ByteArray) {
+        val file = File(outputDir, resource.removePrefix("/"))
+        file.parentFile.mkdirs()
+        file.writeBytes(bytes)
+    }
+    write(SkyGradientTable.RESOURCE, SkyGradientTable.compute())
 }

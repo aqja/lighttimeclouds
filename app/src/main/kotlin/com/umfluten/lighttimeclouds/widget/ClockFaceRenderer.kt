@@ -311,34 +311,17 @@ object ClockFaceRenderer {
         }
     }
 
-    /** Darkest sky tone: the night color of the other ring styles, so night is never pure black. */
-    private val SKY_NIGHT_FLOOR: Int get() = bandColor(SunMoonCalculator.SkyState.NIGHT)
-
-    /** Below this sun altitude the sky shows only [SKY_NIGHT_FLOOR] (end of astronomical twilight). */
-    private const val SKY_NIGHT_BELOW = -18.0
-
     /** Gradient stops across the band in the sky style. */
     private const val SKY_STOPS = 24
 
     /**
      * [SKY_STOPS] sky colors for the sun at [altitudeDeg] as opaque ARGB, from the horizon up to
-     * [topElevationDeg] above it, evenly spaced in [SkyProjection]: the physical model
-     * ([SkyGradientTable]: averaged all around, with eye adaptation), which supplies daylight, the
-     * red/golden glow and the blue of twilight, over [SKY_NIGHT_FLOOR] with a "screen" blend.
-     * Below [SKY_NIGHT_BELOW] only the night color remains.
+     * [topElevationDeg] above it, evenly spaced in [SkyProjection]: the physical model as the eye
+     * sees it ([SkyGradientTable]), from daylight through the glow and the blue of twilight to the
+     * night sky's own faint glow.
      */
-    internal fun skyColors(altitudeDeg: Double, topElevationDeg: Double): IntArray {
-        val floor = SKY_NIGHT_FLOOR
-        if (altitudeDeg <= SKY_NIGHT_BELOW) return IntArray(SKY_STOPS) { floor }
-        val light = SkyGradientTable.colors(altitudeDeg, topElevationDeg, SKY_STOPS)
-        return IntArray(SKY_STOPS) { k -> screenBlend(floor, light[k] or (0xFF shl 24)) }
-    }
-
-    /** "Screen" blend of two opaque colors: 1 - (1 - a)(1 - b) per channel; never darker than either. */
-    private fun screenBlend(a: Int, b: Int): Int {
-        fun ch(x: Int, y: Int) = 255 - (255 - x) * (255 - y) / 255
-        return Color.rgb(ch(Color.red(a), Color.red(b)), ch(Color.green(a), Color.green(b)), ch(Color.blue(a), Color.blue(b)))
-    }
+    internal fun skyColors(altitudeDeg: Double, topElevationDeg: Double): IntArray =
+        SkyGradientTable.colors(altitudeDeg, topElevationDeg, SKY_STOPS).map { it or (0xFF shl 24) }.toIntArray()
 
     /**
      * Marks solar noon/midnight and sunrise/sunset across the ring, per settings. All strokes use

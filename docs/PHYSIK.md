@@ -5,7 +5,8 @@
 Dieses Dokument beschreibt alle physikalischen und astronomischen Rechnungen der App: was gerechnet
 wird, mit welchen Formeln und Konstanten, wo es im Code steht, woher Modell und Zahlen stammen und
 welche Vereinfachungen bewusst gemacht wurden. Die Quellen stehen nummeriert am Ende
-([Quellen](#15-quellen)); Verweise im Text sehen so aus: [7].
+([Quellen](#15-quellen)); Verweise im Text sehen so aus: [7]. Wie aus dem berechneten Licht die
+Farben werden, die ein menschliches Auge sieht, beschreibt [PHYSIOLOGIE.md](PHYSIOLOGIE.md).
 
 Die Rechnungen stehen fast vollständig im Modul `core` (reines Kotlin/JVM, ohne Android):
 
@@ -17,6 +18,7 @@ Die Rechnungen stehen fast vollständig im Modul `core` (reines Kotlin/JVM, ohne
 | Ort des Beobachters, Horizontsystem, Refraktion | [`astro/Topocentric.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/astro/Topocentric.kt) |
 | Ereignisse, Mondphase, öffentliche API | [`astro/SunMoonCalculator.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/astro/SunMoonCalculator.kt), [`astro/SolarDay.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/astro/SolarDay.kt) |
 | Streumodell der Atmosphäre | [`sky/SkyModel.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyModel.kt) |
+| Aerosole (Mie-Theorie, Größenverteilung) | [`sky/Mie.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Mie.kt), [`sky/Aerosol.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Aerosol.kt) |
 | Spektrum und Farbmetrik | [`sky/Spectrum.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Spectrum.kt) |
 | Abbildung Höhenwinkel → Ring | [`sky/SkyProjection.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyProjection.kt) |
 | Vorberechnete Farbtabelle | [`sky/SkyGradientTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyGradientTable.kt), [`sky/SkyTableGenerator.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyTableGenerator.kt) |
@@ -526,18 +528,23 @@ Code: [`SkyModel.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/S
 Das Modell ist eine Portierung von *Horizon* (Daniel Lazaro) [22], das auf *Production Sky
 Rendering* (Andrew Helmer) [23] zurückgeht. Physik und Parameter stammen aus Hillaire (2020) [24],
 der wiederum auf Bruneton und Neyret (2008) [25] aufbaut. Die App erweitert das Original um
-Mehrfachstreuung nach Hillaire [24, Abschn. 5.5] und um eine spektrale Rechnung mit Daten aus
-Brunetons Implementierung [26] (Abschnitt [10](#10-himmelsfarben-spektrum-farbmetrik-bildaufbereitung)).
+Mehrfachstreuung nach Hillaire [24, Abschn. 5.5], um eine spektrale Rechnung mit Daten aus
+Brunetons Implementierung [26] (Abschnitt [10](#10-himmelsfarben-spektrum-farbmetrik-bildaufbereitung)),
+um Aerosole aus der Mie-Theorie mit gemessenen Größenverteilungen (Abschnitt
+[9.6](#96-aerosole-mie-theorie-und-eine-gemessene-größenverteilung)) und um das Eigenleuchten des
+Nachthimmels (Abschnitt [9.7](#97-der-nachthimmel)).
 
 Es gibt zwei Konfigurationen derselben Rechnung:
 
-| | `gradient` (Original) | `averagedGradient` (Ring der App) |
+| | `gradient` (Original) | `ringGradient` (Ring der App) |
 |---|---|---|
 | Wellenlängen | 3 (680, 550, 440 nm ≙ R, G, B) | 48 (360–830 nm, 10-nm-Schritte) |
 | Sonnenspektrum | weiß (1, 1, 1) | ASTM G-173 oberhalb der Atmosphäre |
+| Aerosole | grau, Phasenfunktion nach Cornette-Shanks, optische Dicke 0,005 | Stadtaerosol aus der Mie-Theorie, τ(440 nm) = 0,2 |
 | Streuordnungen | einfach | einfach + Mehrfachstreuung |
+| Integration entlang des Sehstrahls | 32 gleiche Schritte | 32 mit der Entfernung wachsende Schritte |
 | Blickrichtung | 90° seitlich zur Sonne | Mittel über 12 Azimute |
-| Belichtung | fest | mit Augenanpassung |
+| Belichtung | fest | so, wie das Auge sieht ([PHYSIOLOGIE.md](PHYSIOLOGIE.md)) |
 
 Das Original dient als Referenz: Ein Test prüft, dass die Portierung dieselben Farben wie Horizon
 liefert.
@@ -562,14 +569,16 @@ Koeffizienten am Boden bzw. im Ozonmaximum (in 1/m):
 | Größe | Wert | Herkunft |
 |---|---|---|
 | Rayleigh-Streuung $\beta_R$ | 5,802·10⁻⁶ / 13,558·10⁻⁶ / 33,1·10⁻⁶ (R/G/B) | $1{,}24062\cdot10^{-6}\,(\lambda/\mu\mathrm{m})^{-4}$ bei 680/550/440 nm [24; 26] |
-| Mie-Extinktion $\beta_M^\mathrm{ext}$ | 4,44·10⁻⁶ | Ångström-β 5,328·10⁻³ / 1,2 km [26]; ebenso Hillaires Referenzcode [24]. Tabelle 1 des Artikels nennt als Mie-Absorption 4,40·10⁻⁶ statt 0,444·10⁻⁶ |
-| Mie-Streuung $\beta_M$ | 3,996·10⁻⁶ | Einfachstreu-Albedo 0,9 · Extinktion [24; 26] |
+| Mie-Extinktion $\beta_M^\mathrm{ext}$ (Original) | 4,44·10⁻⁶ | Ångström-β 5,328·10⁻³ / 1,2 km [26]; ebenso Hillaires Referenzcode [24]. Tabelle 1 des Artikels nennt als Mie-Absorption 4,40·10⁻⁶ statt 0,444·10⁻⁶ |
+| Mie-Streuung $\beta_M$ (Original) | 3,996·10⁻⁶ | Einfachstreu-Albedo 0,9 · Extinktion [24; 26] |
 | Ozon-Absorption $\beta_O$ (RGB) | 0,65·10⁻⁶ / 1,881·10⁻⁶ / 0,085·10⁻⁶ | [24] |
 | Ozon-Absorption $\beta_O$ (spektral) | $\sigma_{O_3}(\lambda)\cdot n_\mathrm{max}$ | Abschnitt [10.1](#101-spektrale-daten) |
 | Bodenalbedo $a$ | 0,3 | wie im Artikel von Hillaire [24] (nur Mehrfachstreuung) |
 
-Rayleigh streut ohne Absorption, Ozon absorbiert nur, Aerosol tut beides (grau, also unabhängig von
-der Wellenlänge).
+Rayleigh streut ohne Absorption, Ozon absorbiert nur, Aerosol tut beides: im Original grau, also
+unabhängig von der Wellenlänge, mit einer optischen Dicke von nur 0,005 (eine sehr saubere
+Atmosphäre); für den Ring mit den spektralen Koeffizienten aus Abschnitt
+[9.6](#96-aerosole-mie-theorie-und-eine-gemessene-größenverteilung) und demselben Höhenprofil.
 
 ### 9.2 Phasenfunktionen
 
@@ -586,7 +595,10 @@ P_M(\theta) = \frac{3}{8\pi}\,
   \frac{(1 - g^2)(1 + \cos^2\theta)}{(2 + g^2)\,(1 + g^2 - 2g\cos\theta)^{3/2}} .
 ```
 
-$\theta$ ist der Winkel zwischen Blick- und Sonnenrichtung.
+$\theta$ ist der Winkel zwischen Blick- und Sonnenrichtung. Das ist die des Originals; sie ist nahe
+der Sonne glatt (bei 0° nur doppelt so stark wie bei 10°). Der Ring nutzt stattdessen die
+Phasenfunktion eines gemessenen Aerosols aus der Mie-Theorie, mit einer echten Vorwärtsspitze
+(Abschnitt [9.6](#96-aerosole-mie-theorie-und-eine-gemessene-größenverteilung)).
 
 ### 9.3 Transmission
 
@@ -617,6 +629,11 @@ L(\lambda) = E_\odot(\lambda)\sum_{j} T(c \to x_j)\Bigl[
 $T(c \to x_j)$ ergibt sich ohne zusätzliche Integration als Quotient zweier Transmissionen bis zur
 Oberkante, $T(c \to \mathrm{top}) / T(x_j \to \mathrm{top})$ (bei Blick nach unten umgekehrt).
 $\Psi_\mathrm{ms}$ ist der Beitrag der Mehrfachstreuung (nächster Abschnitt, im Original 0).
+
+Für den Ring wachsen die Schritte mit dem Quadrat der Entfernung, $s_j = s_\mathrm{top}\,(j/32)^2$,
+und $T(c \to x_j)$ ist die unterwegs aufsummierte optische Tiefe. Mit Blick am Horizont entlang ist
+der erste Schritt dann etwa 1 km lang statt 35 km: Der Dunst in Bodennähe liegt in den ersten paar
+Schritten, die ihm mit gleichen Schritten einen falschen, bräunlichen Farbton gaben.
 
 ### 9.5 Mehrfachstreuung (Hillaire 2020)
 
@@ -652,6 +669,79 @@ $\Psi_\mathrm{ms}$ wird je spektralem Band vorab als Tabelle berechnet: lokale S
 in 1°-Schritten × 32 Höhen, die zum Boden hin dichter liegen ($h = u^2 \cdot 100\,\mathrm{km}$,
 $u$ gleichverteilt). Abgefragt wird bilinear. Hillaire legt dieselbe Tabelle über
 $\cos$(Sonnenzenitwinkel) und Höhe an [24].
+
+### 9.6 Aerosole: Mie-Theorie und eine gemessene Größenverteilung
+
+Code: [`Mie.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Mie.kt),
+[`Aerosol.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Aerosol.kt).
+Das Aerosol des Originals ist sehr dünn und seine Phasenfunktion glatt. Echter Dunst ist bis zu
+zehnmal dicker, streut stärker zur Seite und hat eine scharfe Vorwärtsspitze, die die helle Aureole
+um die Sonne macht. Das Aerosol des Rings wird deshalb aus einer gemessenen Teilchenpopulation
+berechnet.
+
+**Größenverteilung.** AERONET, das weltweite Netz von Sonnenphotometern, leitet die
+Volumen-Größenverteilung des Aerosols aus Messungen des Himmels um die Sonne ab. Dubovik et al.
+[43] geben sie für typische Aerosolarten als zwei Lognormal-Moden an, deren Parameter mit der
+optischen Dicke $\tau_{440}$ bei 440 nm wachsen:
+
+```math
+\frac{dV}{d\ln r} = \sum_{i=1}^{2}\frac{C_i}{\sqrt{2\pi}\,\sigma_i}
+  \exp\!\left(-\frac{(\ln r - \ln r_i)^2}{2\sigma_i^2}\right).
+```
+
+Die App nimmt das Stadtaerosol von Créteil bei Paris (1999) [43, Tabelle 1], den Ort der Tabelle,
+der einer europäischen Stadt am nächsten kommt, mit $\tau_{440} = 0{,}2$, einem ziemlich klaren Tag
+(gemessen wurden dort im Mittel 0,26, die Tabelle gilt von 0,1 bis 0,9):
+
+| Mode | Volumen $C_i$ (µm³/µm²) | Medianradius $r_i$ (µm) | $\sigma_i$ |
+|---|---|---|---|
+| fein | $0{,}01 + 0{,}12\,\tau_{440}$ | $0{,}11 + 0{,}13\,\tau_{440}$ | 0,43 |
+| grob | $0{,}01 + 0{,}05\,\tau_{440}$ | $2{,}76 + 0{,}48\,\tau_{440}$ | 0,79 |
+
+mit dem Brechungsindex $1{,}40 + 0{,}009i$, als unabhängig von der Wellenlänge angenommen.
+
+**Mie-Theorie.** Jedes Teilchen ist eine homogene Kugel. Seine Effizienzen für Extinktion und
+Streuung $Q_\mathrm{ext}, Q_\mathrm{sca}$ und seine Streuamplituden $S_1, S_2$ folgen aus der
+Lorenz-Mie-Reihe, gerechnet mit dem Algorithmus BHMIE von Bohren und Huffman [42] (logarithmische
+Ableitung per Abwärtsrekursion, Riccati-Bessel-Funktionen aufwärts, Winkelfunktionen
+$\pi_n, \tau_n$). Summiert über 160 Radien von 0,01 bis 20 µm (gleichmäßig in $\ln r$), für jede
+der 48 Wellenlängen:
+
+```math
+\tau_\mathrm{ext}(\lambda) = \int \frac{dV/d\ln r}{\tfrac43\pi r^3}\,\pi r^2\,Q_\mathrm{ext}\,d\ln r,\qquad
+P_M(\theta,\lambda) = \frac{\int N(r)\,\tfrac12\bigl(|S_1|^2 + |S_2|^2\bigr)\,d\ln r}{k^2\int N(r)\,\pi r^2 Q_\mathrm{sca}\,d\ln r},
+```
+
+ebenso $\tau_\mathrm{sca}$ mit $Q_\mathrm{sca}$; $N(r)$ ist die Teilchenzahl je $d\ln r$,
+$k = 2\pi/\lambda$. Die Phasenfunktion ist für 721 Winkel tabelliert, am dichtesten nahe 0°. Tests
+prüfen den Algorithmus am Rechenbeispiel von Bohren und Huffman ($Q = 3{,}10543$, Rückstreuung
+2,92534), die Normierung $\int P\,d\Omega = 1$ und den Rayleigh-Grenzfall.
+
+**Ergebnis** für $\tau_{440} = 0{,}2$, verglichen mit den Werten, die Dubovik et al. in Créteil
+gemessen haben:
+
+| Größe | Modell | Gemessen [43] |
+|---|---|---|
+| Optische Dicke bei 440 / 550 / 670 nm | 0,208 / 0,136 / 0,092 | 0,2 (vorgegeben) |
+| Einfachstreu-Albedo bei 440 / 670 nm | 0,92 / 0,89 | 0,94 / 0,93 ± 0,03 |
+| Asymmetrieparameter $g$ bei 440 / 670 nm | 0,67 / 0,57 | 0,68 / 0,61 ± 0,07 |
+| Ångström-Exponent 440–670 nm | 1,93 | 1,2 bis 2,3 |
+| Phasenfunktion bei 550 nm, 0° / 3° / 10° / 90° | 6,0 / 1,8 / 0,57 / 0,026 sr⁻¹ | |
+
+**Im Modell** behält das Aerosol das Höhenprofil des Originals: $\beta(h) = \tau(\lambda)/H \cdot e^{-h/H}$
+mit $H = 1{,}2$ km. Mit Blick am Horizont entlang durchquert die Sichtlinie so etwa das Hundertfache
+der senkrechten optischen Dicke. Bei Sonnenuntergang wird dieser bodennahe Dunst kaum noch
+beleuchtet: Der Horizont selbst wird dunkler, darüber liegt ein helleres Band, wie an diesigen
+Abenden. Der Anteil des Lichts aus der Umgebung der Sonne bis 2,5° (Circumsolar Ratio, in
+Leuchtdichte) ergibt sich zu 0,4 % bei 40° Sonnenhöhe, 1,4 % bei 10° und 5,7 % bei 2°.
+
+### 9.7 Der Nachthimmel
+
+Ohne Sonne leuchtet der Himmel noch: Airglow, Sternlicht, Zodiakallicht. Das Modell legt die
+natürliche Helligkeit des Nachthimmels darunter, die Falchi et al. [44] für den Hintergrund fern
+der Milchstraße bei geringer Sonnenaktivität annehmen, 22,0 mag/arcsec² oder 174 µcd/m², überall am
+Himmel gleich und mit dem Spektrum der Sonne. Lichtverschmutzung ist nicht enthalten. Dieses Leuchten
+bestimmt die Farbe der Nacht ([PHYSIOLOGIE.md](PHYSIOLOGIE.md), Abschnitt 5).
 
 ---
 
@@ -723,28 +813,20 @@ XYZ → lineares sRGB mit der Matrix für die Primärvalenzen von sRGB/Rec. 709 
 Atmosphäre hätte. Ungefiltertes Sonnenlicht ist damit genau weiß (1, 1, 1), wie im Original mit
 seiner weißen Sonne. Die Farben sind also relativ zum Sonnenlicht, nicht zu D65.
 
-### 10.3 Belichtung und Augenanpassung
+### 10.3 Belichtung
 
-Die Leuchtdichte im linearen RGB rechnet der Code mit den Rec.-709-Gewichten [35]:
-$Y = 0{,}2126R + 0{,}7152G + 0{,}0722B$.
-
-- **Original:** feste Belichtung 25.
-- **Ring:** Die Belichtung wird so skaliert, dass der Horizont bei Sonnenhöhe 10° so hell ist wie
-  im Original: $E_\mathrm{ring} = 25 \cdot Y_\mathrm{orig}(10°)/Y_\mathrm{ring}(10°)$. Dazu kommt
-  eine teilweise, gedeckelte **Anpassung an die Dunkelheit**, mit $Y_h$ = Leuchtdichte des
-  Horizonts:
-
-  ```math
-  A = \operatorname{clamp}\!\left(\left(\frac{Y_\mathrm{ref}}{Y_h}\right)^{0{,}5},\ 1,\ 1000\right).
-  ```
-
-  Das ist kein physiologisches Modell, sondern eine Heuristik: Wie das Auge hebt sie das Blau der
-  tiefen Dämmerung sichtbar an, während der Himmel insgesamt doch zur Nacht hin dunkler wird
-  (Exponent < 1, höchstens 1000-fach).
+- **Original:** feste Belichtung 25 auf dem linearen RGB. Die Leuchtdichte rechnet der Code dort
+  mit den Rec.-709-Gewichten [35]: $Y = 0{,}2126R + 0{,}7152G + 0{,}0722B$.
+- **Ring:** keine feste Belichtung. Das Licht wird in absoluten Einheiten genommen (photopische und
+  skotopische Leuchtdichte in cd/m²) und so in Displayfarben umgerechnet, wie ein an den ganzen
+  Himmel angepasstes Auge sie sieht: die Helligkeit nach dem Gesetz von Stevens, der Farbton mit
+  dem Beitrag der Stäbchen bei wenig Licht, die Farben verblassend, wenn es dunkel wird. All das
+  beschreibt [PHYSIOLOGIE.md](PHYSIOLOGIE.md).
 
 ### 10.4 Tonwertabbildung
 
-Nach der Belichtung, je Kanal:
+Im Original nach der Belichtung, je Kanal (der Ring nutzt die Schritte 2 und 3, siehe
+[PHYSIOLOGIE.md](PHYSIOLOGIE.md), Abschnitt 6):
 
 1. **Warmer Ausgleich für dunkle Himmel** (aus Horizon übernommen, rein gestalterisch): mit
    $w = 1/(1 + 2Y)$ werden $R \cdot (1 + 0{,}05w)$, $G \cdot (1 - 0{,}05w)$, $B \cdot (1 + 0{,}1w)$
@@ -759,8 +841,8 @@ Nach der Belichtung, je Kanal:
 
 ### 10.5 Mittelung über den Azimut
 
-Der Ring hat keine Himmelsrichtung. Für jede Höhe wird daher der Himmel ringsum gemittelt: Das
-**lineare** RGB (vor der Tonwertabbildung) wird über 12 Azimute gemittelt. Weil der Himmel zur
+Der Ring hat keine Himmelsrichtung. Für jede Höhe wird daher der Himmel ringsum gemittelt: Die
+spektrale Strahldichte (vor allem Nichtlinearen) wird über 12 Azimute gemittelt. Weil der Himmel zur
 Ebene durch Sonne und Zenit spiegelsymmetrisch ist, werden nur 6 berechnet (15°, 45°, …, 165°
 von der Sonne). So kommt das Morgen- und Abendrot auf der Sonnenseite mit hinein, ohne dass die
 Sonnenscheibe selbst dominiert, denn keine Stützstelle liegt bei 0°.
@@ -787,10 +869,16 @@ Abbildung mit $e_t = 37{,}5°$ (halbes vertikales Sichtfeld von 75°).
 
 Code: [`SkyGradientTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyGradientTable.kt).
 Die Streurechnung ist für jede Minute zu teuer. Der Gradle-Task `:core:generateSkyTable` legt
-deshalb beim Build eine Tabelle an: Sonnenhöhe −18°…90° in 0,5°-Schritten (217 Zeilen) ×
-Blickhöhe 0°…80° in 1°-Schritten (81 Spalten), je 3 Byte sRGB. Zur Laufzeit wird bilinear
-interpoliert. Sonnenhöhen unter −18° zählen als −18°. Ein Test prüft, dass die mitgelieferte
-Tabelle mit dem Modell übereinstimmt.
+deshalb beim Build die Tabelle an:
+
+- **Himmelsfarben:** Sonnenhöhe −18°…90° in 0,5°-Schritten (217 Zeilen) × Blickhöhe 0°…80° in
+  1°-Schritten (81 Spalten), je 3 Byte sRGB, zur Laufzeit bilinear interpoliert. Sonnenhöhen unter
+  −18° zählen als −18°: Dann bleibt nur noch das Eigenleuchten des Nachthimmels.
+
+Ein Test prüft, dass die mitgelieferte Tabelle mit dem Modell übereinstimmt. Weil F-Droid die App
+nachbaut und Byte für Byte vergleicht, rechnet das Himmelsmodell mit `java.lang.StrictMath`, dessen
+Ergebnisse auf jedem Rechner gleich sind, statt mit den Mathefunktionen der Plattform, die im
+letzten Bit abweichen können.
 
 ---
 
@@ -806,9 +894,8 @@ Jeder Ringabschnitt steht für einen Zeitpunkt $t$. Dafür wird die **geometrisc
 $h_\odot(t)$ am Ort berechnet, und:
 
 - **„Himmel“:** 24 Farben aus der Tabelle (Abschnitt [11.2](#112-vorberechnete-tabelle)) vom
-  Horizont bis $e_t$, per *Screen*-Mischung $1 - (1 - a)(1 - b)$ über eine dunkle Nachtfarbe gelegt.
-  Bei $h_\odot \le -18°$ (Ende der astronomischen Dämmerung) bleibt nur die Nachtfarbe. Mondlicht,
-  Sterne und Airglow kommen im Modell nicht vor; die Nachtfarbe steht dafür ein.
+  Horizont bis $e_t$. Die Farbe der Nacht ist das Eigenleuchten des Nachthimmels, so wie das Auge
+  es sieht (Abschnitt [9.7](#97-der-nachthimmel)); Mondlicht ist nicht im Modell.
 - **„Phasenfarben“:** eine feste Farbe je Himmelszustand (Abschnitt [6.4](#64-himmelszustand)),
   entnommen einer gestalteten Palette, die zwischen Stützstellen an den physikalischen Schwellen
   −18°, −12°, −6°, −0,833°, 6° und 90° linear interpoliert ist.
@@ -928,9 +1015,11 @@ Niederschlag wird für die nächsten 3 und 6 Stunden geprüft; Schnee hat dabei 
 | Beobachter auf Meereshöhe | Horizont und Parallaxe für Höhe 0 | [5.1](#51-ort-auf-dem-wgs84-ellipsoid-und-parallaxe) |
 | Standardatmosphäre für die Refraktion (10 °C, 1010 hPa) | am Horizont schwankt die wahre Refraktion um mehrere Bogenminuten | [5.3](#53-refraktion) |
 | Mondphase aus geozentrischen Orten | Unterschied zur topozentrischen Phase vernachlässigbar | [7.2](#72-beleuchteter-anteil-und-phase) |
-| Himmel ohne Wolken, feste Aerosole und 300 DU Ozon, ohne Mondlicht und Nachthimmel | Himmelsfarbe gilt für einen klaren Standardhimmel | [9](#9-himmelsfarben-das-streumodell), [12.1](#121-ringfarbe) |
+| Himmel ohne Wolken, 300 DU Ozon, ohne Mondlicht | Himmelsfarbe gilt für einen wolkenlosen Standardhimmel | [9](#9-himmelsfarben-das-streumodell), [12.1](#121-ringfarbe) |
+| Ein Stadtaerosol fester Menge (τ₄₄₀ = 0,2), kugelförmig, Brechungsindex unabhängig von der Wellenlänge, überall dasselbe Höhenprofil | Dunst, Horizont und Aureole eines ziemlich klaren Tages; echter Dunst wechselt von Tag zu Tag | [9.6](#96-aerosole-mie-theorie-und-eine-gemessene-größenverteilung) |
+| Nachthimmel gleichmäßig, mit dem Spektrum der Sonne, ohne Lichtverschmutzung | die Nacht eines natürlichen, mondlosen Himmels | [9.7](#97-der-nachthimmel) |
 | Mehrfachstreuung isotrop und lokal homogen (Hillaire) | kleine Fehler in der Helligkeitsverteilung der tiefen Dämmerung | [9.5](#95-mehrfachstreuung-hillaire-2020) |
-| Augenanpassung, warmer Ausgleich, Tonwertabbildung | gestalterisch, nicht photometrisch | [10.3](#103-belichtung-und-augenanpassung), [10.4](#104-tonwertabbildung) |
+| Sehen des Himmels (Anpassung, Helligkeit, Farben bei wenig Licht) | siehe [PHYSIOLOGIE.md](PHYSIOLOGIE.md), Abschnitt 8 | [10.3](#103-belichtung) |
 | Neigung der Sichel aus geozentrischen Orten | Abweichung zur topozentrischen Ansicht durch die Mondparallaxe (≤ 1°), bei schmaler Sichel etwas mehr | [7.4](#74-neigung-der-sichel) |
 
 ---
@@ -1038,3 +1127,15 @@ Niederschlag wird für die nächsten 3 und 6 Stunden geprüft; Schnee hat dabei 
 
 41. G. G. Bennett: The Calculation of Astronomical Refraction in Marine Navigation. *Journal of
     Navigation* 35 (2), 255–259 (1982). <https://doi.org/10.1017/S0373463300022037>
+
+**Ergänzung: Aerosole und Nachthimmel**
+
+42. C. F. Bohren, D. R. Huffman: *Absorption and Scattering of Light by Small Particles*, Wiley
+    1983, Anhang A (BHMIE).
+43. O. Dubovik, B. N. Holben, T. F. Eck, A. Smirnov, Y. J. Kaufman, M. D. King, D. Tanré,
+    I. Slutsker: Variability of Absorption and Optical Properties of Key Aerosol Types Observed in
+    Worldwide Locations. *Journal of the Atmospheric Sciences* 59, 590–608 (2002).
+    <https://doi.org/10.1175/1520-0469(2002)059<0590:VOAAOP>2.0.CO;2>
+44. F. Falchi, P. Cinzano, D. Duriscoe, C. C. M. Kyba, C. D. Elvidge, K. Baugh, B. A. Portnov,
+    N. A. Rybnikova, R. Furgoni: The new world atlas of artificial night sky brightness.
+    *Science Advances* 2, e1600377 (2016). <https://doi.org/10.1126/sciadv.1600377>

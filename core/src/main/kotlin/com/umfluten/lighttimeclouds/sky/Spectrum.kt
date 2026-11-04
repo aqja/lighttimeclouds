@@ -1,7 +1,5 @@
 package com.umfluten.lighttimeclouds.sky
 
-import kotlin.math.exp
-import kotlin.math.pow
 
 /**
  * Spectral data for [SkyModel]: wavelengths from 360 to 830 nm in 10 nm steps, with the
@@ -57,6 +55,11 @@ internal object Spectrum {
     private val sunSrgb: DoubleArray by lazy { unbalancedSrgb(solarIrradiance) }
 
     private fun unbalancedSrgb(spectrum: DoubleArray): DoubleArray {
+        val (x, y, z) = xyz(spectrum).let { Triple(it[0], it[1], it[2]) }
+        return srgbOfXyz(x, y, z)
+    }
+
+    private fun xyz(spectrum: DoubleArray): DoubleArray {
         var x = 0.0
         var y = 0.0
         var z = 0.0
@@ -66,12 +69,92 @@ internal object Spectrum {
             y += spectrum[i] * cieY(l) * STEP_NM
             z += spectrum[i] * cieZ(l) * STEP_NM
         }
-        return doubleArrayOf(
-            3.2404542 * x - 1.5371385 * y - 0.4985314 * z,
-            -0.9692660 * x + 1.8760108 * y + 0.0415560 * z,
-            0.0556434 * x - 0.2040259 * y + 1.0572252 * z,
+        return doubleArrayOf(x, y, z)
+    }
+
+    private fun srgbOfXyz(x: Double, y: Double, z: Double) = doubleArrayOf(
+        3.2404542 * x - 1.5371385 * y - 0.4985314 * z,
+        -0.9692660 * x + 1.8760108 * y + 0.0415560 * z,
+        0.0556434 * x - 0.2040259 * y + 1.0572252 * z,
+    )
+
+    /** Photopic luminance (cd/m²) of the spectral [radiance] (W/(m²·sr·nm) per [wavelengthsNm]): 683 lm/W times V(λ), here the CIE ȳ. */
+    fun photopicLuminance(radiance: DoubleArray): Double {
+        var sum = 0.0
+        for (i in radiance.indices) sum += radiance[i] * cieY(wavelengthsNm[i])
+        return 683.0 * sum * STEP_NM
+    }
+
+    /** Scotopic luminance (cd/m², rod vision) of the spectral [radiance]: 1700 lm/W times V′(λ). */
+    fun scotopicLuminance(radiance: DoubleArray): Double {
+        var sum = 0.0
+        for (i in radiance.indices) sum += radiance[i] * scotopicEfficiency[i]
+        return 1700.0 * sum * STEP_NM
+    }
+
+    /**
+     * Excitations of the L, M and S cones and of the rods by the spectral [radiance]: the cone
+     * fundamentals of Smith and Pokorny (1975) as linear combinations of X, Y and Z (here of CIE
+     * 1931, not the Judd-Vos correction they were defined on), each normalized to a peak of 1, and
+     * [scotopicEfficiency]; summed like [toLinearSrgb], so [linearSrgbOfCones] turns them back.
+     */
+    fun photoreceptors(radiance: DoubleArray): DoubleArray {
+        val xyz = xyz(radiance)
+        val lms = DoubleArray(3) { i -> (0..2).sumOf { j -> SMITH_POKORNY[i][j] * xyz[j] } / conePeaks[i] }
+        var rods = 0.0
+        for (i in radiance.indices) rods += radiance[i] * scotopicEfficiency[i] * STEP_NM
+        return doubleArrayOf(lms[0], lms[1], lms[2], rods)
+    }
+
+    /** Linear sRGB, balanced like [toLinearSrgb], of cone excitations [lms] in the units of [photoreceptors]. */
+    fun linearSrgbOfCones(lms: DoubleArray): DoubleArray {
+        val raw = DoubleArray(3) { lms[it] * conePeaks[it] }
+        val xyz = DoubleArray(3) { i -> (0..2).sumOf { j -> xyzOfSmithPokorny[i][j] * raw[j] } }
+        val rgb = srgbOfXyz(xyz[0], xyz[1], xyz[2])
+        return DoubleArray(3) { rgb[it] / sunSrgb[it] }
+    }
+
+    /** Smith and Pokorny (1975): L and M from X, Y, Z; S proportional to Z (its scale drops out in the normalization). */
+    private val SMITH_POKORNY = arrayOf(
+        doubleArrayOf(0.15514, 0.54312, -0.03286),
+        doubleArrayOf(-0.15514, 0.45684, 0.03286),
+        doubleArrayOf(0.0, 0.0, 1.0),
+    )
+
+    private val xyzOfSmithPokorny: Array<DoubleArray> by lazy { invert(SMITH_POKORNY) }
+
+    /** Peak of each cone fundamental over the visible range, in 1 nm steps. */
+    private val conePeaks: DoubleArray by lazy {
+        DoubleArray(3) { i ->
+            (360..830).maxOf { l -> val x = cieX(l.toDouble()); val y = cieY(l.toDouble()); val z = cieZ(l.toDouble())
+                SMITH_POKORNY[i][0] * x + SMITH_POKORNY[i][1] * y + SMITH_POKORNY[i][2] * z }
+        }
+    }
+
+    private fun invert(m: Array<DoubleArray>): Array<DoubleArray> {
+        val (a, b, c) = m[0].let { Triple(it[0], it[1], it[2]) }
+        val (d, e, f) = m[1].let { Triple(it[0], it[1], it[2]) }
+        val (g, h, k) = m[2].let { Triple(it[0], it[1], it[2]) }
+        val det = a * (e * k - f * h) - b * (d * k - f * g) + c * (d * h - e * g)
+        return arrayOf(
+            doubleArrayOf((e * k - f * h) / det, (c * h - b * k) / det, (b * f - c * e) / det),
+            doubleArrayOf((f * g - d * k) / det, (a * k - c * g) / det, (c * d - a * f) / det),
+            doubleArrayOf((d * h - e * g) / det, (b * g - a * h) / det, (a * e - b * d) / det),
         )
     }
+
+    /**
+     * CIE 1951 scotopic luminous efficiency V′(λ) per [wavelengthsNm], from 380 to 770 nm as
+     * tabulated by HyperPhysics (Georgia State University), zero outside.
+     */
+    private val scotopicEfficiency = doubleArrayOf(
+        0.0, 0.0,
+        0.000589, 0.002209, 0.009290, 0.034840, 0.096600, 0.199800, 0.328100, 0.455000, 0.567000, 0.676000,
+        0.793000, 0.904000, 0.982000, 0.997000, 0.935000, 0.811000, 0.655000, 0.481000, 0.328800, 0.207600,
+        0.121200, 0.065500, 0.033150, 0.015930, 0.007370, 0.003335, 0.001497, 0.000677, 0.000313, 0.000148,
+        0.000072, 0.000035, 0.000018, 0.000009, 0.000005, 0.000003, 0.000001, 0.000001, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    )
 
     // CIE 1931 color matching functions, multi-lobe fit from "Simple Analytic Approximations to the
     // CIE XYZ Color Matching Functions" (Wyman, Sloan, Shirley, 2013).
