@@ -204,10 +204,12 @@ private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
         },
     ) { padding ->
         // Keyed by tab, so switching the weather ring on or off (which adds or removes the first tab)
-        // keeps the settings tab in view instead of shifting to its neighbor.
+        // keeps the settings tab in view instead of shifting to its neighbor. All tabs stay composed:
+        // otherwise a tab is built only when it slides into view, which stalls a frame mid-swipe.
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
+            beyondViewportPageCount = MAX_TABS - 1,
             key = { page -> currentTabs[page] },
             verticalAlignment = Alignment.Top,
         ) { page ->
@@ -546,3 +548,6 @@ internal const val SKY_TOP_ELEVATION_MIN = 10
 internal const val SKY_TOP_ELEVATION_MAX = SkyProjection.MAX_TOP_ELEVATION_DEG.toInt()
 internal const val SKY_TOP_ELEVATION_STEP = 5
 private const val RING_END_FADE_STEP = 5
+
+/** Weather, times, settings and preview. */
+private const val MAX_TABS = 4
