@@ -4,8 +4,8 @@ import java.io.File
 
 /**
  * Build step (Gradle task `generateSkyTable` in `core/build.gradle.kts`): writes the
- * [SkyGradientTable] resource below the directory given as the only argument, so the table is
- * always computed from [SkyModel] and never kept as a binary in the source tree.
+ * [SkyGradientTable] and [SunTable] resources below the directory given as the only argument, so
+ * the tables are always computed from [SkyModel] and never kept as binaries in the source tree.
  */
 fun main(args: Array<String>) {
     val outputDir = File(requireNotNull(args.singleOrNull()) { "usage: SkyTableGenerator <output directory>" })
@@ -15,4 +15,5 @@ fun main(args: Array<String>) {
         file.writeBytes(bytes)
     }
     write(SkyGradientTable.RESOURCE, SkyGradientTable.compute())
+    write(SunTable.RESOURCE, SunTable.compute())
 }

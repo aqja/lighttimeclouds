@@ -73,6 +73,24 @@ class SkyModelTest {
     }
 
     @Test
+    fun `sun disc is near white high up, golden, orange and red towards the horizon`() {
+        val red = { c: Int -> c shr 16 and 255 }
+        val green = { c: Int -> c shr 8 and 255 }
+        val blue = { c: Int -> c and 255 }
+        val high = SkyModel.sunDisc(60.0)
+        assertTrue("high sun near white: %06x".format(high), green(high) > 235 && blue(high) > 200)
+        val low = SkyModel.sunDisc(3.0)
+        assertTrue("sun 3° high orange: %06x".format(low), green(low) in 100..180 && blue(low) < 60)
+        val horizon = SkyModel.sunDisc(0.0)
+        assertTrue("sun at the horizon red through the haze: %06x".format(horizon), green(horizon) < 60 && blue(horizon) < 40)
+        // Far brighter than the display: shown at full brightness, its hue kept, getting warmer towards the horizon.
+        val altitudes = listOf(0.0, 1.0, 3.0, 10.0, 30.0, 90.0)
+        for (altitude in altitudes) assertEquals(255, red(SkyModel.sunDisc(altitude)))
+        val greens = altitudes.map { green(SkyModel.sunDisc(it)) }
+        assertEquals(greens.sorted(), greens)
+    }
+
+    @Test
     fun `table is dark at night and interpolates between rows and elevations`() {
         // Night: only the night sky's own faint glow, dark and a little blue as the rods see it.
         assertTrue(SkyGradientTable.colors(-30.0, 45.0, 16).all { c -> listOf(16, 8, 0).all { c shr it and 255 <= 64 } && (c and 255) >= (c shr 16 and 255) })
@@ -89,6 +107,37 @@ class SkyModelTest {
         val fine = SkyGradientTable.colors(2.0, 2.0, 5)
         for (i in coarse.indices) assertEquals(coarse[i], fine[2 * i])
         assertEquals((red(coarse[0]) + red(coarse[1])) / 2.0, red(fine[1]).toDouble(), 1.0)
+    }
+
+    /** Checks every 20th row of the sun table generated at build time. */
+    @Test
+    fun `bundled sun table matches the model`() {
+        val rows = (0 until SunTable.ROWS step 20)
+        val computed = SunTable.compute(rows)
+        val bundled = SunTable::class.java.getResourceAsStream(SunTable.RESOURCE)!!.use { it.readBytes() }
+        val rowBytes = bundled.size / SunTable.ROWS
+        for (row in rows) {
+            val range = row * rowBytes until (row + 1) * rowBytes
+            assertArrayEquals("row $row", computed.sliceArray(range), bundled.sliceArray(range))
+        }
+    }
+
+    @Test
+    fun `aureole is brightest next to the sun and fades out completely`() {
+        val brightness = { c: Int -> (c shr 16 and 255) + (c shr 8 and 255) + (c and 255) }
+        for (altitude in listOf(2.0, 10.0, 40.0)) {
+            val aureole = SunTable.aureole(altitude)
+            assertTrue("sun at $altitude°", (1 until aureole.size).all { brightness(aureole[it]) <= brightness(aureole[it - 1]) })
+            assertTrue(brightness(aureole.first()) > 300)
+            assertEquals(0, aureole.last())
+        }
+    }
+
+    @Test
+    fun `circumsolar ratio is a few percent at most, more for a low sun`() {
+        val high = SkyModel.circumsolarRatio(40.0)
+        val low = SkyModel.circumsolarRatio(10.0)
+        assertTrue("$high, $low", high in 0.001..0.02 && low in high..0.05)
     }
 
     @Test

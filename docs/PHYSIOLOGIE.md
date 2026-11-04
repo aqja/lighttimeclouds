@@ -219,6 +219,14 @@ nicht enthalten; über einer Stadt wie Berlin ist der Nachthimmel 10- bis 50-mal
    dunstigen Horizont ein hartes, leicht türkises Band.
 3. **Gamma** $f^{1/2{,}2}$ und 8 Bit je Kanal.
 
+Die Sonnenscheibe durchläuft dieselben Schritte, nur wird in Schritt 2 die Kurve auf ihren hellsten
+Kanal angewandt und die übrigen werden im selben Verhältnis skaliert: Weit heller als das Display,
+wird sie in voller Helligkeit mit erhaltenem Farbton gezeigt. Je Kanal angewandt, liefen Rot und
+Grün zuerst in die Begrenzung und machten aus einer orangen Sonne reines Gelb (PHYSIK.md,
+Abschnitt 12.2). Ihre Aureole ist der Himmel neben ihr, gesehen wie der übrige Himmel: die Ringfarbe
+in Sonnenhöhe plus der Überschuss des Himmels zur Sonne hin, durch dieselben Schritte 1 bis 3, und in
+„Screen“-Mischung über den Ring gelegt.
+
 ## 7. Was herauskommt
 
 Die mittlere Leuchtdichte des ganzen Himmels (Abschnitt 2) und die dargestellten Farben eines Rings

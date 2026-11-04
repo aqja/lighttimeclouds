@@ -33,7 +33,9 @@ import com.umfluten.lighttimeclouds.data.TemperaturePosition
 import com.umfluten.lighttimeclouds.data.WeatherRingPosition
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.sky.SkyGradientTable
+import com.umfluten.lighttimeclouds.sky.SkyModel
 import com.umfluten.lighttimeclouds.sky.SkyProjection
+import com.umfluten.lighttimeclouds.sky.SunTable
 import com.umfluten.lighttimeclouds.weather.HeavyRainWarning
 import com.umfluten.lighttimeclouds.weather.PrecipitationIntensity
 import com.umfluten.lighttimeclouds.weather.TemperatureKind
@@ -46,6 +48,7 @@ import java.time.LocalTime
 import java.time.ZonedDateTime
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.acos
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.hypot
@@ -321,7 +324,7 @@ object ClockFaceRenderer {
      * night sky's own faint glow.
      */
     internal fun skyColors(altitudeDeg: Double, topElevationDeg: Double): IntArray =
-        SkyGradientTable.colors(altitudeDeg, topElevationDeg, SKY_STOPS).map { it or (0xFF shl 24) }.toIntArray()
+        SkyGradientTable.colors(altitudeDeg, topElevationDeg, SKY_STOPS).map { it or OPAQUE }.toIntArray()
 
     /**
      * Marks solar noon/midnight and sunrise/sunset across the ring, per settings. All strokes use
@@ -406,13 +409,7 @@ object ClockFaceRenderer {
     private const val SKY_DOT_SIZE = 0.02f
     private const val SKY_PATH_WIDTH = 0.008f
 
-    private val SUN_COLOR = Color.rgb(255, 232, 60)
-
-    /** Sun symbol in text presentation (the variation selector rules out a colored emoji). */
-    private const val SUN_SYMBOL = "\u2600\uFE0E"
-
-    /** The symbol's rays reach a bit beyond the moon disc, its core is about as large. */
-    private const val SUN_SYMBOL_SCALE = 1.3f
+    private const val OPAQUE = 0xFF shl 24
 
     /**
      * Sun and moon in the day/night ring, per settings, read as a sky: the angle is the current
@@ -464,20 +461,37 @@ object ClockFaceRenderer {
             }
         }
         sun?.let { (r, disc) ->
+            val altitude = sunAltitude(instant)
+            // The aureole around where the sun stands, even beyond the far edge: it then fades
+            // out of the band as the sun climbs, instead of vanishing when the disc turns into a dot.
+            val trueRadius = sky.radiusFor(altitude)
+            // Its size at the scale of the sky's projection across the ring (altitude), which is not
+            // linear: over the aureole's extent toward the horizon, or the smaller of both sides
+            // while the sun is within the band.
+            val extent = SunTable.AUREOLE_EXTENT_DEG
+            val towardHorizon = abs(trueRadius - sky.radiusFor(altitude - extent)) / extent
+            val upward = abs(sky.radiusFor(altitude + extent) - trueRadius) / extent
+            val acrossRing = (if (altitude >= sky.topElevation) towardHorizon else min(towardHorizon, upward)).toFloat()
+            val (ax, ay) = pointOnDial(cx, cy, trueRadius, angle)
+            // Only where the ring is opaque: "screen" blending would raise the coverage of its
+            // smoothed edges and make them glow.
+            canvas.withClip(ringBandPath(cx, cy, radius, bands, inset = 1f)) {
+                drawAureole(this, ax, ay, acrossRing, altitude)
+            }
             val (x, y) = pointOnDial(cx, cy, r, angleFor(r, 1f))
             if (disc) {
-                canvas.withClip(band) { drawSunSymbol(this, x, y, discRadius * SUN_SYMBOL_SCALE) }
+                canvas.withClip(band) { drawSunDisc(this, x, y, sunPixelsPerDegree(r, instant, settings), altitude) }
             } else {
-                drawSkyDot(canvas, x, y, dotRadius, SUN_COLOR, null)
+                drawSkyDot(canvas, x, y, dotRadius, SunTable.disc(altitude) or OPAQUE, null)
             }
         }
     }
 
     /** The day/night ring's area, to clip what is drawn in it. */
-    private fun ringBandPath(cx: Float, cy: Float, radius: Float, bands: RingBands) = Path().apply {
+    private fun ringBandPath(cx: Float, cy: Float, radius: Float, bands: RingBands, inset: Float = 0f) = Path().apply {
         fillType = Path.FillType.EVEN_ODD
-        addCircle(cx, cy, radius * bands.sunInner, Path.Direction.CW)
-        addCircle(cx, cy, radius * bands.sunOuter, Path.Direction.CW)
+        addCircle(cx, cy, radius * bands.sunInner + inset, Path.Direction.CW)
+        addCircle(cx, cy, radius * bands.sunOuter - inset, Path.Direction.CW)
     }
 
     /**
@@ -555,13 +569,62 @@ object ClockFaceRenderer {
         canvas.drawCircle(x, y, r - paint.strokeWidth / 2f, paint)
     }
 
-    /** [SUN_SYMBOL] centered on ([x], [y]), its rays reaching about [r] from the center. */
-    private fun drawSunSymbol(canvas: Canvas, x: Float, y: Float, r: Float) {
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = SUN_COLOR; textAlign = Paint.Align.CENTER; textSize = 100f }
-        val bounds = Rect().also { paint.getTextBounds(SUN_SYMBOL, 0, SUN_SYMBOL.length, it) }
-        paint.textSize = 100f * 2f * r / maxOf(bounds.width(), bounds.height(), 1)
-        paint.getTextBounds(SUN_SYMBOL, 0, SUN_SYMBOL.length, bounds)
-        canvas.drawText(SUN_SYMBOL, x, y - bounds.exactCenterY(), paint)
+    /**
+     * Pixels per degree of sky at the sun, [r] px from the center at [instant]: its true size on
+     * the ring along the time axis. The sun moves along its daily path by the angle between its
+     * positions a few minutes apart, and the dial turns by its own angle in that time; across the
+     * ring (altitude) the scale depends on the sky's projection and is far smaller, so the disc is
+     * drawn round at the scale along the ring.
+     */
+    private fun sunPixelsPerDegree(r: Float, instant: Instant, settings: WidgetSettings): Float {
+        val later = instant.plus(SUN_SPEED_INTERVAL)
+        val a = SunMoonCalculator.sunPosition(instant, settings.place.latitude, settings.place.longitude)
+        val b = SunMoonCalculator.sunPosition(later, settings.place.latitude, settings.place.longitude)
+        val skyDegrees = angularDistance(a.altitudeRad, a.azimuthRad, b.altitudeRad, b.azimuthRad)
+        val dialDegrees = SUN_SPEED_INTERVAL.toMinutes() / 60.0 * when (settings.displayMode) {
+            DisplayMode.TWELVE_HOUR -> 30.0
+            DisplayMode.TWENTY_FOUR_HOUR -> 15.0
+        }
+        return (r * Math.toRadians(dialDegrees) / skyDegrees.coerceAtLeast(1e-6)).toFloat()
+    }
+
+    private val SUN_SPEED_INTERVAL: Duration = Duration.ofMinutes(10)
+
+    /** Angle (degrees) between two directions given by altitude and azimuth (radians). */
+    private fun angularDistance(alt1: Double, az1: Double, alt2: Double, az2: Double): Double =
+        Math.toDegrees(acos((sin(alt1) * sin(alt2) + cos(alt1) * cos(alt2) * cos(az1 - az2)).coerceIn(-1.0, 1.0)))
+
+    /**
+     * The sun's aureole around ([x], [y]): the sky around the sun as the eye sees it, laid over the
+     * ring in "screen" blending ([SunTable.aureole]), at [pxPerDegree] of sky. Round at the scale
+     * across the ring (altitude): along the ring, the time axis is stretched several times as much
+     * and would draw it as a long, thin streak.
+     */
+    private fun drawAureole(canvas: Canvas, x: Float, y: Float, pxPerDegree: Float, altitudeDeg: Double) {
+        val extent = (SunTable.AUREOLE_EXTENT_DEG * pxPerDegree).toFloat()
+        if (extent < 0.5f) return
+        val angles = SunTable.ANGLES_DEG
+        val glow = SunTable.aureole(altitudeDeg)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            shader = RadialGradient(
+                x, y, extent,
+                intArrayOf(glow.first() or OPAQUE) + IntArray(glow.size) { glow[it] or OPAQUE },
+                floatArrayOf(0f) + FloatArray(angles.size) { (angles[it] / SunTable.AUREOLE_EXTENT_DEG).toFloat() },
+                Shader.TileMode.CLAMP,
+            )
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.SCREEN)
+        }
+        canvas.drawCircle(x, y, extent, paint)
+    }
+
+    /**
+     * The sun's disc at [altitudeDeg] centered on ([x], [y]) at [pxPerDegree] along the ring, at its
+     * true size and round, in the color the eye sees it in ([SunTable.disc]).
+     */
+    private fun drawSunDisc(canvas: Canvas, x: Float, y: Float, pxPerDegree: Float, altitudeDeg: Double) {
+        val discRadius = (SkyModel.SUN_SEMI_DIAMETER_DEG * pxPerDegree).toFloat()
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = SunTable.disc(altitudeDeg) or OPAQUE }
+        canvas.drawCircle(x, y, discRadius, paint)
     }
 
     /** The point [r] px from the center at dial [angleDeg] (0 = top, clockwise). */

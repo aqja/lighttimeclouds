@@ -9,6 +9,7 @@ import com.umfluten.lighttimeclouds.data.ColorMode
 import com.umfluten.lighttimeclouds.data.DisplayMode
 import com.umfluten.lighttimeclouds.data.MoonStyle
 import com.umfluten.lighttimeclouds.data.Place
+import com.umfluten.lighttimeclouds.data.RingStyle
 import com.umfluten.lighttimeclouds.data.SkyHorizon
 import com.umfluten.lighttimeclouds.data.SwitchStrategyType
 import com.umfluten.lighttimeclouds.data.TemperatureDisplay
@@ -186,6 +187,11 @@ class ClockFacePreviewTest {
         // Sunrise: the sun half above the horizon edge.
         val sunrise = ZonedDateTime.of(2026, 10, 17, 7, 47, 0, 0, Place.DEFAULT.zone)
         render("bodies", "ring_bodies_12h_sunrise", plain, null, darkBackground = true, at = sunrise)
+        // The sun's color through the atmosphere: golden a few degrees up, orange-red at the horizon.
+        val lowSun = ZonedDateTime.of(2026, 11, 3, 15, 50, 0, 0, Place.DEFAULT.zone)
+        render("bodies", "ring_bodies_12h_sun_low", plain, null, darkBackground = true, at = lowSun)
+        render("bodies", "ring_bodies_12h_sun_setting", plain, null, darkBackground = true, at = lowSun.withMinute(25))
+        render("bodies", "ring_bodies_12h_sun_low_light", plain.copy(colorMode = ColorMode.LIGHT), null, darkBackground = false, at = lowSun)
         // New moon night: both below the horizon, so neither in the ring.
         val newMoonNight = ZonedDateTime.of(2026, 11, 9, 2, 0, 0, 0, Place.DEFAULT.zone)
         render("bodies", "ring_bodies_12h_new_moon_night", plain, null, darkBackground = true, at = newMoonNight)
@@ -200,37 +206,43 @@ class ClockFacePreviewTest {
     }
 
     /**
-     * The sun disc (found by its color) lies as far from the horizon edge as the sun is high, on the
-     * sky colors' scale up to the far edge, whichever edge the horizon is on: day/night ring from
-     * 0.82 to 1 of the dial radius, which is 0.96 of half the size.
+     * The sun (found where drawing it changes the ring most: its disc and the brightest part of its
+     * aureole, on a ring of fixed colors) lies as far from the horizon edge as the sun is high, on the sky colors' scale up to
+     * the far edge, whichever edge the horizon is on: day/night ring from 0.82 to 1 of the dial
+     * radius, which is 0.96 of half the size.
      */
     @Test
     fun sunInRingFollowsTheHorizonEdge() {
+        // Fixed colors: the ring is the same across its width, so the aureole changes it most at its center.
         val sunOnly = WidgetSettings(
             widgetId = 1, displayMode = DisplayMode.TWENTY_FOUR_HOUR, showMoon = false, showMoonInRing = false,
-            showSolarMarks = false, showSunriseSunsetMarks = false,
+            showSolarMarks = false, showSunriseSunsetMarks = false, ringStyle = RingStyle.BANDS,
         )
         val altitude = SunMoonCalculator.sunAltitudeDegrees(now.toInstant(), Place.DEFAULT.latitude, Place.DEFAULT.longitude)
         val fraction = SkyProjection.fraction(altitude, 45.0).toFloat()
         val expected = mapOf(SkyHorizon.INNER to 0.82f + 0.18f * fraction, SkyHorizon.OUTER to 1f - 0.18f * fraction)
-        // Only pixels toward the current time on the 24h dial: elsewhere the horizon glow can be as yellow.
-        val nowAngle = Math.toRadians((now.hour + now.minute / 60.0) * 15.0 - 90.0)
         for ((horizon, radius) in expected) {
             val size = 600
-            val clock = ClockFaceRenderer.render(RuntimeEnvironment.getApplication(), size, sunOnly.copy(skyHorizon = horizon), null, now)
+            val settings = sunOnly.copy(skyHorizon = horizon)
+            val withSun = ClockFaceRenderer.render(RuntimeEnvironment.getApplication(), size, settings, null, now)
+            val without = ClockFaceRenderer.render(RuntimeEnvironment.getApplication(), size, settings.copy(showSunInRing = false), null, now)
+            fun change(x: Int, y: Int): Int {
+                val a = withSun.getPixel(x, y)
+                val b = without.getPixel(x, y)
+                return abs(Color.red(a) - Color.red(b)) + abs(Color.green(a) - Color.green(b)) + abs(Color.blue(a) - Color.blue(b))
+            }
+            val strongest = (0 until size).maxOf { y -> (0 until size).maxOf { x -> change(x, y) } }
             var sumX = 0.0
             var sumY = 0.0
             var count = 0
             for (y in 0 until size) for (x in 0 until size) {
-                val c = clock.getPixel(x, y)
-                val offAngle = abs(Math.IEEEremainder(atan2(y - size / 2.0, x - size / 2.0) - nowAngle, 2 * Math.PI))
-                if (offAngle < Math.toRadians(8.0) && Color.red(c) > 240 && Color.green(c) in 215..250 && Color.blue(c) < 90) {
+                if (change(x, y) >= strongest * 0.9) {
                     sumX += x
                     sumY += y
                     count++
                 }
             }
-            assertTrue("no sun disc with horizon $horizon", count > 50)
+            assertTrue("no sun with horizon $horizon", strongest > 30 && count > 0)
             val distance = hypot(sumX / count - size / 2.0, sumY / count - size / 2.0) / (size / 2.0 * 0.96)
             assertEquals("sun distance with horizon $horizon", radius.toDouble(), distance, 0.01)
         }

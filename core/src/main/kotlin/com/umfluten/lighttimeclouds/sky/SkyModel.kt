@@ -9,7 +9,7 @@ import kotlin.math.sqrt
 
 /**
  * Physically based sky colors (Rayleigh and Mie scattering, ozone absorption) for a given sun
- * altitude, as a vertical gradient upward from the horizon.
+ * altitude, as a vertical gradient upward from the horizon, and the sun's disc and aureole.
  *
  * [gradient] is the original: looking at right angles to the sun with a fixed exposure, up to
  * [TOP_ELEVATION_DEG]; three wavelengths (one per RGB channel), single scattering. The rest is our
@@ -59,6 +59,9 @@ object SkyModel {
 
     /** Integration steps along each ray. */
     private const val SAMPLES = 32
+
+    /** Integration steps along the line of sight to the sun ([sunDisc]): enough for the long, low path at the horizon. */
+    private const val SUN_SAMPLES = 512
 
     /** Vertical field of view of the original; the gradient spans half of it above the horizon. */
     private const val FOV_DEG = 75.0
@@ -227,7 +230,7 @@ object SkyModel {
      *    the revised operator of Tumblin and Rushmeier (Tumblin, Hodgins and Guenter 1999);
      *  - highlights compressed by the ACES curve, then gamma-encoded.
      */
-    private fun perceive(radiance: DoubleArray, adaptation: Adaptation): Int {
+    private fun perceive(radiance: DoubleArray, adaptation: Adaptation, preserveHue: Boolean = false): Int {
         val rgb = RING.toLinearRgb(radiance)
         val (k1, k2) = rodIntrusion(adaptation.photopic)
         val rods = Spectrum.photoreceptors(radiance)[3]
@@ -241,10 +244,11 @@ object SkyModel {
         val m = DISPLAY_CONTRAST.pow((world / display - 1.0) / 2.0)
         val brightness = DISPLAY_ADAPTATION * m * (Spectrum.photopicLuminance(radiance) / adaptation.photopic).pow(world / display)
 
-        fun channel(i: Int): Int {
-            val c = (seen[i].coerceAtLeast(0.0) / seenLuminance).pow(saturation) * brightness / DISPLAY_MAX_LUMINANCE
-            return (aces(c).pow(1.0 / GAMMA) * 255.0).roundToInt().coerceIn(0, 255)
-        }
+        val linear = DoubleArray(3) { (seen[it].coerceAtLeast(0.0) / seenLuminance).pow(saturation) * brightness / DISPLAY_MAX_LUMINANCE }
+        // The curve per channel, or on the brightest channel with the others in proportion.
+        val brightest = linear.max().coerceAtLeast(1e-300)
+        val toned = if (preserveHue) DoubleArray(3) { linear[it] * aces(brightest) / brightest } else DoubleArray(3) { aces(linear[it]) }
+        fun channel(i: Int): Int = (toned[i].pow(1.0 / GAMMA) * 255.0).roundToInt().coerceIn(0, 255)
         return (channel(0) shl 16) or (channel(1) shl 8) or channel(2)
     }
 
@@ -283,6 +287,93 @@ object SkyModel {
 
     /** ACES filmic curve (Narkowicz 2016). */
     private fun aces(c: Double) = ((c * (2.51 * c + 0.03)) / (c * (2.43 * c + 0.59) + 0.14)).coerceIn(0.0, 1.0)
+
+    // --- The sun ---------------------------------------------------------------------------
+
+    /** Mean angular radius of the sun's disc. */
+    const val SUN_SEMI_DIAMETER_DEG = 0.2666
+
+    /**
+     * Color (packed 0xRRGGBB) of the sun's disc with the sun at [altitudeDeg] (at least the
+     * horizon), as the eye sees it ([perceive]), like the sky: sunlight above the atmosphere
+     * ([Spectrum.solarIrradiance]) after its way through the [RING] atmosphere along the line of
+     * sight, spread over the disc's solid angle, in front of the sky at the sun's altitude. Far
+     * brighter than anything else, the disc comes out white; only where the long path through the
+     * air near the horizon dims it does its color show, yellow, orange and red, until in the haze
+     * it hardly stands out from the sky.
+     */
+    fun sunDisc(altitudeDeg: Double): Int = sunDisc(altitudeDeg, preserveHue = true)
+
+    internal fun sunDisc(altitudeDeg: Double, preserveHue: Boolean): Int {
+        val altitude = altitudeDeg.coerceIn(0.0, 90.0)
+        val transmitted = transmittance(RING, 0.0, Math.toRadians(90.0 - altitude), SUN_SAMPLES)
+        val solidAngle = Math.PI * Math.toRadians(SUN_SEMI_DIAMETER_DEG).pow(2)
+        val sky = skySpectra(altitude, doubleArrayOf(altitude)).first()
+        val radiance = DoubleArray(RING.bands) { k -> RING.sun[k] * transmitted[k] / solidAngle + sky[k] }
+        return perceive(radiance, adaptation(altitude), preserveHue)
+    }
+
+    /**
+     * The aureole around the sun at [sunAltitudeDeg] (at least the horizon): at each of
+     * [anglesDeg] from the sun's center (ascending, the last far enough out for the aureole to
+     * have faded), the color (packed 0xRRGGBB) that, laid over the ring's color at the sun's
+     * altitude in "screen" blending (1 − (1 − a)(1 − b) per channel), gives the sky there as the
+     * eye sees it ([perceive]): the ring's azimuth-averaged sky plus the excess of the sky in the
+     * sun's direction (along the almucantar, the circle of the sun's altitude) over that at the
+     * last angle. Black where there is none, so it ends without an edge.
+     */
+    fun aureole(sunAltitudeDeg: Double, anglesDeg: DoubleArray): IntArray {
+        val altitudeDeg = sunAltitudeDeg.coerceIn(0.0, 89.0)
+        val sky = almucantar(altitudeDeg, anglesDeg)
+        val adaptation = adaptation(altitudeDeg)
+        val ring = skySpectra(altitudeDeg, doubleArrayOf(altitudeDeg)).first()
+        val background = perceive(ring, adaptation)
+        val last = sky.last()
+        return sky.map { s ->
+            val target = perceive(DoubleArray(s.size) { ring[it] + max(0.0, s[it] - last[it]) }, adaptation)
+            var color = 0
+            for (shift in intArrayOf(16, 8, 0)) {
+                val b = (background shr shift and 255) / 255.0
+                val t = (target shr shift and 255) / 255.0
+                val a = if (b >= 1.0) 0.0 else (1.0 - (1.0 - t) / (1.0 - b)).coerceIn(0.0, 1.0)
+                color = color or ((a * 255.0).roundToInt() shl shift)
+            }
+            color
+        }.toIntArray()
+    }
+
+    /** Spectral radiance of the [RING] sky at [anglesDeg] from the sun at [altitudeDeg], along the almucantar. */
+    private fun almucantar(altitudeDeg: Double, anglesDeg: DoubleArray): List<DoubleArray> {
+        val altitude = Math.toRadians(altitudeDeg)
+        val sun = doubleArrayOf(cos(altitude), sin(altitude), 0.0)
+        val camera = doubleArrayOf(0.0, GROUND_RADIUS, 0.0)
+        return anglesDeg.map { angleDeg ->
+            // cos θ = sin²a + cos²a cos φ
+            val cosPhi = ((cos(Math.toRadians(angleDeg)) - sin(altitude).pow(2)) / cos(altitude).pow(2)).coerceIn(-1.0, 1.0)
+            val phi = acos(cosPhi)
+            val view = doubleArrayOf(cos(altitude) * cos(phi), sin(altitude), cos(altitude) * sin(phi))
+            inscattered(RING, camera, view, sun)
+        }
+    }
+
+    /**
+     * Share of the light from within [limitDeg] of the sun's center (2.5° as in solar-energy work)
+     * that comes from outside its disc, in luminance (circumsolar ratio), with the sun at
+     * [altitudeDeg].
+     */
+    internal fun circumsolarRatio(altitudeDeg: Double, limitDeg: Double = 2.5): Double {
+        val angles = DoubleArray(41) { SUN_SEMI_DIAMETER_DEG + (limitDeg - SUN_SEMI_DIAMETER_DEG) * it / 40 }
+        val sky = almucantar(altitudeDeg, angles).map(Spectrum::photopicLuminance)
+        var circumsolar = 0.0
+        for (i in 1 until angles.size) {
+            val a = Math.toRadians(angles[i - 1])
+            val b = Math.toRadians(angles[i])
+            circumsolar += 0.5 * (sky[i - 1] * sin(a) + sky[i] * sin(b)) * (b - a) * 2 * Math.PI
+        }
+        val transmitted = transmittance(RING, 0.0, Math.toRadians(90.0 - altitudeDeg), SUN_SAMPLES)
+        val direct = Spectrum.photopicLuminance(DoubleArray(RING.bands) { RING.sun[it] * transmitted[it] })
+        return circumsolar / (circumsolar + direct)
+    }
 
     // --- Scattering -------------------------------------------------------------------------
 

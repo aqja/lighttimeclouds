@@ -21,7 +21,7 @@ Almost all of the computation is in the `core` module (plain Kotlin/JVM, no Andr
 | Aerosols (Mie theory, size distribution) | [`sky/Mie.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Mie.kt), [`sky/Aerosol.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Aerosol.kt) |
 | Spectrum and colorimetry | [`sky/Spectrum.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Spectrum.kt) |
 | Mapping elevation → ring | [`sky/SkyProjection.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyProjection.kt) |
-| Precomputed color table | [`sky/SkyGradientTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyGradientTable.kt), [`sky/SkyTableGenerator.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyTableGenerator.kt) |
+| Precomputed color tables | [`sky/SkyGradientTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyGradientTable.kt), [`sky/SunTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SunTable.kt), [`sky/SkyTableGenerator.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyTableGenerator.kt) |
 | Weather quantities and thresholds | [`weather/WeatherForecast.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/weather/WeatherForecast.kt), [`weather/WeatherOutlook.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/weather/WeatherOutlook.kt) |
 | Drawing on the dial | [`widget/ClockFaceRenderer.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/ClockFaceRenderer.kt) (module `app`) |
 | Truncating the series, reference values | [`tools/astro_series.py`](../tools/astro_series.py), [`tools/reference_ephemeris.py`](../tools/reference_ephemeris.py) |
@@ -855,13 +855,16 @@ $e_t = 37.5°$ (half of a vertical field of view of 75°).
 
 Code: [`SkyGradientTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyGradientTable.kt).
 The scattering computation is too expensive for every minute. The Gradle task
-`:core:generateSkyTable` therefore builds the table at build time:
+`:core:generateSkyTable` therefore builds the tables at build time:
 
 - **Sky colors:** Sun altitude −18°…90° in 0.5° steps (217 rows) × view elevation 0°…80° in 1°
   steps (81 columns), 3 bytes of sRGB each, interpolated bilinearly at run time. Sun altitudes
   below −18° count as −18°: by then only the night sky's own glow is left.
+- **Sun** ([`SunTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SunTable.kt)):
+  Sun altitude 0°…90° in 0.5° steps × 8 colors of the disc from its center to its edge and 24
+  colors of its aureole from the disc's edge out to 12° (section [12.2](#122-sun-and-moon-in-the-ring)).
 
-A test checks that the bundled table matches the model. As F-Droid rebuilds the app and compares it
+Tests check that the bundled tables match the model. As F-Droid rebuilds the app and compares it
 byte for byte, the sky model computes with `java.lang.StrictMath`, whose results are the same on
 every machine, instead of the platform's math functions, which may differ in the last bit.
 
@@ -894,6 +897,39 @@ opposite the horizon. The Sun uses the geometric altitude (like the ring color),
 apparent one, with refraction. The optional moon path is $h_\mathrm{Moon}(t)$ over the shown time
 span. Below the horizon it leaves the band (limited to $u \ge -0.5$ and clipped at the edge); above
 $e_t$ it runs along the edge opposite the horizon ($u = 1$), where the Moon's dot then sits.
+
+The Sun's disc takes its color from the sunlight that reaches the observer through the
+atmosphere: the spectrum above the atmosphere times the transmittance $T(0,\,90° - h)$ (section
+9.3, here in 512 steps for the long path at the horizon, with the ring's aerosol), spread over the
+disc's solid angle $\pi\,(0.2666°)^2$, in front of the sky at the Sun's altitude. This radiance is
+seen like the sky ([PHYSIOLOGY.md](PHYSIOLOGY.md), section 6). The disc is far brighter than the
+display can show, so it is shown at full brightness with its hue kept: high up almost white, a few
+degrees above the horizon golden, then orange, and at the horizon deep red through the haze.
+Limb darkening is left out: at a few pixels across it cannot be seen.
+
+**Size.** The ring is a chart of time (angle) and altitude (distance from the horizon edge), not a
+picture of the sky: one direction of the sky, the azimuth, is missing. Of the disc's 0.53°, only
+its extent along the two axes is defined. Along the time axis it is the time the Sun takes to move
+by its own diameter, which the code measures from two positions of the Sun 10 minutes apart:
+$\omega_\odot$ = their angular distance per hour (15°/h · cos δ). One degree of sky at the Sun is
+then $r\,\Delta\varphi/\omega_\odot$ pixels along the ring, with $r$ the distance from the center and
+$\Delta\varphi$ = 15°/h (24-hour dial) or 30°/h (12-hour dial) in radians. Across the ring the
+projection's scale, $(R_\mathrm{far} - R_\mathrm{horizon})\sec^2 h/\tan e_t$ per radian, is
+usually several times smaller (5 to 10 times for a far edge at 45°), so a true ellipse would mostly
+be a sliver about a pixel high. The disc is drawn round, with its true diameter along the time
+axis: 2 to 8 pixels, depending on the widget's size and the dial.
+
+**Aureole.** Around the disc lies the sky in the Sun's direction, seen like the rest of the ring
+([PHYSIOLOGY.md](PHYSIOLOGY.md), section 6): at angles $\theta$ from 0.27° to 12° from the Sun's
+center, along the almucantar (the circle of the Sun's altitude), the radiance in excess of that at
+12° is added to the ring's color at the Sun's altitude. The table stores, per angle, the color
+that gives this sum when laid over that ring color in *screen* blending, $1 - (1 - a)(1 - b)$. The
+widget lays it over the ring round, at the scale of the projection across the ring (altitude) over
+the 12° toward the horizon. Along the ring, the time axis is stretched several times as much: at
+its scale the aureole would be a long, thin streak, which neither looks nor reads like the sky
+around the Sun. It is drawn around where the Sun stands even when that lies beyond the far edge, so
+it fades out of the band as the Sun climbs. Its size and strength come from
+the aerosol's forward peak (section [9.6](#96-aerosols-mie-theory-and-a-measured-size-distribution)).
 
 ### 12.3 Moon path with a separate hand or on the hour hand
 
@@ -1004,6 +1040,7 @@ time of day. Precipitation is checked for the next 3 and 6 hours; snow takes pre
 | Night sky uniform, with the Sun's spectrum, without light pollution | the night of a natural, moonless sky | [9.7](#97-the-night-sky) |
 | Multiple scattering isotropic and locally homogeneous (Hillaire) | small errors in the brightness distribution of deep twilight | [9.5](#95-multiple-scattering-hillaire-2020) |
 | Seeing the sky (adaptation, brightness, colors in dim light) | see [PHYSIOLOGY.md](PHYSIOLOGY.md), section 8 | [10.3](#103-exposure) |
+| Sun disc round at the scale of the time axis, without limb darkening, at full brightness with its hue | true size along the ring and true hue, not true shape and brightness | [12.2](#122-sun-and-moon-in-the-ring) |
 
 ---
 

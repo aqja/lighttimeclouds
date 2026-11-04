@@ -21,7 +21,7 @@ Die Rechnungen stehen fast vollständig im Modul `core` (reines Kotlin/JVM, ohne
 | Aerosole (Mie-Theorie, Größenverteilung) | [`sky/Mie.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Mie.kt), [`sky/Aerosol.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Aerosol.kt) |
 | Spektrum und Farbmetrik | [`sky/Spectrum.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Spectrum.kt) |
 | Abbildung Höhenwinkel → Ring | [`sky/SkyProjection.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyProjection.kt) |
-| Vorberechnete Farbtabelle | [`sky/SkyGradientTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyGradientTable.kt), [`sky/SkyTableGenerator.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyTableGenerator.kt) |
+| Vorberechnete Farbtabellen | [`sky/SkyGradientTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyGradientTable.kt), [`sky/SunTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SunTable.kt), [`sky/SkyTableGenerator.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyTableGenerator.kt) |
 | Wettergrößen und Schwellen | [`weather/WeatherForecast.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/weather/WeatherForecast.kt), [`weather/WeatherOutlook.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/weather/WeatherOutlook.kt) |
 | Darstellung im Zifferblatt | [`widget/ClockFaceRenderer.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/ClockFaceRenderer.kt) (Modul `app`) |
 | Kürzung der Reihen, Referenzwerte | [`tools/astro_series.py`](../tools/astro_series.py), [`tools/reference_ephemeris.py`](../tools/reference_ephemeris.py) |
@@ -869,13 +869,16 @@ Abbildung mit $e_t = 37{,}5°$ (halbes vertikales Sichtfeld von 75°).
 
 Code: [`SkyGradientTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyGradientTable.kt).
 Die Streurechnung ist für jede Minute zu teuer. Der Gradle-Task `:core:generateSkyTable` legt
-deshalb beim Build die Tabelle an:
+deshalb beim Build die Tabellen an:
 
 - **Himmelsfarben:** Sonnenhöhe −18°…90° in 0,5°-Schritten (217 Zeilen) × Blickhöhe 0°…80° in
   1°-Schritten (81 Spalten), je 3 Byte sRGB, zur Laufzeit bilinear interpoliert. Sonnenhöhen unter
   −18° zählen als −18°: Dann bleibt nur noch das Eigenleuchten des Nachthimmels.
+- **Sonne** ([`SunTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SunTable.kt)):
+  Sonnenhöhe 0°…90° in 0,5°-Schritten × 8 Farben der Scheibe von der Mitte bis zum Rand und 24
+  Farben ihrer Aureole vom Scheibenrand bis 12° (Abschnitt [12.2](#122-sonne-und-mond-im-ring)).
 
-Ein Test prüft, dass die mitgelieferte Tabelle mit dem Modell übereinstimmt. Weil F-Droid die App
+Tests prüfen, dass die mitgelieferten Tabellen mit dem Modell übereinstimmen. Weil F-Droid die App
 nachbaut und Byte für Byte vergleicht, rechnet das Himmelsmodell mit `java.lang.StrictMath`, dessen
 Ergebnisse auf jedem Rechner gleich sind, statt mit den Mathefunktionen der Plattform, die im
 letzten Bit abweichen können.
@@ -910,6 +913,41 @@ gesehene, mit Refraktion. Die optionale Mondbahn ist $h_\mathrm{Mond}(t)$ über 
 Zeitraum. Unter dem Horizont verlässt sie das Band (begrenzt auf $u \ge -0{,}5$ und am Rand
 abgeschnitten), über $e_t$ läuft sie am Rand gegenüber dem Horizont entlang ($u = 1$), wo dann
 auch der Punkt des Mondes sitzt.
+
+Die Sonnenscheibe hat die Farbe des Sonnenlichts, das den Beobachter durch die Atmosphäre
+erreicht: das Spektrum oberhalb der Atmosphäre mal der Transmission $T(0,\,90° - h)$ (Abschnitt
+9.3, hier in 512 Schritten für den langen Weg am Horizont, mit dem Aerosol des Rings), verteilt auf
+den Raumwinkel der Scheibe $\pi\,(0{,}2666°)^2$, vor dem Himmel in Sonnenhöhe. Diese Strahldichte
+wird gesehen wie der Himmel ([PHYSIOLOGIE.md](PHYSIOLOGIE.md), Abschnitt 6). Die Scheibe ist viel
+heller, als das Display zeigen kann; sie wird deshalb in voller Helligkeit mit erhaltenem Farbton
+gezeigt: hoch am Himmel fast weiß, wenige Grad über dem Horizont goldgelb, dann orange und am Horizont
+durch den Dunst tiefrot. Die Randverdunkelung entfällt: Bei wenigen Pixeln Durchmesser ist sie nicht
+zu sehen.
+
+**Größe.** Der Ring ist ein Diagramm aus Zeit (Winkel) und Höhe (Abstand vom Horizontrand), kein
+Bild des Himmels: Eine Richtung des Himmels, der Azimut, fehlt. Von den 0,53° der Scheibe ist nur
+ihre Ausdehnung entlang der beiden Achsen bestimmt. Entlang der Zeitachse ist es die Zeit, die die
+Sonne braucht, um sich um ihren eigenen Durchmesser weiterzubewegen. Der Code misst sie aus zwei
+Sonnenpositionen im Abstand von 10 Minuten: $\omega_\odot$ = ihr Winkelabstand je Stunde
+(15°/h · cos δ). Ein Grad Himmel an der Sonne ist dann $r\,\Delta\varphi/\omega_\odot$ Pixel entlang
+des Rings, mit $r$ dem Abstand vom Mittelpunkt und $\Delta\varphi$ = 15°/h (24-Stunden-Zifferblatt)
+oder 30°/h (12-Stunden-Zifferblatt) im Bogenmaß. Quer zum Ring ist der Maßstab der Projektion,
+$(R_\mathrm{fern} - R_\mathrm{Horizont})\sec^2 h/\tan e_t$ je Bogenmaß, meist um ein Mehrfaches
+kleiner (5- bis 10-mal bei einem fernen Rand von 45°), sodass eine wahre Ellipse meist ein Splitter
+von etwa einem Pixel Höhe wäre. Die Scheibe wird rund gezeichnet, mit ihrem wahren Durchmesser
+entlang der Zeitachse: 2 bis 8 Pixel, je nach Größe des Widgets und Zifferblatt.
+
+**Aureole.** Um die Scheibe liegt der Himmel in Richtung der Sonne, gesehen wie der übrige Ring
+([PHYSIOLOGIE.md](PHYSIOLOGIE.md), Abschnitt 6): In Winkeln $\theta$ von 0,27° bis 12° von der
+Sonnenmitte, entlang des Almukantarats (des Kreises der Sonnenhöhe), wird die Strahldichte, um die
+der Himmel dort heller ist als bei 12°, zur Ringfarbe in Sonnenhöhe addiert. Die Tabelle speichert
+je Winkel die Farbe, die, in *Screen*-Mischung $1 - (1 - a)(1 - b)$ über diese Ringfarbe gelegt,
+diese Summe ergibt. Das Widget legt sie rund über den Ring, im Maßstab der Projektion quer zum Ring
+(Höhe) über die 12° zum Horizont hin. Entlang des Rings ist die Zeitachse um ein Mehrfaches stärker
+gedehnt: In ihrem Maßstab wäre die Aureole ein langer, dünner Streifen, der weder wie der Himmel um
+die Sonne aussieht noch sich so liest. Sie wird um den Ort der Sonne gezeichnet, auch wenn der
+jenseits des fernen Rands liegt, und klingt so aus dem Band aus, wenn die Sonne höher steigt. Größe und Stärke folgen aus der Vorwärtsspitze des Aerosols (Abschnitt
+[9.6](#96-aerosole-mie-theorie-und-eine-gemessene-größenverteilung)).
 
 ### 12.3 Mondbahn mit eigenem Zeiger oder am Stundenzeiger
 
@@ -1020,6 +1058,7 @@ Niederschlag wird für die nächsten 3 und 6 Stunden geprüft; Schnee hat dabei 
 | Nachthimmel gleichmäßig, mit dem Spektrum der Sonne, ohne Lichtverschmutzung | die Nacht eines natürlichen, mondlosen Himmels | [9.7](#97-der-nachthimmel) |
 | Mehrfachstreuung isotrop und lokal homogen (Hillaire) | kleine Fehler in der Helligkeitsverteilung der tiefen Dämmerung | [9.5](#95-mehrfachstreuung-hillaire-2020) |
 | Sehen des Himmels (Anpassung, Helligkeit, Farben bei wenig Licht) | siehe [PHYSIOLOGIE.md](PHYSIOLOGIE.md), Abschnitt 8 | [10.3](#103-belichtung) |
+| Sonnenscheibe rund im Maßstab der Zeitachse, ohne Randverdunkelung, in voller Helligkeit mit ihrem Farbton | wahre Größe entlang des Rings und wahrer Farbton, nicht wahre Form und Helligkeit | [12.2](#122-sonne-und-mond-im-ring) |
 | Neigung der Sichel aus geozentrischen Orten | Abweichung zur topozentrischen Ansicht durch die Mondparallaxe (≤ 1°), bei schmaler Sichel etwas mehr | [7.4](#74-neigung-der-sichel) |
 
 ---

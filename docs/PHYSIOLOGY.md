@@ -209,6 +209,14 @@ a dark blue-gray. Light pollution is not included; over a city like Berlin the n
    into a hard, slightly cyan band.
 3. **Gamma** $f^{1/2.2}$ and 8 bits per channel.
 
+The Sun's disc goes through the same steps, but in step 2 the curve is applied to its brightest
+channel and the others are scaled in proportion: far brighter than the display, it is shown at full
+brightness with its hue kept. Applied per channel, its red and green would both run into the limit
+first and turn an orange Sun pure yellow (PHYSICS.md, section 12.2).
+Its aureole is the sky next to it seen like the rest of the sky: the ring's color at the Sun's
+altitude plus the excess of the sky toward the Sun, through the same steps 1 to 3, and laid over
+the ring in "screen" blending.
+
 ## 7. What comes out
 
 The whole sky's mean luminance (section 2) and the ring's displayed colors for a ring up to 45°
