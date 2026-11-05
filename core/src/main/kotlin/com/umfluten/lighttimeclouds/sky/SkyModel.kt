@@ -1,5 +1,6 @@
 package com.umfluten.lighttimeclouds.sky
 
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.max
@@ -9,7 +10,8 @@ import kotlin.math.sqrt
 
 /**
  * Physically based sky colors (Rayleigh and Mie scattering, ozone absorption) for a given sun
- * altitude, as a vertical gradient upward from the horizon, and the sun's disc and aureole.
+ * altitude, as a vertical gradient upward from the horizon, the sun's disc and aureole, the moon's
+ * disc and the light of the sky for the sky the moon lights ([MoonlitSky]).
  *
  * [gradient] is the original: looking at right angles to the sun with a fixed exposure, up to
  * [TOP_ELEVATION_DEG]; three wavelengths (one per RGB channel), single scattering. The rest is our
@@ -189,17 +191,20 @@ object SkyModel {
      */
     private class Adaptation(val photopic: Double, val scotopic: Double)
 
-    private fun adaptation(sunAltitudeDeg: Double): Adaptation {
+    private fun adaptation(sunAltitudeDeg: Double): Adaptation = adaptations.getOrPut(sunAltitudeDeg) {
         val n = HEMISPHERE_ELEVATIONS
         val elevations = DoubleArray(n) { (it + 0.5) * 90.0 / n }
         val hemisphere = skySpectra(sunAltitudeDeg, elevations)
         val weights = elevations.map { cos(Math.toRadians(it)) }
         val total = weights.sum()
-        return Adaptation(
+        Adaptation(
             photopic = hemisphere.indices.sumOf { Spectrum.photopicLuminance(hemisphere[it]) * weights[it] } / total,
             scotopic = hemisphere.indices.sumOf { Spectrum.scotopicLuminance(hemisphere[it]) * weights[it] } / total,
         )
     }
+
+    /** [adaptation] by sun altitude: the moon's table asks for the same few again and again. */
+    private val adaptations = ConcurrentHashMap<Double, Adaptation>()
 
     /** Mean photopic and scotopic luminance (cd/m²) of the whole sky with the sun at [sunAltitudeDeg] ([adaptation]). */
     internal fun skyLuminance(sunAltitudeDeg: Double): Pair<Double, Double> =
@@ -229,20 +234,50 @@ object SkyModel {
      *  - the brightness from Stevens' brightness law, matched between the sky and the display by
      *    the revised operator of Tumblin and Rushmeier (Tumblin, Hodgins and Guenter 1999);
      *  - highlights compressed by the ACES curve, then gamma-encoded.
+     *
+     * Rods and fading colors go by [colorLuminance]: for the sky that of the whole sky, for a small
+     * bright body in a dark sky its own, which the cones see in full.
      */
-    private fun perceive(radiance: DoubleArray, adaptation: Adaptation, preserveHue: Boolean = false): Int {
-        val rgb = RING.toLinearRgb(radiance)
-        val (k1, k2) = rodIntrusion(adaptation.photopic)
-        val rods = Spectrum.photoreceptors(radiance)[3]
-        val intrusion = Spectrum.linearSrgbOfCones(doubleArrayOf(k1 * rods, k1 * rods, k2 * rods))
-        val seen = DoubleArray(3) { rgb[it] + intrusion[it] }
-        val seenLuminance = luminance(seen).coerceAtLeast(1e-300)
-        val saturation = saturationFactor(adaptation.photopic) / saturationFactor(DISPLAY_ADAPTATION)
+    private fun perceive(
+        radiance: DoubleArray,
+        adaptation: Adaptation,
+        preserveHue: Boolean = false,
+        colorLuminance: Double = adaptation.photopic,
+    ): Int = perceiveLight(light(radiance), adaptation.photopic, preserveHue, colorLuminance)
 
-        val world = stevensGamma(adaptation.photopic)
+    /** Values in a [light] array. */
+    internal const val LIGHT_CHANNELS = 5
+
+    /** Index of the photopic luminance (cd/m²) in a [light] array. */
+    internal const val LIGHT_LUMINANCE = 4
+
+    /**
+     * All [perceive] needs of a spectral [radiance]: linear RGB, the rods' signal and the photopic
+     * luminance. All linear in the radiance, so the light of two skies adds up like their radiance.
+     */
+    private fun light(radiance: DoubleArray): DoubleArray {
+        val rgb = RING.toLinearRgb(radiance)
+        return doubleArrayOf(rgb[0], rgb[1], rgb[2], Spectrum.photoreceptors(radiance)[3], Spectrum.photopicLuminance(radiance))
+    }
+
+    /** [perceive] of [light], for an eye adapted to the photopic luminance [adaptation]. */
+    internal fun perceiveLight(
+        light: DoubleArray,
+        adaptation: Double,
+        preserveHue: Boolean = false,
+        colorLuminance: Double = adaptation,
+    ): Int {
+        val (k1, k2) = rodIntrusion(colorLuminance)
+        val rods = light[3]
+        val intrusion = Spectrum.linearSrgbOfCones(doubleArrayOf(k1 * rods, k1 * rods, k2 * rods))
+        val seen = DoubleArray(3) { light[it] + intrusion[it] }
+        val seenLuminance = luminance(seen).coerceAtLeast(1e-300)
+        val saturation = saturationFactor(colorLuminance) / saturationFactor(DISPLAY_ADAPTATION)
+
+        val world = stevensGamma(adaptation)
         val display = stevensGamma(DISPLAY_ADAPTATION)
         val m = DISPLAY_CONTRAST.pow((world / display - 1.0) / 2.0)
-        val brightness = DISPLAY_ADAPTATION * m * (Spectrum.photopicLuminance(radiance) / adaptation.photopic).pow(world / display)
+        val brightness = DISPLAY_ADAPTATION * m * (light[LIGHT_LUMINANCE] / adaptation).pow(world / display)
 
         val linear = DoubleArray(3) { (seen[it].coerceAtLeast(0.0) / seenLuminance).pow(saturation) * brightness / DISPLAY_MAX_LUMINANCE }
         // The curve per channel, or on the brightest channel with the others in proportion.
@@ -330,16 +365,31 @@ object SkyModel {
         val background = perceive(ring, adaptation)
         val last = sky.last()
         return sky.map { s ->
-            val target = perceive(DoubleArray(s.size) { ring[it] + max(0.0, s[it] - last[it]) }, adaptation)
-            var color = 0
-            for (shift in intArrayOf(16, 8, 0)) {
-                val b = (background shr shift and 255) / 255.0
-                val t = (target shr shift and 255) / 255.0
-                val a = if (b >= 1.0) 0.0 else (1.0 - (1.0 - t) / (1.0 - b)).coerceIn(0.0, 1.0)
-                color = color or ((a * 255.0).roundToInt() shl shift)
-            }
-            color
+            screenOver(background, perceive(DoubleArray(s.size) { ring[it] + max(0.0, s[it] - last[it]) }, adaptation))
         }.toIntArray()
+    }
+
+    /** The color that, laid over [background] in "screen" blending, gives [target], or as near as it can. */
+    internal fun screenOver(background: Int, target: Int): Int {
+        var color = 0
+        for (shift in intArrayOf(16, 8, 0)) {
+            val b = (background shr shift and 255) / 255.0
+            val t = (target shr shift and 255) / 255.0
+            val a = if (b >= 1.0) 0.0 else (1.0 - (1.0 - t) / (1.0 - b)).coerceIn(0.0, 1.0)
+            color = color or ((a * 255.0).roundToInt() shl shift)
+        }
+        return color
+    }
+
+    /** [light] of the [RING] sky with its glow ([skySpectra]) with a body at [altitudeDeg] at each of [elevationsDeg]. */
+    internal fun skyLight(altitudeDeg: Double, elevationsDeg: DoubleArray): List<DoubleArray> =
+        skySpectra(altitudeDeg, elevationsDeg).map(::light)
+
+    /** [light] of what the [aureole] adds to the sky around a body at [altitudeDeg], at each of [anglesDeg], as bright as the sun. */
+    internal fun aureoleLight(altitudeDeg: Double, anglesDeg: DoubleArray): List<DoubleArray> {
+        val sky = almucantar(altitudeDeg.coerceIn(0.0, 89.0), anglesDeg)
+        val last = sky.last()
+        return sky.map { s -> light(DoubleArray(s.size) { max(0.0, s[it] - last[it]) }) }
     }
 
     /** Spectral radiance of the [RING] sky at [anglesDeg] from the sun at [altitudeDeg], along the almucantar. */
@@ -373,6 +423,99 @@ object SkyModel {
         val transmitted = transmittance(RING, 0.0, Math.toRadians(90.0 - altitudeDeg), SUN_SAMPLES)
         val direct = Spectrum.photopicLuminance(DoubleArray(RING.bands) { RING.sun[it] * transmitted[it] })
         return circumsolar / (circumsolar + direct)
+    }
+
+    // --- The moon --------------------------------------------------------------------------
+
+    /** Mean angular radius of the moon's disc, at the mean distance [moonMagnitude] refers to. */
+    private const val MOON_SEMI_DIAMETER_DEG = 0.2590
+
+    /** Apparent V magnitude of the sun, against which [moonMagnitude] sets the moonlight. */
+    private const val SUN_MAGNITUDE = -26.74
+
+    /** The thinnest crescent the moon's light is computed for, so the lit part's solid angle stays above zero. */
+    private const val MOON_MIN_FRACTION = 0.01
+
+    /**
+     * Diameter (degrees) of the spot the eye is taken to adapt to when looking at something (Ward
+     * Larson, Rushmeier and Piatko 1997). An assumption: measured pooling is far narrower.
+     */
+    private const val FOVEA_DEG = 1.0
+
+    /**
+     * Share of the [FOVEA_DEG] spot the moon's disc fills, counted for the whole disc whatever its
+     * phase. A choice, not physiology: the eye pools more narrowly (Vangorp et al. 2015) and adapts
+     * far less to a crescent. It stays because its result fits: at that measured adaptation the
+     * curves of Stevens and Stevens (1963) put all phases at about the same brightness, as this does.
+     */
+    private const val MOON_FOVEA_SHARE = (2.0 * MOON_SEMI_DIAMETER_DEG / FOVEA_DEG) * (2.0 * MOON_SEMI_DIAMETER_DEG / FOVEA_DEG)
+
+    /**
+     * Apparent V magnitude of the moon at its mean distance, at [phaseAngleDeg] (0 at full moon),
+     * outside the atmosphere: the phase law Krisciunas and Schaefer (1991) use, from the full
+     * moon's −12.73 in Allen's Astrophysical Quantities.
+     */
+    private fun moonMagnitude(phaseAngleDeg: Double): Double =
+        -12.73 + 0.026 * phaseAngleDeg + 4e-9 * phaseAngleDeg.pow(4)
+
+    /** Moonlight outside the atmosphere with the share [fraction] of the disc lit, relative to sunlight. */
+    internal fun moonlightRatio(fraction: Double): Double {
+        val phaseAngle = Math.toDegrees(acos(2.0 * fraction.coerceIn(0.0, 1.0) - 1.0))
+        return 10.0.pow(-0.4 * (moonMagnitude(phaseAngle) - SUN_MAGNITUDE))
+    }
+
+    /**
+     * Color (packed 0xRRGGBB) of the lit part of the moon at [moonAltitudeDeg] (at least the
+     * horizon), lit by the share [fraction], with the sun at [sunAltitudeDeg], as the eye sees it
+     * ([perceive]): sunlight reflected at the brightness of [moonMagnitude], spread over the lit
+     * part's solid angle (so independent of the moon's distance, which changes its light and its
+     * size alike), after its way through the [RING] atmosphere, in front of the sky. By day it adds
+     * little to the bright sky and stays pale; in the dark it is white high up and orange to red
+     * near the horizon. The eye is adapted to the sky, moonlit too, and to the moon it looks at
+     * ([MOON_FOVEA_SHARE]), so a crescent stays bright in a dark sky. Like the sky it is toned per
+     * channel, like the sun with its hue kept, the more the more of its light is the moon's: the
+     * first keeps it brighter than the sky behind it, the second the colors of a body far brighter
+     * than the display.
+     */
+    fun moonDisc(moonAltitudeDeg: Double, sunAltitudeDeg: Double, fraction: Double): Int =
+        moonDiscs(moonAltitudeDeg, doubleArrayOf(sunAltitudeDeg), doubleArrayOf(fraction)).single()
+
+    /** [moonDisc] for each of [sunAltitudesDeg] and, within each, each of [fractions]: the moon's way through the air is the same for all. */
+    fun moonDiscs(moonAltitudeDeg: Double, sunAltitudesDeg: DoubleArray, fractions: DoubleArray): IntArray {
+        val altitude = moonAltitudeDeg.coerceIn(0.0, 90.0)
+        val transmitted = transmittance(RING, 0.0, Math.toRadians(90.0 - altitude), SUN_SAMPLES)
+        val moonlitSky = adaptation(altitude)
+        return sunAltitudesDeg.flatMap { sunAltitude ->
+            val sky = skySpectra(sunAltitude, doubleArrayOf(altitude)).first()
+            val moonlessSky = adaptation(sunAltitude)
+            fractions.map { fraction ->
+                val lit = fraction.coerceIn(MOON_MIN_FRACTION, 1.0)
+                val ratio = moonlightRatio(lit)
+                val solidAngle = lit * Math.PI * Math.toRadians(MOON_SEMI_DIAMETER_DEG).pow(2)
+                val moon = DoubleArray(RING.bands) { k -> RING.sun[k] * ratio * transmitted[k] / solidAngle }
+                val adapted = Adaptation(
+                    moonlessSky.photopic + ratio * moonlitSky.photopic + MOON_FOVEA_SHARE * Spectrum.photopicLuminance(moon),
+                    moonlessSky.scotopic + ratio * moonlitSky.scotopic + MOON_FOVEA_SHARE * Spectrum.scotopicLuminance(moon),
+                )
+                moonColor(moon, sky, adapted)
+            }
+        }.toIntArray()
+    }
+
+    /** The [moon]'s radiance in front of the [sky], seen with [adaptation]; see [moonDisc]. */
+    private fun moonColor(moon: DoubleArray, sky: DoubleArray, adaptation: Adaptation): Int {
+        val radiance = DoubleArray(RING.bands) { k -> moon[k] + sky[k] }
+        val luminance = Spectrum.photopicLuminance(radiance)
+        val share = Spectrum.photopicLuminance(moon) / luminance
+        val likeSky = perceive(radiance, adaptation, colorLuminance = luminance)
+        val likeSun = perceive(radiance, adaptation, preserveHue = true, colorLuminance = luminance)
+        var color = 0
+        for (shift in intArrayOf(16, 8, 0)) {
+            val a = likeSky shr shift and 255
+            val b = likeSun shr shift and 255
+            color = color or ((a + (b - a) * share).roundToInt() shl shift)
+        }
+        return color
     }
 
     // --- Scattering -------------------------------------------------------------------------

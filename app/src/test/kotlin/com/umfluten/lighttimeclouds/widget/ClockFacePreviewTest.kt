@@ -198,6 +198,17 @@ class ClockFacePreviewTest {
         // Full moon night with the moon high.
         val fullMoonNight = ZonedDateTime.of(2026, 10, 26, 23, 30, 0, 0, Place.DEFAULT.zone)
         render("bodies", "ring_bodies_24h_full_moon_night", fullDay, null, darkBackground = true, at = fullMoonNight)
+        // The moon as it appears: rising orange-red, a pale half moon in the day sky, a crescent at dusk.
+        val moonrise = ZonedDateTime.of(2026, 10, 26, 17, 0, 0, 0, Place.DEFAULT.zone)
+        render("bodies", "ring_bodies_12h_moon_rising", plain, null, darkBackground = true, at = moonrise)
+        // The moon lights the sky: the night's half of the ring grows lighter, with an aureole around the moon.
+        val moonlit = ZonedDateTime.of(2026, 12, 24, 4, 10, 0, 0, Place.DEFAULT.zone)
+        render("bodies", "ring_bodies_12h_moonlit_night", plain.copy(showMoonPathInRing = false), null, darkBackground = true, at = moonlit)
+        render("bodies", "ring_bodies_24h_moonlit_night", fullDay.copy(showMoonPathInRing = false), null, darkBackground = true, at = moonlit.plusMinutes(30))
+        val dayMoon = ZonedDateTime.of(2026, 11, 1, 10, 30, 0, 0, Place.DEFAULT.zone)
+        render("bodies", "ring_bodies_12h_moon_by_day", plain, null, darkBackground = true, at = dayMoon)
+        val duskCrescent = ZonedDateTime.of(2026, 11, 13, 17, 0, 0, 0, Place.DEFAULT.zone)
+        render("bodies", "ring_bodies_12h_moon_crescent_dusk", plain.copy(skyTopElevationDeg = 15), null, darkBackground = true, at = duskCrescent)
         val outer = plain.copy(skyHorizon = SkyHorizon.OUTER)
         val waningNight = ZonedDateTime.of(2026, 11, 1, 1, 0, 0, 0, Place.DEFAULT.zone)
         render("bodies", "ring_bodies_12h_horizon_outer_night", outer, null, darkBackground = true, at = waningNight)
@@ -425,6 +436,31 @@ class ClockFacePreviewTest {
             mixedForecast().copy(fetchedAt = now.toInstant().minus(Duration.ofHours(9))),
             darkBackground = true,
         )
+    }
+
+    /**
+     * Right at the switch of the shown window the hand stands at the ring's seam, where the ring has
+     * faded out on one side: an aureole there lightens what lies behind it, but never darkens it.
+     */
+    @Test
+    fun aureoleDoesNotDarkenTheFadedRingEnd() {
+        val plain = WidgetSettings(widgetId = 1, colorMode = ColorMode.DARK, showMoon = false, showMoonInRing = false, ringEndFadeDeg = 30)
+        val atSwitch = ZonedDateTime.of(2026, 6, 21, 18, 0, 0, 0, Place.DEFAULT.zone)
+        val with = renderClock(plain, null, atSwitch)
+        val without = renderClock(plain.copy(showSunInRing = false), null, atSwitch)
+        // On a gray background: light brightens it, black covering it would darken it.
+        fun overGray(pixel: Int): Double {
+            val alpha = Color.alpha(pixel) / 255.0
+            return alpha * Color.green(pixel) + (1.0 - alpha) * 128.0
+        }
+        var changed = 0
+        for (y in 500 until 600) for (x in 300 until 360) {
+            val a = with.getPixel(x, y)
+            val b = without.getPixel(x, y)
+            if (a != b) changed++
+            assertTrue("($x, $y) ${Integer.toHexString(a)} over ${Integer.toHexString(b)}", overGray(a) >= overGray(b) - 2.0)
+        }
+        assertTrue("no aureole there", changed > 0)
     }
 
     companion object {

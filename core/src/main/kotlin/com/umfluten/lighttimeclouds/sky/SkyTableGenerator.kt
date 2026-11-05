@@ -4,7 +4,7 @@ import java.io.File
 
 /**
  * Build step (Gradle task `generateSkyTable` in `core/build.gradle.kts`): writes the
- * [SkyGradientTable] and [SunTable] resources below the directory given as the only argument, so
+ * [SkyGradientTable], [SunTable] and [MoonTable] resources below the directory given as the only argument, so
  * the tables are always computed from [SkyModel] and never kept as binaries in the source tree.
  */
 fun main(args: Array<String>) {
@@ -16,4 +16,6 @@ fun main(args: Array<String>) {
     }
     write(SkyGradientTable.RESOURCE, SkyGradientTable.compute())
     write(SunTable.RESOURCE, SunTable.compute())
+    write(MoonTable.RESOURCE, MoonTable.compute())
+    write(MoonlitSky.RESOURCE, MoonlitSky.compute())
 }

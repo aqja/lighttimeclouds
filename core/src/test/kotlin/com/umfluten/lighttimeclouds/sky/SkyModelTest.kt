@@ -8,6 +8,9 @@ import org.junit.Test
 class SkyModelTest {
 
     private fun rgb(r: Int, g: Int, b: Int) = (r shl 16) or (g shl 8) or b
+    private fun red(rgb: Int) = rgb shr 16 and 255
+    private fun green(rgb: Int) = rgb shr 8 and 255
+    private fun blue(rgb: Int) = rgb and 255
 
     @Test
     fun `matches the original Horizon implementation`() {
@@ -54,9 +57,6 @@ class SkyModelTest {
     fun `averaged sky is blue in the blue hour, not purple`() {
         // Three wavelengths and single scattering leave the upper sky black-purple here; the
         // spectrum (ozone absorbing broadly) and multiple scattering make it a dark blue.
-        val red = { c: Int -> c shr 16 and 255 }
-        val green = { c: Int -> c shr 8 and 255 }
-        val blue = { c: Int -> c and 255 }
         for (sun in listOf(-4.0, -6.0)) {
             val top = SkyModel.ringGradient(sun, doubleArrayOf(0.0, 30.0)).last()
             val blueSky = blue(top) > 1.3 * red(top) && blue(top) > green(top) && blue(top) > 10
@@ -67,16 +67,11 @@ class SkyModelTest {
     @Test
     fun `daytime zenith is a deeper blue than the horizon`() {
         val sky = SkyGradientTable.colors(40.0, topElevationDeg = 80.0, stops = 2)
-        val red = { c: Int -> c shr 16 and 255 }
-        val blue = { c: Int -> c and 255 }
         assertTrue(blue(sky.last()) - red(sky.last()) > blue(sky.first()) - red(sky.first()))
     }
 
     @Test
     fun `sun disc is near white high up, golden, orange and red towards the horizon`() {
-        val red = { c: Int -> c shr 16 and 255 }
-        val green = { c: Int -> c shr 8 and 255 }
-        val blue = { c: Int -> c and 255 }
         val high = SkyModel.sunDisc(60.0)
         assertTrue("high sun near white: %06x".format(high), green(high) > 235 && blue(high) > 200)
         val low = SkyModel.sunDisc(3.0)
@@ -96,7 +91,6 @@ class SkyModelTest {
         assertTrue(SkyGradientTable.colors(-30.0, 45.0, 16).all { c -> listOf(16, 8, 0).all { c shr it and 255 <= 64 } && (c and 255) >= (c shr 16 and 255) })
         assertArrayEquals(SkyGradientTable.colors(-18.0, 45.0, 16), SkyGradientTable.colors(-40.0, 45.0, 16))
 
-        val red = { c: Int -> c shr 16 and 255 }
         val a = SkyGradientTable.colors(2.0, 45.0, 16)
         val b = SkyGradientTable.colors(2.5, 45.0, 16)
         val mid = SkyGradientTable.colors(2.25, 45.0, 16)
@@ -120,6 +114,115 @@ class SkyModelTest {
             val range = row * rowBytes until (row + 1) * rowBytes
             assertArrayEquals("row $row", computed.sliceArray(range), bundled.sliceArray(range))
         }
+    }
+
+    @Test
+    fun `moon by day is pale and never darker than the sky behind it`() {
+        for (sun in listOf(5.0, 20.0, 45.0)) for (moon in listOf(10.0, 30.0, 60.0)) for (fraction in listOf(0.1, 0.5, 1.0)) {
+            val sky = SkyModel.ringGradient(sun, doubleArrayOf(moon)).single()
+            val disc = SkyModel.moonDisc(moon, sun, fraction)
+            fun brightness(c: Int) = 0.2126 * red(c) + 0.7152 * green(c) + 0.0722 * blue(c)
+            assertTrue("sun $sun°, moon $moon°, k $fraction: %06x on %06x".format(disc, sky), brightness(disc) >= brightness(sky))
+        }
+        // A half moon high in the day stands out only faintly, unlike the night's.
+        val day = SkyModel.moonDisc(45.0, 45.0, 0.5)
+        val sky = SkyModel.ringGradient(45.0, doubleArrayOf(45.0)).single()
+        assertTrue("%06x on %06x".format(day, sky), green(day) - green(sky) in 1..20)
+    }
+
+    @Test
+    fun `moon at night is near white high up and orange to red towards the horizon`() {
+        val high = SkyModel.moonDisc(60.0, -30.0, 1.0)
+        assertTrue("high moon near white: %06x".format(high), red(high) > 235 && green(high) > 225 && blue(high) > 190)
+        val low = SkyModel.moonDisc(3.0, -30.0, 1.0)
+        assertTrue("moon 3° high orange: %06x".format(low), red(low) > 220 && green(low) in 100..170 && blue(low) < 60)
+        val horizon = SkyModel.moonDisc(1.0, -30.0, 1.0)
+        assertTrue("moon near the horizon red: %06x".format(horizon), green(horizon) < 100 && blue(horizon) < 40)
+    }
+
+    @Test
+    fun `a thin crescent at night is dimmer than the full moon`() {
+        assertTrue(red(SkyModel.moonDisc(30.0, -30.0, 0.1)) < red(SkyModel.moonDisc(30.0, -30.0, 1.0)))
+    }
+
+    private fun brightness(rgb: Int) = 0.2126 * red(rgb) + 0.7152 * green(rgb) + 0.0722 * blue(rgb)
+
+    @Test
+    fun `a crescent is no dimmer in a dark sky than at dusk, and dimmer than a full moon`() {
+        for (moon in listOf(45.0, 20.0, 10.0, 4.0)) {
+            val night = SkyModel.moonDisc(moon, -30.0, 0.1)
+            val dusk = SkyModel.moonDisc(moon, -12.0, 0.1)
+            val full = SkyModel.moonDisc(moon, -30.0, 1.0)
+            assertTrue("moon $moon night ${night.toString(16)} dusk ${dusk.toString(16)}", brightness(night) >= brightness(dusk) - 1.0)
+            assertTrue("moon $moon full ${full.toString(16)} crescent ${night.toString(16)}", brightness(full) > brightness(night))
+        }
+    }
+
+    @Test
+    fun `the full moon lights the night sky, the more the fuller it is`() {
+        val full = MoonlitSky.colors(-30.0, 40.0, 1.0, 45.0, 24)
+        val half = MoonlitSky.colors(-30.0, 40.0, 0.5, 45.0, 24)
+        val crescent = MoonlitSky.colors(-30.0, 40.0, 0.1, 45.0, 24)
+        val moonless = SkyGradientTable.colors(-30.0, 45.0, 24)
+        for (i in full.indices) {
+            assertTrue("full ${full[i].toString(16)} half ${half[i].toString(16)}", brightness(full[i]) > brightness(half[i]))
+            assertTrue("half ${half[i].toString(16)} crescent ${crescent[i].toString(16)}", brightness(half[i]) > brightness(crescent[i]))
+            assertTrue("full ${full[i].toString(16)} moonless ${moonless[i].toString(16)}", brightness(full[i]) > brightness(moonless[i]) + 30)
+        }
+    }
+
+    @Test
+    fun `a moon far below the horizon or a bright sky leave the ring as it is`() {
+        for (sun in listOf(-30.0, -14.0, -8.0, -3.0, -0.5)) {
+            val moonless = SkyGradientTable.colors(sun, 45.0, 24)
+            for (moon in listOf(-30.0 to 1.0, 40.0 to 0.0)) {
+                val moonlit = MoonlitSky.colors(sun, moon.first, moon.second, 45.0, 24)
+                for (i in moonless.indices) {
+                    assertEquals("sun $sun moon $moon", red(moonless[i]).toDouble(), red(moonlit[i]).toDouble(), 3.0)
+                    assertEquals("sun $sun moon $moon", green(moonless[i]).toDouble(), green(moonlit[i]).toDouble(), 3.0)
+                    assertEquals("sun $sun moon $moon", blue(moonless[i]).toDouble(), blue(moonlit[i]).toDouble(), 3.0)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `the moon's aureole fades outward and into the twilight`() {
+        val night = MoonlitSky.aureole(40.0, -30.0, 1.0)
+        assertTrue("next to the moon ${night.first().toString(16)}", brightness(night.first()) > 50)
+        assertTrue(brightness(night[night.size / 2]) < brightness(night.first()))
+        assertEquals(0, night.last())
+        val twilight = MoonlitSky.aureole(15.0, -6.0, 1.0)
+        assertTrue("in the twilight ${twilight.first().toString(16)}", brightness(twilight.first()) < 25)
+    }
+
+    /** Checks every 40th row of the moonlit sky's table generated at build time, and that it matches the sky table. */
+    @Test
+    fun `bundled moonlit sky table matches the model`() {
+        val rows = (0 until MoonlitSky.ROWS step 40)
+        val aureoleRows = (0 until MoonlitSky.AUREOLE_ROWS step 40)
+        val computed = MoonlitSky.compute(rows, aureoleRows)
+        val bundled = MoonlitSky::class.java.getResourceAsStream(MoonlitSky.RESOURCE)!!.use { it.readBytes() }
+        assertEquals(computed.size, bundled.size)
+        val nonZero = computed.indices.filter { computed[it] != 0.toByte() }
+        assertTrue(nonZero.size > 1000)
+        for (i in nonZero) assertEquals("byte $i", computed[i], bundled[i])
+    }
+
+    /** Checks every 20th row of the moon table generated at build time, and its interpolation. */
+    @Test
+    fun `bundled moon table matches the model`() {
+        val rows = (0 until MoonTable.ROWS step 20)
+        val computed = MoonTable.compute(rows)
+        val bundled = MoonTable::class.java.getResourceAsStream(MoonTable.RESOURCE)!!.use { it.readBytes() }
+        val rowBytes = bundled.size / MoonTable.ROWS
+        for (row in rows) {
+            val from = row * rowBytes
+            assertArrayEquals(computed.copyOfRange(from, from + rowBytes), bundled.copyOfRange(from, from + rowBytes))
+        }
+        // On a grid point the table returns the model's color.
+        assertEquals(SkyModel.moonDisc(20.0, -18.0, 0.6), MoonTable.disc(20.0, -18.0, 0.6))
+        assertEquals(MoonTable.disc(20.0, -18.0, 0.6), MoonTable.disc(20.0, -40.0, 0.6))
     }
 
     @Test

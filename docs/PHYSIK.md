@@ -877,6 +877,12 @@ deshalb beim Build die Tabellen an:
 - **Sonne** ([`SunTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SunTable.kt)):
   Sonnenhöhe 0°…90° in 0,5°-Schritten × 8 Farben der Scheibe von der Mitte bis zum Rand und 24
   Farben ihrer Aureole vom Scheibenrand bis 12° (Abschnitt [12.2](#122-sonne-und-mond-im-ring)).
+- **Mondheller Himmel** ([`MoonlitSky.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/MoonlitSky.kt)):
+  keine Farben, sondern das Licht des Himmels, weil sich Licht addiert: je Höhe eines Himmelskörpers
+  −18°…90° in 0,5°-Schritten und Blickhöhe 0°…80° in 1°-Schritten fünf Gleitkommazahlen (lineares
+  RGB, Signal der Stäbchen, Leuchtdichte), dazu die mittlere Leuchtdichte des Himmels und der
+  Lichtüberschuss der Aureole. Für Farben bräuchte es eine Tabelle über Sonnenhöhe, Mondhöhe, Phase
+  und Blickhöhe zugleich.
 
 Tests prüfen, dass die mitgelieferten Tabellen mit dem Modell übereinstimmen. Weil F-Droid die App
 nachbaut und Byte für Byte vergleicht, rechnet das Himmelsmodell mit `java.lang.StrictMath`, dessen
@@ -898,7 +904,8 @@ $h_\odot(t)$ am Ort berechnet, und:
 
 - **„Himmel“:** 24 Farben aus der Tabelle (Abschnitt [11.2](#112-vorberechnete-tabelle)) vom
   Horizont bis $e_t$. Die Farbe der Nacht ist das Eigenleuchten des Nachthimmels, so wie das Auge
-  es sieht (Abschnitt [9.7](#97-der-nachthimmel)); Mondlicht ist nicht im Modell.
+  es sieht (Abschnitt [9.7](#97-der-nachthimmel)), und was der Mond hinzufügt (Abschnitt
+  [12.2](#122-sonne-und-mond-im-ring)).
 - **„Phasenfarben“:** eine feste Farbe je Himmelszustand (Abschnitt [6.4](#64-himmelszustand)),
   entnommen einer gestalteten Palette, die zwischen Stützstellen an den physikalischen Schwellen
   −18°, −12°, −6°, −0,833°, 6° und 90° linear interpoliert ist.
@@ -924,6 +931,58 @@ gezeigt: hoch am Himmel fast weiß, wenige Grad über dem Horizont goldgelb, dan
 durch den Dunst tiefrot. Die Randverdunkelung entfällt: Bei wenigen Pixeln Durchmesser ist sie nicht
 zu sehen.
 
+**Mond.** Die Mondscheibe entsteht genauso, nur wird allein ihr beleuchteter Teil gezeichnet: Der
+dunkle Teil lässt den Himmel durch, wie er es am Taghimmel tut. Die Strahldichte des beleuchteten
+Teils ist das Sonnenlicht, das er zurückwirft, verteilt auf seinen Raumwinkel
+$k\,\pi\,(0{,}2590°)^2$, mit dem beleuchteten Anteil $k$. Seine Helligkeit relativ zur Sonne
+($V_\odot = -26{,}74$) folgt dem Phasengesetz, das Krisciunas und Schaefer verwenden [45], ausgehend
+von der Helligkeit des Vollmonds bei Allen [46],
+
+```math
+V(\alpha) = -12{,}73 + 0{,}026\,|\alpha| + 4\cdot 10^{-9}\,\alpha^4
+```
+
+mit dem Phasenwinkel $\alpha$ in Grad. Das gilt bei der mittleren Entfernung des Mondes, die
+Strahldichte hängt von der Entfernung aber nicht ab: Licht und Scheibe ändern sich gleich. Das
+Spektrum folgt dem der Sonne. Der Mondboden wirft Rot besser zurück und ist in $B-V$ um 0,26 mag
+röter [47], aber nachts hat das Auge nur das Mondlicht, um Weiß zu beurteilen, und am Tag überstrahlt
+der Himmel den Unterschied; deshalb entfällt er. Durch dieselbe Atmosphäre wie das Sonnenlicht und
+vor dem Himmel in Mondhöhe ist der Mond im Dunkeln hoch am Himmel weiß und am Horizont orange bis
+rot; am Tag fügt er dem Himmel wenig hinzu und bleibt blass. Wie das Auge ihn sieht, steht in
+[PHYSIOLOGIE.md](PHYSIOLOGIE.md), Abschnitt 6. Die Farben kommen aus einer dritten Tabelle über
+Mondhöhe, Sonnenhöhe und $k$.
+
+**Mondheller Himmel.** Der Mond beleuchtet dieselbe Atmosphäre wie die Sonne, und die Streuung ist
+linear in der Lichtquelle: Sein Himmel ist der Himmel mit der Sonne in Mondhöhe, abgeschwächt um das
+Verhältnis $10^{-0{,}4\,(V_\text{Mond}(\alpha) - V_\odot)}$, bei Vollmond $2{,}5\cdot 10^{-6}$. Solange
+die Sonne unter dem Horizont steht, addiert das Widget in jedem Ringabschnitt zum Himmel der Sonne
+den des Mondes zu diesem Zeitpunkt, auch für einen Mond knapp unter dem Horizont, und sieht die Summe
+mit einem an beide angepassten Auge. Die Phase gilt für den ganzen Ring: Sie ändert sich über einen
+Tag kaum. Bei Vollmond wird die Nacht dadurch graublau, bei Sichel bleibt sie fast dunkel, und in
+der Dämmerung überstrahlt die Sonne den Beitrag. Wo im Ring zwei Zeiten aneinanderstoßen, zwischen
+denen der Mond weit gewandert ist, springt die Helligkeit.
+
+Die Aureole des Mondes entsteht wie die der Sonne, mit deren Lichtüberschuss in Mondhöhe,
+abgeschwächt um dasselbe Verhältnis.
+
+Zum Vergleich dient das Modell von Krisciunas und Schaefer [45], das 33 Messungen auf dem Mauna Kea
+anpasst und die Extinktion $k$ als Parameter hat. Unsere Atmosphäre hat im Visuellen
+$k = 0{,}29$ mag je Luftmasse: etwa 0,12 aus der Rayleigh-Streuung, 0,15 aus dem Aerosol und 0,03 aus
+dem Ozon. Mit diesem $k$ liegt unser Himmel bei Vollmond von 10° bis 60° Abstand um den Faktor 1,2 bis
+1,7 über ihrem Modell, bei Mond in 40° Höhe und 10° Abstand mit 0,032 gegenüber 0,026 cd/m². Der
+größte Teil davon ist ein bekannter Fehler ihres Modells: Es schwächt das Mondlicht um die ganze
+Atmosphäre, bevor es gestreut wird, statt nur um den Teil darüber [48]. Mit derselben Luftmasse $X$ für
+Mond und Blickrichtung macht das den Faktor $\tau X/(1 - e^{-\tau X})$ aus, mit $\tau = 0{,}921\,k$:
+1,16 bis 1,47 je nach Mondhöhe. Korrigiert bleiben bei 10° Abstand 1 bis 3 %, bei 60° bis zu 27 %;
+dort tragen Mehrfachstreuung und der helle Boden bei. Das Modell selbst ist für 8 bis 23 % genau.
+
+Unter 10° fällt ihr Modell wie $\rho^{-2}$ und wird steiler als unseres: Unser Wert liegt bei 5°
+Abstand um den Faktor 0,8 bis 1,0, bei 3° um 0,5 bis 0,7 und bei 2° um 0,3 bis 0,4 darunter. Dicht am
+Mond ist die Aureole hier also eher zu schwach; wie stark die Vorwärtsspitze ist, hängt an den großen
+Teilchen des Aerosols, die von Tag zu Tag wechseln. Für Xinglong (950 m) wurden Mie- und
+Rayleigh-Anteil von [45] mit $k = 0{,}23$ um die Faktoren 1,5 und 0,9 angepasst [49]; damit läge unser
+Himmel bei 10° bis 20° Abstand um −6 bis +31 % daneben.
+
 **Größe.** Der Ring ist ein Diagramm aus Zeit (Winkel) und Höhe (Abstand vom Horizontrand), kein
 Bild des Himmels: Eine Richtung des Himmels, der Azimut, fehlt. Von den 0,53° der Scheibe ist nur
 ihre Ausdehnung entlang der beiden Achsen bestimmt. Entlang der Zeitachse ist es die Zeit, die die
@@ -935,7 +994,9 @@ oder 30°/h (12-Stunden-Zifferblatt) im Bogenmaß. Quer zum Ring ist der Maßsta
 $(R_\mathrm{fern} - R_\mathrm{Horizont})\sec^2 h/\tan e_t$ je Bogenmaß, meist um ein Mehrfaches
 kleiner (5- bis 10-mal bei einem fernen Rand von 45°), sodass eine wahre Ellipse meist ein Splitter
 von etwa einem Pixel Höhe wäre. Die Scheibe wird rund gezeichnet, mit ihrem wahren Durchmesser
-entlang der Zeitachse: 2 bis 8 Pixel, je nach Größe des Widgets und Zifferblatt.
+entlang der Zeitachse: 2 bis 8 Pixel, je nach Größe des Widgets und Zifferblatt. Die Mondscheibe
+wird genauso bemessen, aus ihrer eigenen Bewegung und ihrer aktuellen Entfernung
+($\arcsin(0{,}2725\,R_\oplus/d)$), ihre Phase ist im Ring deshalb gerade noch zu erahnen.
 
 **Aureole.** Um die Scheibe liegt der Himmel in Richtung der Sonne, gesehen wie der übrige Ring
 ([PHYSIOLOGIE.md](PHYSIOLOGIE.md), Abschnitt 6): In Winkeln $\theta$ von 0,27° bis 12° von der
@@ -975,7 +1036,9 @@ genau $k\,\pi r^2$, denn $2k - 1 = \cos i$ mit dem Phasenwinkel $i$ [1, Kap. 48]
 vergleicht die gerenderte Scheibe pixelweise mit dieser Form.
 
 Die Scheibe hat überall dieselbe Ausrichtung, auch wenn sie mit dem Mondzeiger um das Zifferblatt
-wandert: Oben ist immer der Zenit.
+wandert: Oben ist immer der Zenit. Nur im Ring dreht sie sich: Dort ist der Zenit die Richtung zum
+fernen Rand, der Winkel des hellen Rands zählt also von dieser Richtung aus, ohne Rand und dunklen
+Teil (Abschnitt [12.2](#122-sonne-und-mond-im-ring)).
 
 ---
 
@@ -1053,12 +1116,13 @@ Niederschlag wird für die nächsten 3 und 6 Stunden geprüft; Schnee hat dabei 
 | Beobachter auf Meereshöhe | Horizont und Parallaxe für Höhe 0 | [5.1](#51-ort-auf-dem-wgs84-ellipsoid-und-parallaxe) |
 | Standardatmosphäre für die Refraktion (10 °C, 1010 hPa) | am Horizont schwankt die wahre Refraktion um mehrere Bogenminuten | [5.3](#53-refraktion) |
 | Mondphase aus geozentrischen Orten | Unterschied zur topozentrischen Phase vernachlässigbar | [7.2](#72-beleuchteter-anteil-und-phase) |
-| Himmel ohne Wolken, 300 DU Ozon, ohne Mondlicht | Himmelsfarbe gilt für einen wolkenlosen Standardhimmel | [9](#9-himmelsfarben-das-streumodell), [12.1](#121-ringfarbe) |
+| Himmel ohne Wolken, 300 DU Ozon | Himmelsfarbe gilt für einen wolkenlosen Standardhimmel | [9](#9-himmelsfarben-das-streumodell), [12.1](#121-ringfarbe) |
 | Ein Stadtaerosol fester Menge (τ₄₄₀ = 0,2), kugelförmig, Brechungsindex unabhängig von der Wellenlänge, überall dasselbe Höhenprofil | Dunst, Horizont und Aureole eines ziemlich klaren Tages; echter Dunst wechselt von Tag zu Tag | [9.6](#96-aerosole-mie-theorie-und-eine-gemessene-größenverteilung) |
 | Nachthimmel gleichmäßig, mit dem Spektrum der Sonne, ohne Lichtverschmutzung | die Nacht eines natürlichen, mondlosen Himmels | [9.7](#97-der-nachthimmel) |
 | Mehrfachstreuung isotrop und lokal homogen (Hillaire) | kleine Fehler in der Helligkeitsverteilung der tiefen Dämmerung | [9.5](#95-mehrfachstreuung-hillaire-2020) |
 | Sehen des Himmels (Anpassung, Helligkeit, Farben bei wenig Licht) | siehe [PHYSIOLOGIE.md](PHYSIOLOGIE.md), Abschnitt 8 | [10.3](#103-belichtung) |
 | Sonnenscheibe rund im Maßstab der Zeitachse, ohne Randverdunkelung, in voller Helligkeit mit ihrem Farbton | wahre Größe entlang des Rings und wahrer Farbton, nicht wahre Form und Helligkeit | [12.2](#122-sonne-und-mond-im-ring) |
+| Mondlicht mit dem Spektrum der Sonne, gleichmäßig hell über den beleuchteten Teil, ohne Erdschein und Oppositionseffekt | die gemessene Rötung von 0,26 mag entfällt, weil das Auge sie nicht sieht; der dunkle Teil bleibt ganz durchsichtig | [12.2](#122-sonne-und-mond-im-ring) |
 | Neigung der Sichel aus geozentrischen Orten | Abweichung zur topozentrischen Ansicht durch die Mondparallaxe (≤ 1°), bei schmaler Sichel etwas mehr | [7.4](#74-neigung-der-sichel) |
 
 ---
@@ -1178,3 +1242,18 @@ Niederschlag wird für die nächsten 3 und 6 Stunden geprüft; Schnee hat dabei 
 44. F. Falchi, P. Cinzano, D. Duriscoe, C. C. M. Kyba, C. D. Elvidge, K. Baugh, B. A. Portnov,
     N. A. Rybnikova, R. Furgoni: The new world atlas of artificial night sky brightness.
     *Science Advances* 2, e1600377 (2016). <https://doi.org/10.1126/sciadv.1600377>
+
+**Ergänzung: Mondlicht**
+
+45. K. Krisciunas, B. E. Schaefer: A Model of the Brightness of Moonlight. *Publications of the
+    Astronomical Society of the Pacific* 103, 1033–1039 (1991). <https://doi.org/10.1086/132921>
+46. A. N. Cox (Hrsg.): *Allen's Astrophysical Quantities*, 4. Auflage, Springer.
+47. P. Thejll, C. Flynn, H. Gleisner, T. Andersen, A. Ulla, M. Pérez, A. Darudi, H. Schwarz:
+    The colour of the dark side of the Moon. *Astronomy & Astrophysics* 563, A38 (2014).
+    <https://doi.org/10.1051/0004-6361/201322776>
+48. H. Winkler: A revised simplified scattering model for the moonlit sky brightness profile based
+    on photometry at SAAO. *Monthly Notices of the Royal Astronomical Society* (2022).
+    <https://doi.org/10.1093/mnras/stac1387>
+49. S. Yao, H.-T. Zhang, H.-L. Yuan, Y.-H. Zhao, Y.-Q. Dong, Z.-R. Bai, L.-C. Deng, Y.-J. Lei: Moon
+    night sky brightness simulation for Xinglong station. *Research in Astronomy and Astrophysics*
+    (2013). <https://arxiv.org/abs/1304.7107>

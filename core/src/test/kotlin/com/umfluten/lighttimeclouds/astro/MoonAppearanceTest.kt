@@ -24,6 +24,14 @@ class MoonAppearanceTest {
     }
 
     @Test
+    fun `moon's disc stays within what its distance allows`() {
+        // A month covers one perigee and one apogee: about 0.276° and 0.245°.
+        val sizes = (0..30).map { SunMoonCalculator.moonSemiDiameterDegrees(START.plus(Duration.ofDays(it.toLong()))) }
+        assertTrue("smallest ${sizes.min()}°", sizes.min() in 0.24..0.26)
+        assertTrue("largest ${sizes.max()}°", sizes.max() in 0.26..0.28)
+    }
+
+    @Test
     fun `bright limb points along the great circle towards the sun`() {
         var checked = 0
         for ((lat, lon) in PLACES) {

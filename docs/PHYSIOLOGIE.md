@@ -227,6 +227,35 @@ Abschnitt 12.2). Ihre Aureole ist der Himmel neben ihr, gesehen wie der übrige 
 in Sonnenhöhe plus der Überschuss des Himmels zur Sonne hin, durch dieselben Schritte 1 bis 3, und in
 „Screen“-Mischung über den Ring gelegt.
 
+Der Mond unterscheidet sich in vier Punkten. Anders als der Himmel ist er ein kleiner heller Körper,
+den die Zapfen auch im Dunkeln voll sehen; Stäbchen und verblassende Farben (Abschnitt 4) richten sich
+deshalb nach seiner eigenen Leuchtdichte, sonst würde sein Orange am Horizont zu Grau verblassen. Das
+Auge ist nicht nur an den mondlosen Himmel angepasst, sondern auch an den mondbeschienenen, den
+Himmel mit der Sonne in Mondhöhe, gedämpft um das Verhältnis von Mondlicht zu Sonnenlicht; sonst käme
+ein Vollmond matt heraus. Außerdem zählt der Mond selbst mit, auf den das Auge schaut: Das Modell nimmt
+dafür wie Ward Larson und andere [18] einen Fleck von 1° um den Fixierpunkt an, den die Mondscheibe zu
+27 % füllt, und zählt in jeder Phase die ganze Scheibe. Ohne das fiele eine schmale Sichel am dunklen
+Himmel matt und bräunlich aus, viel dunkler als in der Dämmerung, weil die Helligkeitsabbildung bei
+geringer Anpassung stark staucht. Und er wird dazwischen getont: je Kanal wie der Himmel und mit
+erhaltenem Farbton wie die Sonne, umso stärker, je größer der Anteil des Mondlichts ist. Am Tag hält das
+Erste ihn heller als den Himmel hinter ihm, nachts erhält das Zweite seine Farben.
+
+Der Fleck ist eine Festlegung, keine Physiologie. Gemessen mittelt das Auge viel enger, in seinem
+einfachsten Modell mit einem Gaußkern von σ = 0,131° über die logarithmierte Leuchtdichte [19], und passt
+sich an eine Sichel weit weniger an, als der Fleck annimmt: Bei 10 % beleuchtet liegt die Leuchtdichte
+das 500- bis 10 000-Fache über der Anpassung, beim Vollmond das 60- bis 100-Fache. Für das Ergebnis
+zählt aber die empfundene Helligkeit, und die senkt die starke Anpassung beim Vollmond deutlich. Liest
+man sie bei dieser gemessenen Anpassung aus den Kurven von Stevens und Stevens [20] ab, liegen alle Phasen eines
+Mondes in 45° Höhe bei rund 30 bis 40 brils, obwohl die Leuchtdichte der Scheibe um das 15-Fache
+schwankt. Eine Sichel ist also fast so hell wie ein Vollmond, und genauso nah liegen die Farben, die der
+Fleck ergibt. Der Vergleich ist grob: Die Kurven gelten für eine Fläche von 5° bei kurzem Hinsehen, und
+der Nachthimmel liegt unter dem Messbereich von [19].
+
+Auch den Himmel selbst hellt er auf (PHYSIK.md, Abschnitt 12.2): Dort sieht das Auge die Summe beider
+Himmel mit derselben Anpassung an beide. Der Ring folgt dabei den Schritten für den Himmel, seine
+Aureole richtet sich nach der Leuchtdichte an jeder Stelle, weil die Zapfen neben dem Mond noch Farben
+sehen.
+
 ## 7. Was herauskommt
 
 Die mittlere Leuchtdichte des ganzen Himmels (Abschnitt 2) und die dargestellten Farben eines Rings
@@ -259,6 +288,7 @@ bis 45° (Horizont / 15° / 30° / 80° darüber), mit dem Aerosol aus PHYSIK.md
 | Stäbchengewichte und Sättigung unter 0,1 cd/m² festgehalten | dort gibt es keine Messungen; der Blauton der Nacht beruht auf dem Wert bei 0,1 | [4.1](#41-der-purkinje-effekt-stäbchen-in-den-kanälen-der-zapfen), [4.2](#42-verblassende-farben) |
 | Zapfengrundempfindlichkeiten aus CIE 1931 statt Judd-Vos | kleine Abweichungen im Violetten und Blauen | [1](#1-maße-des-lichts-für-das-auge) |
 | Nachthimmel gleichmäßig, mit dem Spektrum der Sonne, ohne Lichtverschmutzung | die Nachtfarbe eines natürlichen, mondlosen Himmels | [5](#5-der-nachthimmel) |
+| Anpassung an den Mond über einen Fleck von 1° mit der ganzen Scheibe in jeder Phase | das Auge mittelt enger; die Helligkeit der Phasen passt trotzdem zu den Messungen, aber nur grob geprüft | [6](#6-auf-das-display) |
 | ACES-Kurve für die Lichter | gestalterische Stauchung der hellsten Stellen | [6](#6-auf-das-display) |
 
 ---
@@ -302,3 +332,11 @@ bis 45° (Horizont / 15° / 30° / 80° darüber), mit dem Aerosol aus PHYSIK.md
     (2006), Abschnitt 4.1 (zu den Schwächen des Operators von 1993).
 17. W. B. Thompson, P. Shirley, J. A. Ferwerda: A Spatial Post-Processing Algorithm for Images of
     Night Scenes. *Journal of Graphics Tools* 7 (1), 1–12 (2002).
+18. G. Ward Larson, H. Rushmeier, C. Piatko: A Visibility Matching Tone Reproduction Operator for
+    High Dynamic Range Scenes. *IEEE Transactions on Visualization and Computer Graphics* 3 (4),
+    291–306 (1997). <https://radsite.lbl.gov/radiance/papers/lbnl39882/tonemap.pdf>
+19. P. Vangorp, K. Myszkowski, E. W. Graf, R. K. Mantiuk: A Model of Local Adaptation. *ACM
+    Transactions on Graphics* 34 (6) (2015).
+20. J. C. Stevens, S. S. Stevens: Brightness Function: Effects of Adaptation. *Journal of the Optical
+    Society of America* 53 (3), 375 (1963). Abgelesen aus einer späteren Nachzeichnung der Kurven.
+    <https://opg.optica.org/josa/abstract.cfm?uri=josa-53-3-375>

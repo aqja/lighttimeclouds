@@ -863,6 +863,11 @@ The scattering computation is too expensive for every minute. The Gradle task
 - **Sun** ([`SunTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SunTable.kt)):
   Sun altitude 0°…90° in 0.5° steps × 8 colors of the disc from its center to its edge and 24
   colors of its aureole from the disc's edge out to 12° (section [12.2](#122-sun-and-moon-in-the-ring)).
+- **Moonlit sky** ([`MoonlitSky.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/MoonlitSky.kt)):
+  not colors but the sky's light, as light adds up: for a body's altitude −18°…90° in 0.5° steps and
+  view elevation 0°…80° in 1° steps five floats (linear RGB, the rods' signal, luminance), plus the
+  sky's mean luminance and the aureole's excess of light. Colors would need a table over the Sun's
+  altitude, the Moon's altitude, the phase and the view elevation at once.
 
 Tests check that the bundled tables match the model. As F-Droid rebuilds the app and compares it
 byte for byte, the sky model computes with `java.lang.StrictMath`, whose results are the same on
@@ -883,7 +888,8 @@ the place is computed, and:
 
 - **"Sky":** 24 colors from the table (section [11.2](#112-precomputed-table)) from the horizon up
   to $e_t$. The night's color is the night sky's own glow as the eye sees it (section
-  [9.7](#97-the-night-sky)); moonlight is not in the model.
+  [9.7](#97-the-night-sky)), and what the Moon adds to it (section
+  [12.2](#122-sun-and-moon-in-the-ring)).
 - **"Phase colors":** one fixed color per sky state (section [6.4](#64-sky-state)), taken from a
   designed palette that is interpolated linearly between stops at the physical thresholds −18°,
   −12°, −6°, −0.833°, 6° and 90°.
@@ -907,6 +913,55 @@ display can show, so it is shown at full brightness with its hue kept: high up a
 degrees above the horizon golden, then orange, and at the horizon deep red through the haze.
 Limb darkening is left out: at a few pixels across it cannot be seen.
 
+**Moon.** The Moon's disc is made the same way, but only its lit part is drawn: the dark part lets
+the sky through, as it does in the day sky. The radiance of the lit part is the sunlight it
+reflects, spread over the lit part's solid angle $k\,\pi\,(0.2590°)^2$, with $k$ the illuminated
+fraction. Its brightness relative to the Sun ($V_\odot = -26.74$) follows the phase law Krisciunas
+and Schaefer use [45], from the full Moon's magnitude in Allen [46],
+
+```math
+V(\alpha) = -12.73 + 0.026\,|\alpha| + 4\cdot 10^{-9}\,\alpha^4
+```
+
+with the phase angle $\alpha$ in degrees. This holds at the Moon's mean distance, but the radiance does not depend on the
+distance: light and disc change alike. Its spectrum follows the Sun's. The Moon's ground
+reflects the red better, and it is 0.26 mag redder in $B-V$ [47], but at night the moonlight is
+all the eye has to judge white by, and by day the sky outshines the difference, so it is left
+out. Through the same atmosphere as the Sun's light and in front of the sky at the Moon's altitude, the
+Moon is white high up in the dark and orange to red near the horizon; by day it adds little to the
+sky and stays pale. How the eye sees it is in [PHYSIOLOGY.md](PHYSIOLOGY.md), section 6. The colors
+come from a third table over the Moon's altitude, the Sun's altitude and $k$.
+
+**Moonlit sky.** The Moon lights the same atmosphere as the Sun, and the scattering is linear in the
+light source: its sky is the sky with the Sun at the Moon's altitude, dimmed by the ratio
+$10^{-0.4\,(V_\text{Moon}(\alpha) - V_\odot)}$, $2.5\cdot 10^{-6}$ at full Moon. While the Sun is
+below the horizon, the widget adds in every ring segment the Moon's sky at that moment to the Sun's,
+also for a Moon just below the horizon, and sees the sum with an eye adapted to both. One phase holds
+for the whole ring: it hardly changes over a day. At full Moon the night turns gray-blue, with a
+crescent it stays nearly dark, and in twilight the Sun outshines the Moon's share. Where two times
+meet in the ring between which the Moon has moved far, the brightness jumps.
+
+The Moon's aureole arises like the Sun's, from the Sun's excess of light at the Moon's altitude,
+dimmed by the same ratio.
+
+For comparison there is the model of Krisciunas and Schaefer [45], fitted to 33 measurements on
+Mauna Kea, with the extinction $k$ as a parameter. Our atmosphere has $k = 0.29$ mag per air mass in
+the visual: about 0.12 from Rayleigh scattering, 0.15 from the aerosol and 0.03 from ozone. With this
+$k$, our sky at full Moon lies a factor of 1.2 to 1.7 above their model from 10° to 60° from the
+Moon, with the Moon 40° high and 10° away at 0.032 against 0.026 cd/m². Most of that is a known error
+of their model: it dims the moonlight by the whole atmosphere before it is scattered, not just by
+the part above [48]. With the same air mass $X$ for the Moon and the line of sight this amounts to the
+factor $\tau X/(1 - e^{-\tau X})$, with $\tau = 0.921\,k$: 1.16 to 1.47 depending on the Moon's altitude.
+Corrected, 1 to 3 % remain at 10° from the Moon and up to 27 % at 60°, where multiple scattering and
+the bright ground add to it. The model itself is good to 8 to 23 %.
+
+Below 10° their model falls as $\rho^{-2}$ and grows steeper than ours: our value lies a factor of
+0.8 to 1.0 below it at 5°, 0.5 to 0.7 at 3° and 0.3 to 0.4 at 2°. Right next to the Moon the aureole
+here is thus rather too weak; the strength of the forward peak depends on the aerosol's large
+particles, which change from day to day. For Xinglong (950 m), the Mie and Rayleigh parts of [45]
+were fitted with $k = 0.23$ by the factors 1.5 and 0.9 [49]; with these our sky would be off by −6 to
++31 % at 10° to 20° from the Moon.
+
 **Size.** The ring is a chart of time (angle) and altitude (distance from the horizon edge), not a
 picture of the sky: one direction of the sky, the azimuth, is missing. Of the disc's 0.53°, only
 its extent along the two axes is defined. Along the time axis it is the time the Sun takes to move
@@ -917,7 +972,9 @@ $\Delta\varphi$ = 15°/h (24-hour dial) or 30°/h (12-hour dial) in radians. Acr
 projection's scale, $(R_\mathrm{far} - R_\mathrm{horizon})\sec^2 h/\tan e_t$ per radian, is
 usually several times smaller (5 to 10 times for a far edge at 45°), so a true ellipse would mostly
 be a sliver about a pixel high. The disc is drawn round, with its true diameter along the time
-axis: 2 to 8 pixels, depending on the widget's size and the dial.
+axis: 2 to 8 pixels, depending on the widget's size and the dial. The Moon's disc is measured the
+same way, from its own motion and its current distance ($\arcsin(0.2725\,R_\oplus/d)$), so its
+phase can only just be made out in the ring.
 
 **Aureole.** Around the disc lies the sky in the Sun's direction, seen like the rest of the ring
 ([PHYSIOLOGY.md](PHYSIOLOGY.md), section 6): at angles $\theta$ from 0.27° to 12° from the Sun's
@@ -958,7 +1015,9 @@ $2k - 1 = \cos i$ with the phase angle $i$ [1, ch. 48]. A test compares the rend
 pixel with this shape.
 
 The disc keeps the same orientation everywhere, even when it travels around the dial with the moon
-hand: up is always the zenith.
+hand: up is always the zenith. Only in the ring does it turn: there the zenith is the direction of
+the far edge, so the bright limb's angle is counted from that direction, without the rim and the
+dark part (section [12.2](#122-sun-and-moon-in-the-ring)).
 
 ---
 
@@ -1035,12 +1094,13 @@ time of day. Precipitation is checked for the next 3 and 6 hours; snow takes pre
 | Standard atmosphere for refraction (10 °C, 1010 hPa) | at the horizon the true refraction varies by several arcminutes | [5.3](#53-refraction) |
 | Moon phase from geocentric positions | difference from the topocentric phase negligible | [7.2](#72-illuminated-fraction-and-phase) |
 | Tilt of the crescent from geocentric positions | difference from the topocentric view through the lunar parallax (≤ 1°), somewhat more for a thin crescent | [7.4](#74-tilt-of-the-crescent) |
-| Sky without clouds, 300 DU of ozone, without moonlight | the sky color is that of a cloudless standard sky | [9](#9-sky-colors-the-scattering-model), [12.1](#121-ring-color) |
+| Sky without clouds, 300 DU of ozone | the sky color is that of a cloudless standard sky | [9](#9-sky-colors-the-scattering-model), [12.1](#121-ring-color) |
 | One urban aerosol of fixed amount (τ₄₄₀ = 0.2), spherical, refractive index independent of the wavelength, same height profile everywhere | haze, horizon and aureole of a fairly clear day; real haze varies from day to day | [9.6](#96-aerosols-mie-theory-and-a-measured-size-distribution) |
 | Night sky uniform, with the Sun's spectrum, without light pollution | the night of a natural, moonless sky | [9.7](#97-the-night-sky) |
 | Multiple scattering isotropic and locally homogeneous (Hillaire) | small errors in the brightness distribution of deep twilight | [9.5](#95-multiple-scattering-hillaire-2020) |
 | Seeing the sky (adaptation, brightness, colors in dim light) | see [PHYSIOLOGY.md](PHYSIOLOGY.md), section 8 | [10.3](#103-exposure) |
 | Sun disc round at the scale of the time axis, without limb darkening, at full brightness with its hue | true size along the ring and true hue, not true shape and brightness | [12.2](#122-sun-and-moon-in-the-ring) |
+| Moon's light with the Sun's spectrum, evenly bright over the lit part, without earthshine or opposition surge | the measured reddening of 0.26 mag is left out as the eye does not see it; the dark part stays fully transparent | [12.2](#122-sun-and-moon-in-the-ring) |
 
 ---
 
@@ -1159,3 +1219,18 @@ time of day. Precipitation is checked for the next 3 and 6 hours; snow takes pre
 44. F. Falchi, P. Cinzano, D. Duriscoe, C. C. M. Kyba, C. D. Elvidge, K. Baugh, B. A. Portnov,
     N. A. Rybnikova, R. Furgoni: The new world atlas of artificial night sky brightness.
     *Science Advances* 2, e1600377 (2016). <https://doi.org/10.1126/sciadv.1600377>
+
+**Supplement: moonlight**
+
+45. K. Krisciunas, B. E. Schaefer: A Model of the Brightness of Moonlight. *Publications of the
+    Astronomical Society of the Pacific* 103, 1033–1039 (1991). <https://doi.org/10.1086/132921>
+46. A. N. Cox (ed.): *Allen's Astrophysical Quantities*, 4th edition, Springer.
+47. P. Thejll, C. Flynn, H. Gleisner, T. Andersen, A. Ulla, M. Pérez, A. Darudi, H. Schwarz:
+    The colour of the dark side of the Moon. *Astronomy & Astrophysics* 563, A38 (2014).
+    <https://doi.org/10.1051/0004-6361/201322776>
+48. H. Winkler: A revised simplified scattering model for the moonlit sky brightness profile based
+    on photometry at SAAO. *Monthly Notices of the Royal Astronomical Society* (2022).
+    <https://doi.org/10.1093/mnras/stac1387>
+49. S. Yao, H.-T. Zhang, H.-L. Yuan, Y.-H. Zhao, Y.-Q. Dong, Z.-R. Bai, L.-C. Deng, Y.-J. Lei: Moon
+    night sky brightness simulation for Xinglong station. *Research in Astronomy and Astrophysics*
+    (2013). <https://arxiv.org/abs/1304.7107>

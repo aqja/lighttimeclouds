@@ -3,6 +3,8 @@ package com.umfluten.lighttimeclouds.widget
 import android.graphics.Canvas
 import android.graphics.Color
 import androidx.core.graphics.createBitmap
+import com.umfluten.lighttimeclouds.data.SkyHorizon
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -67,6 +69,19 @@ class MoonPhaseDiscTest {
             val wrong = render(k, 30.0).first
             assertTrue("k = $k: $wrong of the pixels differ", wrong < 0.01)
         }
+    }
+
+    @Test
+    fun `bright limb in the ring turns with the far edge as the zenith`() {
+        fun assertAngle(expectedDeg: Double, actual: Double) =
+            assertEquals(expectedDeg, Math.toDegrees(actual), 1e-9)
+        // Limb toward the zenith, moon at 3 o'clock: the far edge is to the right with the horizon inside, to the left with it outside.
+        assertAngle(270.0, ClockFaceRenderer.brightLimbOnDial(0.0, 90.0, SkyHorizon.INNER))
+        assertAngle(90.0, ClockFaceRenderer.brightLimbOnDial(0.0, 90.0, SkyHorizon.OUTER))
+        // At the top with the horizon inside, the zenith is the top of the screen.
+        assertAngle(30.0, ClockFaceRenderer.brightLimbOnDial(Math.toRadians(30.0), 0.0, SkyHorizon.INNER))
+        // At 6 o'clock the moon stands on its head, and what is on its left is to the right on the screen.
+        assertAngle(270.0, ClockFaceRenderer.brightLimbOnDial(Math.toRadians(90.0), 180.0, SkyHorizon.INNER))
     }
 
     @Test

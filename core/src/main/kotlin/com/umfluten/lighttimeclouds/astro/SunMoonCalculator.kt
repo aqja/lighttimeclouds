@@ -155,6 +155,13 @@ object SunMoonCalculator {
     fun moonAltitudeDegrees(instant: Instant, latitude: Double, longitude: Double): Double =
         moonPosition(instant, latitude, longitude).altitudeDegrees
 
+    /** Angular radius (degrees) of the Moon's disc at [instant], from its geocentric distance; the observer's being closer adds at most 1.5%. */
+    fun moonSemiDiameterDegrees(instant: Instant): Double =
+        Math.toDegrees(moonSemiDiameter(Ephemeris.moon(Ephemeris.Epoch(instant)).distanceKm))
+
+    /** Angular radius (rad) of the Moon's disc at [distanceKm]. */
+    private fun moonSemiDiameter(distanceKm: Double): Double = asin(MOON_RADIUS_RATIO * EARTH_RADIUS_KM / distanceKm)
+
     /** Geometric topocentric position, and the geocentric distance (km). */
     internal fun moonGeometric(epoch: Ephemeris.Epoch, latitude: Double, longitude: Double): Pair<HorizontalPosition, Double> {
         val moon = Ephemeris.equatorial(Ephemeris.moon(epoch), epoch)
@@ -225,7 +232,7 @@ object SunMoonCalculator {
     fun moonTimes(start: Instant, latitude: Double, longitude: Double): MoonTimes {
         fun margin(t: Instant): Double {
             val (position, distance) = moonGeometric(Ephemeris.Epoch(t), latitude, longitude)
-            val horizon = -MOONRISE_REFRACTION - asin(MOON_RADIUS_RATIO * EARTH_RADIUS_KM / distance)
+            val horizon = -MOONRISE_REFRACTION - moonSemiDiameter(distance)
             return position.altitudeRad - horizon
         }
         var rise: Instant? = null

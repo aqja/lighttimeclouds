@@ -217,6 +217,32 @@ Its aureole is the sky next to it seen like the rest of the sky: the ring's colo
 altitude plus the excess of the sky toward the Sun, through the same steps 1 to 3, and laid over
 the ring in "screen" blending.
 
+The Moon differs in four ways. Unlike the sky, it is a small bright body the cones see in full
+even in the dark, so rods and fading colors (section 4) go by its own luminance, or its orange
+near the horizon would fade to gray. The eye is adapted not only to the moonless sky but also to
+the moonlit one, the sky with the Sun at the Moon's altitude dimmed by the moonlight's ratio to
+sunlight, or a full Moon would come out dull. The Moon the eye looks at counts as well: for this
+the model assumes, like Ward Larson and others [18], a spot of 1° around the point of fixation,
+which the Moon's disc fills to 27 %, and counts the whole disc in every phase. Without this a thin
+crescent in a dark sky would come out dull and brownish, far darker than at dusk, as the brightness
+mapping compresses strongly at low adaptation. And it is toned in between: per channel like the sky
+and with its hue kept like the Sun, the more the larger the share of the Moon's own light. By day
+the first keeps it brighter than the sky behind it, at night the second keeps its colors.
+
+The spot is a choice, not physiology. As measured, the eye pools far more narrowly, in the simplest
+model with a Gaussian of σ = 0.131° over the logarithm of luminance [19], and adapts to a crescent
+far less than the spot assumes: with 10 % lit the luminance lies 500 to 10 000 times above the
+adaptation, with a full Moon 60 to 100 times. What matters for the result, though, is perceived
+brightness, and a full Moon's strong adaptation lowers that markedly. Read off the curves of Stevens
+and Stevens [20] at this measured adaptation, all phases of a Moon at 45° altitude come to about 30 to
+40 brils, although the disc's luminance varies fifteenfold. So a crescent is nearly as bright as a
+full Moon, and the colors the spot gives lie just as close. The comparison is rough: the curves
+hold for an area of 5° seen briefly, and the night sky lies below the measured range of [19].
+
+It also lights the sky itself (PHYSICS.md, section 12.2): there the eye sees the sum of both skies
+with the same adaptation to both. The ring follows the steps for the sky, its aureole goes by the
+luminance at each point, as next to the Moon the cones still see colors.
+
 ## 7. What comes out
 
 The whole sky's mean luminance (section 2) and the ring's displayed colors for a ring up to 45°
@@ -248,6 +274,7 @@ The whole sky's mean luminance (section 2) and the ring's displayed colors for a
 | Rod weights and saturation held below 0.1 cd/m² | no measurements there; the night's blue tint rests on the value at 0.1 | [4.1](#41-the-purkinje-shift-rods-in-the-cones-channels), [4.2](#42-fading-colors) |
 | Cone fundamentals from CIE 1931 instead of Judd-Vos | small differences in the violet and blue | [1](#1-measures-of-light-for-the-eye) |
 | Night sky uniform, with the Sun's spectrum, no light pollution | the night color of a natural, moonless sky | [5](#5-the-night-sky) |
+| Adaptation to the Moon over a spot of 1°, with the whole disc in every phase | the eye pools more narrowly; the brightness of the phases still fits the measurements, but checked only roughly | [6](#6-onto-the-display) |
 | ACES curve for highlights | aesthetic compression of the brightest parts | [6](#6-onto-the-display) |
 
 ---
@@ -291,3 +318,11 @@ The whole sky's mean luminance (section 2) and the ring's displayed colors for a
     (2006), section 4.1 (on the weaknesses of the 1993 operator).
 17. W. B. Thompson, P. Shirley, J. A. Ferwerda: A Spatial Post-Processing Algorithm for Images of
     Night Scenes. *Journal of Graphics Tools* 7 (1), 1–12 (2002).
+18. G. Ward Larson, H. Rushmeier, C. Piatko: A Visibility Matching Tone Reproduction Operator for
+    High Dynamic Range Scenes. *IEEE Transactions on Visualization and Computer Graphics* 3 (4),
+    291–306 (1997). <https://radsite.lbl.gov/radiance/papers/lbnl39882/tonemap.pdf>
+19. P. Vangorp, K. Myszkowski, E. W. Graf, R. K. Mantiuk: A Model of Local Adaptation. *ACM
+    Transactions on Graphics* 34 (6) (2015).
+20. J. C. Stevens, S. S. Stevens: Brightness Function: Effects of Adaptation. *Journal of the Optical
+    Society of America* 53 (3), 375 (1963). Read off a later redrawing of the curves.
+    <https://opg.optica.org/josa/abstract.cfm?uri=josa-53-3-375>

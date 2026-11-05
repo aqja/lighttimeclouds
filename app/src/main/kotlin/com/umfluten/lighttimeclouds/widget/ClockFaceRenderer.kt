@@ -32,6 +32,8 @@ import com.umfluten.lighttimeclouds.data.TemperatureDisplay
 import com.umfluten.lighttimeclouds.data.TemperaturePosition
 import com.umfluten.lighttimeclouds.data.WeatherRingPosition
 import com.umfluten.lighttimeclouds.data.WidgetSettings
+import com.umfluten.lighttimeclouds.sky.MoonTable
+import com.umfluten.lighttimeclouds.sky.MoonlitSky
 import com.umfluten.lighttimeclouds.sky.SkyGradientTable
 import com.umfluten.lighttimeclouds.sky.SkyModel
 import com.umfluten.lighttimeclouds.sky.SkyProjection
@@ -297,15 +299,26 @@ object ClockFaceRenderer {
         val skyPositions = FloatArray(SKY_STOPS) { k ->
             (ringInner + (ringOuter - ringInner) * k / (SKY_STOPS - 1)) / ringOuter
         }
+        val latitude = settings.place.latitude
+        val longitude = settings.place.longitude
+        // The moon lights the sky it stands in; its phase hardly changes across the ring.
+        val moonFraction = if (settings.showMoonInRing) SunMoonCalculator.moonIllumination(now.toInstant()).fraction else null
         for (i in 0 until RING_SAMPLES) {
             val a0 = 360.0 * i / RING_SAMPLES
             val a1 = 360.0 * (i + 1) / RING_SAMPLES
             val mid = (a0 + a1) / 2.0
             val instant = resolveInstantForAngle(mid, settings, now)
-            val altitude = SunMoonCalculator.sunAltitudeDegrees(instant, settings.place.latitude, settings.place.longitude)
+            val altitude = SunMoonCalculator.sunAltitudeDegrees(instant, latitude, longitude)
             if (settings.ringStyle == RingStyle.SKY) {
-                val colors = skyColors(altitude, settings.skyTopElevationDeg.toDouble())
-                    .let { if (settings.skyHorizon == SkyHorizon.OUTER) it.reversedArray() else it }
+                val top = settings.skyTopElevationDeg.toDouble()
+                // With the sun up, moonlight adds nothing the eye could see.
+                val sky = if (moonFraction != null && altitude < 0.0) {
+                    val moonAltitude = SunMoonCalculator.moonAltitudeDegrees(instant, latitude, longitude)
+                    moonlitSkyColors(altitude, moonAltitude, moonFraction, top)
+                } else {
+                    skyColors(altitude, top)
+                }
+                val colors = if (settings.skyHorizon == SkyHorizon.OUTER) sky.reversedArray() else sky
                 paint.shader = RadialGradient(cx, cy, ringOuter, colors, skyPositions, Shader.TileMode.CLAMP)
             } else {
                 paint.color = ringColor(altitude, settings)
@@ -325,6 +338,10 @@ object ClockFaceRenderer {
      */
     internal fun skyColors(altitudeDeg: Double, topElevationDeg: Double): IntArray =
         SkyGradientTable.colors(altitudeDeg, topElevationDeg, SKY_STOPS).map { it or OPAQUE }.toIntArray()
+
+    /** [skyColors] with the sky also lit by the moon at [moonAltitudeDeg], lit by the share [fraction] ([MoonlitSky]). */
+    internal fun moonlitSkyColors(sunAltitudeDeg: Double, moonAltitudeDeg: Double, fraction: Double, topElevationDeg: Double): IntArray =
+        MoonlitSky.colors(sunAltitudeDeg, moonAltitudeDeg, fraction, topElevationDeg, SKY_STOPS).map { it or OPAQUE }.toIntArray()
 
     /**
      * Marks solar noon/midnight and sunrise/sunset across the ring, per settings. All strokes use
@@ -404,8 +421,7 @@ object ClockFaceRenderer {
 
     private const val SKY_PATH_SAMPLES = 240
 
-    /** Sizes (fractions of the dial radius) of the discs, the edge dots and the moon path line in the ring. */
-    private const val SKY_DISC_SIZE = 0.045f
+    /** Sizes (fractions of the dial radius) of the edge dots and the moon path line in the ring. */
     private const val SKY_DOT_SIZE = 0.02f
     private const val SKY_PATH_WIDTH = 0.008f
 
@@ -414,9 +430,9 @@ object ClockFaceRenderer {
     /**
      * Sun and moon in the day/night ring, per settings, read as a sky: the angle is the current
      * time, the distance from the horizon edge the current altitude, up to
-     * [WidgetSettings.skyTopElevationDeg] at the far edge. A disc (the moon with its phase) while
-     * within that range, clipped by the band's edges like a body setting behind the horizon;
-     * above it a small dot at the far edge. Below the horizon neither shows: the hour hand already
+     * [WidgetSettings.skyTopElevationDeg] at the far edge. A disc at its true size (the moon's lit
+     * part only) while within that range, clipped by the band's edges like a body setting behind
+     * the horizon; above it a small dot at the far edge. Below the horizon neither shows: the hour hand already
      * points there, and the ring's colors tell whether the sun is up. The moon's course over the
      * shown time span is [drawMoonPathInRing].
      */
@@ -438,7 +454,6 @@ object ClockFaceRenderer {
         val band = ringBandPath(cx, cy, radius, bands)
         val instant = now.toInstant()
         val angle = dialAngle(now, settings.displayMode)
-        val discRadius = radius * SKY_DISC_SIZE
         val dotRadius = radius * SKY_DOT_SIZE
 
         /** Where a body at [altitude] (not below the horizon) goes: radius, and whether a disc or a dot at the far edge. */
@@ -453,37 +468,63 @@ object ClockFaceRenderer {
             if (apart) angle + Math.toDegrees((side * dotRadius * 1.15f / r).toDouble()) else angle
 
         moon?.let { (r, disc) ->
+            val fraction = SunMoonCalculator.moonIllumination(instant).fraction
+            val altitude = moonAltitude(instant)
+            val color = MoonTable.disc(altitude, sunAltitude(instant), fraction) or OPAQUE
+            drawBodyAureole(canvas, cx, cy, radius, bands, sky, angle, altitude, MoonlitSky.aureole(altitude, sunAltitude(instant), fraction))
             val (x, y) = pointOnDial(cx, cy, r, angleFor(r, -1f))
             if (disc) {
-                canvas.withClip(band) { drawMoonPhase(this, x, y, discRadius, instant, settings, moonLitColor(true), moonShadowColor(true)) }
+                val pxPerDegree = pixelsPerDegree(r, instant, settings, SunMoonCalculator::moonPosition)
+                val discRadius = (SunMoonCalculator.moonSemiDiameterDegrees(instant) * pxPerDegree).toFloat()
+                val limb = SunMoonCalculator.moonBrightLimbAngle(instant, latitude, longitude)
+                val lit = moonLitPath(x, y, discRadius, fraction, brightLimbOnDial(limb, angle, settings.skyHorizon))
+                canvas.withClip(band) { drawPath(lit, Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color }) }
             } else {
-                drawSkyDot(canvas, x, y, dotRadius, moonLitColor(true), moonShadowColor(true))
+                drawSkyDot(canvas, x, y, dotRadius, color)
             }
         }
         sun?.let { (r, disc) ->
             val altitude = sunAltitude(instant)
-            // The aureole around where the sun stands, even beyond the far edge: it then fades
-            // out of the band as the sun climbs, instead of vanishing when the disc turns into a dot.
-            val trueRadius = sky.radiusFor(altitude)
-            // Its size at the scale of the sky's projection across the ring (altitude), which is not
-            // linear: over the aureole's extent toward the horizon, or the smaller of both sides
-            // while the sun is within the band.
-            val extent = SunTable.AUREOLE_EXTENT_DEG
-            val towardHorizon = abs(trueRadius - sky.radiusFor(altitude - extent)) / extent
-            val upward = abs(sky.radiusFor(altitude + extent) - trueRadius) / extent
-            val acrossRing = (if (altitude >= sky.topElevation) towardHorizon else min(towardHorizon, upward)).toFloat()
-            val (ax, ay) = pointOnDial(cx, cy, trueRadius, angle)
-            // Only where the ring is opaque: "screen" blending would raise the coverage of its
-            // smoothed edges and make them glow.
-            canvas.withClip(ringBandPath(cx, cy, radius, bands, inset = 1f)) {
-                drawAureole(this, ax, ay, acrossRing, altitude)
-            }
+            drawBodyAureole(canvas, cx, cy, radius, bands, sky, angle, altitude, SunTable.aureole(altitude))
             val (x, y) = pointOnDial(cx, cy, r, angleFor(r, 1f))
             if (disc) {
-                canvas.withClip(band) { drawSunDisc(this, x, y, sunPixelsPerDegree(r, instant, settings), altitude) }
+                val pxPerDegree = pixelsPerDegree(r, instant, settings, SunMoonCalculator::sunPosition)
+                canvas.withClip(band) { drawSunDisc(this, x, y, pxPerDegree, altitude) }
             } else {
-                drawSkyDot(canvas, x, y, dotRadius, SunTable.disc(altitude) or OPAQUE, null)
+                drawSkyDot(canvas, x, y, dotRadius, SunTable.disc(altitude) or OPAQUE)
             }
+        }
+    }
+
+    /**
+     * The aureole [glow] of a body at [altitudeDeg] around where it stands at dial [angleDeg], even
+     * beyond the far edge: it then fades out of the band as the body climbs, instead of vanishing
+     * when the disc turns into a dot.
+     */
+    private fun drawBodyAureole(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        bands: RingBands,
+        sky: SkyBand,
+        angleDeg: Double,
+        altitudeDeg: Double,
+        glow: IntArray,
+    ) {
+        val trueRadius = sky.radiusFor(altitudeDeg)
+        // Its size at the scale of the sky's projection across the ring (altitude), which is not
+        // linear: over the aureole's extent toward the horizon, or the smaller of both sides
+        // while the body is within the band.
+        val extent = SunTable.AUREOLE_EXTENT_DEG
+        val towardHorizon = abs(trueRadius - sky.radiusFor(altitudeDeg - extent)) / extent
+        val upward = abs(sky.radiusFor(altitudeDeg + extent) - trueRadius) / extent
+        val acrossRing = (if (altitudeDeg >= sky.topElevation) towardHorizon else min(towardHorizon, upward)).toFloat()
+        val (x, y) = pointOnDial(cx, cy, trueRadius, angleDeg)
+        // Only where the ring is opaque: "screen" blending would raise the coverage of its
+        // smoothed edges and make them glow.
+        canvas.withClip(ringBandPath(cx, cy, radius, bands, inset = 1f)) {
+            drawAureole(this, x, y, acrossRing, glow)
         }
     }
 
@@ -560,61 +601,84 @@ object ClockFaceRenderer {
         canvas.drawPath(path, paint)
     }
 
-    /** A filled circle, with a thin [rimColor] edge unless null: the dots of bodies beyond the far edge. */
-    private fun drawSkyDot(canvas: Canvas, x: Float, y: Float, r: Float, fillColor: Int, rimColor: Int?) {
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = fillColor; style = Paint.Style.FILL }
-        canvas.drawCircle(x, y, r, paint)
-        if (rimColor == null) return
-        paint.apply { color = rimColor; style = Paint.Style.STROKE; strokeWidth = r * 0.16f }
-        canvas.drawCircle(x, y, r - paint.strokeWidth / 2f, paint)
+    /** A filled circle: the dots of bodies beyond the far edge. */
+    private fun drawSkyDot(canvas: Canvas, x: Float, y: Float, r: Float, color: Int) {
+        canvas.drawCircle(x, y, r, Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color })
     }
 
     /**
-     * Pixels per degree of sky at the sun, [r] px from the center at [instant]: its true size on
-     * the ring along the time axis. The sun moves along its daily path by the angle between its
-     * positions a few minutes apart, and the dial turns by its own angle in that time; across the
+     * Pixels per degree of sky at a body [r] px from the center at [instant]: its true size on the
+     * ring along the time axis. The body moves along its daily path by the angle between its
+     * [position]s a few minutes apart, and the dial turns by its own angle in that time; across the
      * ring (altitude) the scale depends on the sky's projection and is far smaller, so the disc is
      * drawn round at the scale along the ring.
      */
-    private fun sunPixelsPerDegree(r: Float, instant: Instant, settings: WidgetSettings): Float {
-        val later = instant.plus(SUN_SPEED_INTERVAL)
-        val a = SunMoonCalculator.sunPosition(instant, settings.place.latitude, settings.place.longitude)
-        val b = SunMoonCalculator.sunPosition(later, settings.place.latitude, settings.place.longitude)
+    private fun pixelsPerDegree(
+        r: Float,
+        instant: Instant,
+        settings: WidgetSettings,
+        position: (Instant, Double, Double) -> SunMoonCalculator.HorizontalPosition,
+    ): Float {
+        val a = position(instant, settings.place.latitude, settings.place.longitude)
+        val b = position(instant.plus(BODY_SPEED_INTERVAL), settings.place.latitude, settings.place.longitude)
         val skyDegrees = angularDistance(a.altitudeRad, a.azimuthRad, b.altitudeRad, b.azimuthRad)
-        val dialDegrees = SUN_SPEED_INTERVAL.toMinutes() / 60.0 * when (settings.displayMode) {
+        val dialDegrees = BODY_SPEED_INTERVAL.toMinutes() / 60.0 * when (settings.displayMode) {
             DisplayMode.TWELVE_HOUR -> 30.0
             DisplayMode.TWENTY_FOUR_HOUR -> 15.0
         }
         return (r * Math.toRadians(dialDegrees) / skyDegrees.coerceAtLeast(1e-6)).toFloat()
     }
 
-    private val SUN_SPEED_INTERVAL: Duration = Duration.ofMinutes(10)
+    private val BODY_SPEED_INTERVAL: Duration = Duration.ofMinutes(10)
+
+    /**
+     * [brightLimbAngle] (from the zenith, counterclockwise, see
+     * [SunMoonCalculator.moonBrightLimbAngle]) on a body in the ring at [dialAngleDeg]: the zenith
+     * there points to the far edge, not to the top of the screen. Counted from the top of the
+     * screen, counterclockwise, like [drawMoonPhase].
+     */
+    internal fun brightLimbOnDial(brightLimbAngle: Double, dialAngleDeg: Double, horizon: SkyHorizon): Double {
+        val zenith = -Math.toRadians(dialAngleDeg) + if (horizon == SkyHorizon.OUTER) PI else 0.0
+        return (brightLimbAngle + zenith).mod(2 * PI)
+    }
 
     /** Angle (degrees) between two directions given by altitude and azimuth (radians). */
     private fun angularDistance(alt1: Double, az1: Double, alt2: Double, az2: Double): Double =
         Math.toDegrees(acos((sin(alt1) * sin(alt2) + cos(alt1) * cos(alt2) * cos(az1 - az2)).coerceIn(-1.0, 1.0)))
 
     /**
-     * The sun's aureole around ([x], [y]): the sky around the sun as the eye sees it, laid over the
-     * ring in "screen" blending ([SunTable.aureole]), at [pxPerDegree] of sky. Round at the scale
-     * across the ring (altitude): along the ring, the time axis is stretched several times as much
-     * and would draw it as a long, thin streak.
+     * An aureole around ([x], [y]): the sky around a body as the eye sees it, the colors [glow] at
+     * [SunTable.ANGLES_DEG] laid over the ring in "screen" blending, at [pxPerDegree] of sky. Round
+     * at the scale across the ring (altitude): along the ring, the time axis is stretched several
+     * times as much and would draw it as a long, thin streak. Each color is as opaque as its
+     * brightest channel: over the ring that blends the same as opaque, while where the ring has
+     * faded out at its end the dark rim of the glow does not cover the transparent background.
      */
-    private fun drawAureole(canvas: Canvas, x: Float, y: Float, pxPerDegree: Float, altitudeDeg: Double) {
+    private fun drawAureole(canvas: Canvas, x: Float, y: Float, pxPerDegree: Float, glow: IntArray) {
         val extent = (SunTable.AUREOLE_EXTENT_DEG * pxPerDegree).toFloat()
         if (extent < 0.5f) return
         val angles = SunTable.ANGLES_DEG
-        val glow = SunTable.aureole(altitudeDeg)
+        val colors = IntArray(glow.size) { lightAsAlpha(glow[it]) }
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             shader = RadialGradient(
                 x, y, extent,
-                intArrayOf(glow.first() or OPAQUE) + IntArray(glow.size) { glow[it] or OPAQUE },
+                intArrayOf(colors.first()) + colors,
                 floatArrayOf(0f) + FloatArray(angles.size) { (angles[it] / SunTable.AUREOLE_EXTENT_DEG).toFloat() },
                 Shader.TileMode.CLAMP,
             )
             xfermode = PorterDuffXfermode(PorterDuff.Mode.SCREEN)
         }
         canvas.drawCircle(x, y, extent, paint)
+    }
+
+    /** The opaque [color] (0xRRGGBB) as a translucent color of the same premultiplied channels. */
+    private fun lightAsAlpha(color: Int): Int {
+        val r = color shr 16 and 255
+        val g = color shr 8 and 255
+        val b = color and 255
+        val a = maxOf(r, g, b)
+        if (a == 0) return Color.TRANSPARENT
+        return Color.argb(a, r * 255 / a, g * 255 / a, b * 255 / a)
     }
 
     /**
@@ -1417,7 +1481,15 @@ object ClockFaceRenderer {
             color = shadowColor
         }
         canvas.drawCircle(cx, cy, r, shadowPaint)
+        canvas.drawPath(moonLitPath(cx, cy, r, fraction, brightLimbAngle), litPaint)
+        canvas.drawCircle(cx, cy, r, outlinePaint)
+    }
 
+    /**
+     * The lit part of a moon disc of radius [r] at ([cx], [cy]): lit share [fraction], with the
+     * bright limb at [brightLimbAngle] from the top, counterclockwise.
+     */
+    private fun moonLitPath(cx: Float, cy: Float, r: Float, fraction: Double, brightLimbAngle: Double): Path {
         // Towards the bright limb (screen y points down) and across it.
         val ux = -sin(brightLimbAngle)
         val uy = -cos(brightLimbAngle)
@@ -1437,9 +1509,7 @@ object ClockFaceRenderer {
             point(-terminator * cos(s), sin(s), first = false)
         }
         lit.close()
-        canvas.drawPath(lit, litPaint)
-
-        canvas.drawCircle(cx, cy, r, outlinePaint)
+        return lit
     }
 
     /** Segments of each half of the lit part's outline. */
