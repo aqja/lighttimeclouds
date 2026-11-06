@@ -7,27 +7,9 @@ import org.junit.Test
 
 class SkyModelTest {
 
-    private fun rgb(r: Int, g: Int, b: Int) = (r shl 16) or (g shl 8) or b
     private fun red(rgb: Int) = rgb shr 16 and 255
     private fun green(rgb: Int) = rgb shr 8 and 255
     private fun blue(rgb: Int) = rgb and 255
-
-    @Test
-    fun `matches the original Horizon implementation`() {
-        // Horizon's renderGradient (32 stops) for these sun altitudes: horizon and top stop.
-        val reference = mapOf(
-            0.0 to (rgb(143, 35, 2) to rgb(59, 48, 62)),
-            3.0 to (rgb(202, 144, 40) to rgb(81, 88, 114)),
-            10.0 to (rgb(221, 210, 176) to rgb(97, 128, 171)),
-            60.0 to (rgb(228, 231, 230) to rgb(123, 169, 213)),
-            -12.0 to (0 to 0),
-        )
-        for ((altitude, expected) in reference) {
-            val gradient = SkyModel.gradient(altitude, 32)
-            assertEquals("horizon at $altitude°", expected.first, gradient.first())
-            assertEquals("top at $altitude°", expected.second, gradient.last())
-        }
-    }
 
     /** Checks every 12th row of the table generated at build time (computing all of it takes seconds). */
     @Test
@@ -254,9 +236,9 @@ class SkyModelTest {
     }
 
     @Test
-    fun `ring projection is the original's perspective`() {
-        // The original's view up to 37.5°: half way up the image is atan(tan(37.5°) / 2) ≈ 21°.
-        assertEquals(20.98, SkyProjection.elevation(0.5, SkyModel.TOP_ELEVATION_DEG), 0.01)
+    fun `ring projection is a perspective`() {
+        // Half way up a view to 37.5° is atan(tan(37.5°) / 2) ≈ 21°.
+        assertEquals(20.98, SkyProjection.elevation(0.5, 37.5), 0.01)
         for (f in listOf(-0.3, 0.0, 0.25, 1.0, 1.4)) {
             assertEquals(f, SkyProjection.fraction(SkyProjection.elevation(f, 60.0), 60.0), 1e-9)
         }

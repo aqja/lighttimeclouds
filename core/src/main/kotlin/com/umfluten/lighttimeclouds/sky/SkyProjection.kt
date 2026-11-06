@@ -2,7 +2,7 @@ package com.umfluten.lighttimeclouds.sky
 
 /**
  * How elevations above the horizon spread across a band from the horizon (0) to a far edge (1)
- * that stands for a top elevation: as in a perspective view like the original's, evenly in
+ * that stands for a top elevation: as in a perspective view, evenly in
  * tan(elevation), so the low sky gets no more room than in a photo of it. Because tan grows without
  * bound towards the zenith, the top elevation is at most [MAX_TOP_ELEVATION_DEG]; the sky above it
  * hardly changes anyway.

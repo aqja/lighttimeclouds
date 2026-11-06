@@ -521,26 +521,16 @@ requires:
 Code: [`SkyModel.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyModel.kt).
 The model is a port of *Horizon* (Daniel Lazaro) [22], which derives from *Production Sky
 Rendering* (Andrew Helmer) [23]. Physics and parameters come from Hillaire (2020) [24], who builds
-on Bruneton and Neyret (2008) [25]. The app extends the original with multiple scattering after
+on Bruneton and Neyret (2008) [25]. The app extends it with multiple scattering after
 Hillaire [24, sec. 5.5], with a spectral computation using data from Bruneton's implementation
 [26] (section [10](#10-sky-colors-spectrum-colorimetry-image-processing)), with aerosols from Mie
 theory and measured size distributions (section [9.6](#96-aerosols-mie-theory-and-a-measured-size-distribution))
 and with the night sky's own glow (section [9.7](#97-the-night-sky)).
 
-There are two configurations of the same computation:
-
-| | `gradient` (original) | `ringGradient` (the app's ring) |
-|---|---|---|
-| Wavelengths | 3 (680, 550, 440 nm ≙ R, G, B) | 48 (360–830 nm, 10 nm steps) |
-| Solar spectrum | white (1, 1, 1) | ASTM G-173 above the atmosphere |
-| Aerosols | gray, Cornette-Shanks phase function, optical thickness 0.005 | urban aerosol from Mie theory, τ(440 nm) = 0.2 |
-| Scattering orders | single | single + multiple |
-| Integration along the view ray | 32 even steps | 32 steps growing with distance |
-| View direction | 90° to the side of the Sun | mean over 12 azimuths |
-| Exposure | fixed | seen by the eye ([PHYSIOLOGY.md](PHYSIOLOGY.md)) |
-
-The original serves as a reference: a test checks that the port yields the same colors as
-Horizon.
+The ring computes with 48 wavelengths from 360 to 830 nm, the solar spectrum ASTM G-173 above the
+atmosphere, an urban aerosol with $\tau(440\,\mathrm{nm}) = 0.2$, single and multiple scattering
+and 32 steps growing with distance along the view ray, averaged over 12 azimuths (`ringGradient`).
+There is no fixed exposure; the sky is shown as the eye sees it ([PHYSIOLOGY.md](PHYSIOLOGY.md)).
 
 ### 9.1 Atmosphere
 
@@ -561,17 +551,12 @@ Coefficients at the ground or at the ozone peak (in 1/m):
 
 | Quantity | Value | Origin |
 |---|---|---|
-| Rayleigh scattering $\beta_R$ | 5.802·10⁻⁶ / 13.558·10⁻⁶ / 33.1·10⁻⁶ (R/G/B) | $1.24062\cdot10^{-6}\,(\lambda/\mu\mathrm{m})^{-4}$ at 680/550/440 nm [24; 26] |
-| Mie extinction $\beta_M^\mathrm{ext}$ (original) | 4.44·10⁻⁶ | Ångström β 5.328·10⁻³ / 1.2 km [26]; likewise Hillaire's reference code [24]. Table 1 of the paper gives a Mie absorption of 4.40·10⁻⁶ instead of 0.444·10⁻⁶ |
-| Mie scattering $\beta_M$ (original) | 3.996·10⁻⁶ | single-scattering albedo 0.9 · extinction [24; 26] |
-| Ozone absorption $\beta_O$ (RGB) | 0.65·10⁻⁶ / 1.881·10⁻⁶ / 0.085·10⁻⁶ | [24] |
-| Ozone absorption $\beta_O$ (spectral) | $\sigma_{O_3}(\lambda)\cdot n_\mathrm{max}$ | section [10.1](#101-spectral-data) |
+| Rayleigh scattering $\beta_R$ | $1.24062\cdot10^{-6}\,(\lambda/\mu\mathrm{m})^{-4}$ | [24; 26], section [10.1](#101-spectral-data) |
+| Mie extinction $\beta_M^\mathrm{ext}$ and scattering $\beta_M$ | $\tau(\lambda)/1.2\,\mathrm{km}$ | section [9.6](#96-aerosols-mie-theory-and-a-measured-size-distribution) |
+| Ozone absorption $\beta_O$ | $\sigma_{O_3}(\lambda)\cdot n_\mathrm{max}$ | section [10.1](#101-spectral-data) |
 | Ground albedo $a$ | 0.3 | as in Hillaire's paper [24] (multiple scattering only) |
 
-Rayleigh scatters without absorbing, ozone only absorbs, aerosol does both: in the original gray,
-i.e. independent of wavelength, with an optical thickness of only 0.005 (a very clean atmosphere);
-for the ring with the spectral coefficients of section [9.6](#96-aerosols-mie-theory-and-a-measured-size-distribution),
-with the same height profile.
+Rayleigh scatters without absorbing, ozone only absorbs, aerosol does both.
 
 ### 9.2 Phase functions
 
@@ -581,17 +566,10 @@ Rayleigh [27]:
 P_R(\theta) = \frac{3}{16\pi}\,(1 + \cos^2\theta).
 ```
 
-Mie after Cornette and Shanks (1992) [28] with asymmetry parameter $g = 0.8$ (forward scattering)
-[24; 26]:
-
-```math
-P_M(\theta) = \frac{3}{8\pi}\,
-  \frac{(1 - g^2)(1 + \cos^2\theta)}{(2 + g^2)\,(1 + g^2 - 2g\cos\theta)^{3/2}} .
-```
-
-$\theta$ is the angle between the view and Sun directions. This is the original's; it is smooth
-near the Sun (only twice as strong at 0° as at 10°). The ring uses the phase function of a measured
-aerosol from Mie theory instead, with a real forward peak (section [9.6](#96-aerosols-mie-theory-and-a-measured-size-distribution)).
+$\theta$ is the angle between the view and Sun directions. For the aerosol, Hillaire [24] and
+Bruneton [26] use the approximation of Cornette and Shanks (1992) [28]. It is smooth near the Sun,
+only twice as strong at 0° as at 10°. The ring uses the phase function $P_M$ of a measured aerosol
+from Mie theory instead, with a real forward peak (section [9.6](#96-aerosols-mie-theory-and-a-measured-size-distribution)).
 
 ### 9.3 Transmittance
 
@@ -610,7 +588,7 @@ explicitly (`sunTransmittance`).
 ### 9.4 Single scattering along the view ray
 
 From the observer $c$ on the ground, the view ray $\vec v$ is divided into 32 segments $\Delta s$
-up to the top. At each midpoint $x_j$, the sunlight scattered there is collected and attenuated on
+up to the top, growing with the square of the distance, $s_j = s_\mathrm{top}\,(j/32)^2$. At each midpoint $x_j$, the sunlight scattered there is collected and attenuated on
 its way to the observer:
 
 ```math
@@ -619,13 +597,9 @@ L(\lambda) = E_\odot(\lambda)\sum_{j} T(c \to x_j)\Bigl[
    + \Psi_\mathrm{ms}(x_j)\bigl(\beta_R\rho_R + \beta_M\rho_M\bigr)\Bigr]\Delta s .
 ```
 
-$T(c \to x_j)$ follows without another integration as the ratio of two transmittances to the top,
-$T(c \to \mathrm{top}) / T(x_j \to \mathrm{top})$ (inverted when looking down). $\Psi_\mathrm{ms}$
-is the contribution of multiple scattering (next section; 0 in the original).
-
-For the ring the steps grow with the square of the distance, $s_j = s_\mathrm{top}\,(j/32)^2$, and
-$T(c \to x_j)$ is the optical depth summed along the way. Looking along the horizon, the first
-step is then about 1 km long instead of 35 km: the haze near the ground lies within the first few
+$T(c \to x_j)$ is the optical depth summed along the way, $\Psi_\mathrm{ms}$ the contribution of
+multiple scattering (next section). Looking along the horizon, the first
+step is about 1 km long instead of 35 km: the haze near the ground lies within the first few
 steps, which with even steps gave a wrong, brownish hue to the horizon.
 
 ### 9.5 Multiple scattering (Hillaire 2020)
@@ -666,8 +640,7 @@ height [24].
 
 Code: [`Mie.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Mie.kt),
 [`Aerosol.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Aerosol.kt).
-The original's aerosol is very thin and its phase function smooth. Real haze is up to ten times
-thicker, scatters more toward the side and has a sharp forward peak, which makes the bright
+Real haze scatters strongly toward the side and has a sharp forward peak, which makes the bright
 aureole around the Sun. The ring's aerosol is computed from a measured particle population.
 
 **Size distribution.** AERONET, the worldwide network of sun photometers, derives the aerosol's
@@ -717,7 +690,7 @@ normalization $\int P\,d\Omega = 1$ and the Rayleigh limit.
 | Ångström exponent 440–670 nm | 1.93 | 1.2 to 2.3 |
 | Phase function at 550 nm, 0° / 3° / 10° / 90° | 6.0 / 1.8 / 0.57 / 0.026 sr⁻¹ | |
 
-**In the model** the aerosol keeps the original's height profile: $\beta(h) = \tau(\lambda)/H \cdot e^{-h/H}$
+**In the model** the aerosol has the height profile of section 9.1: $\beta(h) = \tau(\lambda)/H \cdot e^{-h/H}$
 with $H = 1.2$ km. Looking along the horizon, the line of sight thus crosses about 100 times the
 vertical optical thickness. At sunset this haze near the ground is hardly lit any more: the
 horizon itself darkens under a brighter band, as on hazy evenings. The share of light from the
@@ -737,7 +710,7 @@ spectrum. Light pollution is not included. This glow sets the night's color
 ## 10. Sky colors: spectrum, colorimetry, image processing
 
 Code: [`Spectrum.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Spectrum.kt) and
-`toSrgb` in [`SkyModel.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyModel.kt).
+`perceiveLight` in [`SkyModel.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyModel.kt).
 
 ### 10.1 Spectral data
 
@@ -757,8 +730,7 @@ Atmospheric Scattering* (2017 version) [26]:
   \beta_O(\lambda) = \sigma_{O_3}(\lambda)\,n_\mathrm{max}.
   ```
 
-- **Rayleigh** $\beta_R(\lambda) = 1.24062\cdot10^{-6}\,\mathrm{m^{-1}}\cdot(\lambda/\mu\mathrm{m})^{-4}$ [26],
-  so at 680 nm exactly the original's RGB value 5.802·10⁻⁶.
+- **Rayleigh** $\beta_R(\lambda) = 1.24062\cdot10^{-6}\,\mathrm{m^{-1}}\cdot(\lambda/\mu\mathrm{m})^{-4}$ [26].
 
 Only the spectral computation renders the blue of the "blue hour" correctly. It comes mostly from
 ozone's Chappuis absorption, which spans broadly from yellow to red (Hulburt 1953 [37]). With only
@@ -798,32 +770,27 @@ XYZ → linear sRGB with the matrix for the sRGB/Rec. 709 primaries and white po
 ```
 
 **White balance.** Each channel is divided by the value sunlight above the atmosphere would have.
-Unfiltered sunlight is thus exactly white (1, 1, 1), as in the original with its white sun. The
-colors are therefore relative to sunlight, not to D65.
+Unfiltered sunlight is thus exactly white (1, 1, 1). The colors are therefore relative to sunlight, not to D65.
 
 ### 10.3 Exposure
 
-- **Original:** fixed exposure 25 on linear RGB. The code computes luminance there with the
-  Rec. 709 weights [35]: $Y = 0.2126R + 0.7152G + 0.0722B$.
-- **Ring:** no fixed exposure. The light is taken in absolute units (luminance in cd/m²) and
-  turned into display colors as an eye adapted to the whole sky sees them:
-  the brightness after Stevens' law, the hue with the rods' contribution in dim light, the colors
-  fading as it gets dark. All of it is described in [PHYSIOLOGY.md](PHYSIOLOGY.md).
+There is no fixed exposure. The light is taken in absolute units (luminance in cd/m²) and turned
+into display colors as an eye adapted to the whole sky sees them: the brightness after Stevens' law,
+the hue with the rods' contribution in dim light, the colors fading as it gets dark. All of it is
+described in [PHYSIOLOGY.md](PHYSIOLOGY.md). The code computes a color's luminance with the Rec. 709
+weights [35]: $Y = 0.2126R + 0.7152G + 0.0722B$.
 
 ### 10.4 Tone mapping
 
-In the original, after exposure, per channel (the ring uses steps 2 and 3, on the brightest channel, see
-[PHYSIOLOGY.md](PHYSIOLOGY.md), section 6):
+At the end, on the brightest channel (see [PHYSIOLOGY.md](PHYSIOLOGY.md), section 6):
 
-1. **Warm bias for dark skies** (taken from Horizon, purely aesthetic): with $w = 1/(1 + 2Y)$,
-   $R \cdot (1 + 0.05w)$, $G \cdot (1 - 0.05w)$, $B \cdot (1 + 0.1w)$.
-2. **ACES filmic curve** in Narkowicz' fit (2016) [36]:
+1. **ACES filmic curve** in Narkowicz' fit (2016) [36]:
 
    ```math
    f(x) = \operatorname{clamp}\!\left(\frac{x\,(2.51x + 0.03)}{x\,(2.43x + 0.59) + 0.14},\ 0,\ 1\right).
    ```
 
-3. **Gamma** $f^{1/2.2}$ as an approximation of the sRGB transfer function [33], then to 0…255.
+2. **Gamma** $f^{1/2.2}$ as an approximation of the sRGB transfer function [33], then to 0…255.
 
 ### 10.5 Averaging over azimuth
 
@@ -848,8 +815,7 @@ projection):
 u(e) = \frac{\tan e}{\tan e_t},\qquad e(u) = \arctan(u\,\tan e_t),\qquad e_t \le 80° .
 ```
 
-The limit of 80° (and $|e| \le 89°$) keeps $\tan$ finite. The original uses the same mapping with
-$e_t = 37.5°$ (half of a vertical field of view of 75°).
+The limit of 80° (and $|e| \le 89°$) keeps $\tan$ finite.
 
 ### 11.2 Precomputed table
 

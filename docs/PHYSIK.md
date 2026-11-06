@@ -527,27 +527,18 @@ verlangt:
 Code: [`SkyModel.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyModel.kt).
 Das Modell ist eine Portierung von *Horizon* (Daniel Lazaro) [22], das auf *Production Sky
 Rendering* (Andrew Helmer) [23] zurückgeht. Physik und Parameter stammen aus Hillaire (2020) [24],
-der wiederum auf Bruneton und Neyret (2008) [25] aufbaut. Die App erweitert das Original um
+der wiederum auf Bruneton und Neyret (2008) [25] aufbaut. Die App erweitert es um
 Mehrfachstreuung nach Hillaire [24, Abschn. 5.5], um eine spektrale Rechnung mit Daten aus
 Brunetons Implementierung [26] (Abschnitt [10](#10-himmelsfarben-spektrum-farbmetrik-bildaufbereitung)),
 um Aerosole aus der Mie-Theorie mit gemessenen Größenverteilungen (Abschnitt
 [9.6](#96-aerosole-mie-theorie-und-eine-gemessene-größenverteilung)) und um das Eigenleuchten des
 Nachthimmels (Abschnitt [9.7](#97-der-nachthimmel)).
 
-Es gibt zwei Konfigurationen derselben Rechnung:
-
-| | `gradient` (Original) | `ringGradient` (Ring der App) |
-|---|---|---|
-| Wellenlängen | 3 (680, 550, 440 nm ≙ R, G, B) | 48 (360–830 nm, 10-nm-Schritte) |
-| Sonnenspektrum | weiß (1, 1, 1) | ASTM G-173 oberhalb der Atmosphäre |
-| Aerosole | grau, Phasenfunktion nach Cornette-Shanks, optische Dicke 0,005 | Stadtaerosol aus der Mie-Theorie, τ(440 nm) = 0,2 |
-| Streuordnungen | einfach | einfach + Mehrfachstreuung |
-| Integration entlang des Sehstrahls | 32 gleiche Schritte | 32 mit der Entfernung wachsende Schritte |
-| Blickrichtung | 90° seitlich zur Sonne | Mittel über 12 Azimute |
-| Belichtung | fest | so, wie das Auge sieht ([PHYSIOLOGIE.md](PHYSIOLOGIE.md)) |
-
-Das Original dient als Referenz: Ein Test prüft, dass die Portierung dieselben Farben wie Horizon
-liefert.
+Der Ring rechnet mit 48 Wellenlängen von 360 bis 830 nm, dem Sonnenspektrum ASTM G-173 oberhalb der
+Atmosphäre, einem Stadtaerosol mit $\tau(440\,\mathrm{nm}) = 0{,}2$, einfacher und mehrfacher
+Streuung und 32 mit der Entfernung wachsenden Schritten entlang des Sehstrahls, gemittelt über 12
+Azimute (`ringGradient`). Belichtet wird nicht fest, sondern so, wie das Auge sieht
+([PHYSIOLOGIE.md](PHYSIOLOGIE.md)).
 
 ### 9.1 Atmosphäre
 
@@ -568,17 +559,12 @@ Koeffizienten am Boden bzw. im Ozonmaximum (in 1/m):
 
 | Größe | Wert | Herkunft |
 |---|---|---|
-| Rayleigh-Streuung $\beta_R$ | 5,802·10⁻⁶ / 13,558·10⁻⁶ / 33,1·10⁻⁶ (R/G/B) | $1{,}24062\cdot10^{-6}\,(\lambda/\mu\mathrm{m})^{-4}$ bei 680/550/440 nm [24; 26] |
-| Mie-Extinktion $\beta_M^\mathrm{ext}$ (Original) | 4,44·10⁻⁶ | Ångström-β 5,328·10⁻³ / 1,2 km [26]; ebenso Hillaires Referenzcode [24]. Tabelle 1 des Artikels nennt als Mie-Absorption 4,40·10⁻⁶ statt 0,444·10⁻⁶ |
-| Mie-Streuung $\beta_M$ (Original) | 3,996·10⁻⁶ | Einfachstreu-Albedo 0,9 · Extinktion [24; 26] |
-| Ozon-Absorption $\beta_O$ (RGB) | 0,65·10⁻⁶ / 1,881·10⁻⁶ / 0,085·10⁻⁶ | [24] |
-| Ozon-Absorption $\beta_O$ (spektral) | $\sigma_{O_3}(\lambda)\cdot n_\mathrm{max}$ | Abschnitt [10.1](#101-spektrale-daten) |
+| Rayleigh-Streuung $\beta_R$ | $1{,}24062\cdot10^{-6}\,(\lambda/\mu\mathrm{m})^{-4}$ | [24; 26], Abschnitt [10.1](#101-spektrale-daten) |
+| Mie-Extinktion $\beta_M^\mathrm{ext}$ und -Streuung $\beta_M$ | $\tau(\lambda)/1{,}2\,\mathrm{km}$ | Abschnitt [9.6](#96-aerosole-mie-theorie-und-eine-gemessene-größenverteilung) |
+| Ozon-Absorption $\beta_O$ | $\sigma_{O_3}(\lambda)\cdot n_\mathrm{max}$ | Abschnitt [10.1](#101-spektrale-daten) |
 | Bodenalbedo $a$ | 0,3 | wie im Artikel von Hillaire [24] (nur Mehrfachstreuung) |
 
-Rayleigh streut ohne Absorption, Ozon absorbiert nur, Aerosol tut beides: im Original grau, also
-unabhängig von der Wellenlänge, mit einer optischen Dicke von nur 0,005 (eine sehr saubere
-Atmosphäre); für den Ring mit den spektralen Koeffizienten aus Abschnitt
-[9.6](#96-aerosole-mie-theorie-und-eine-gemessene-größenverteilung) und demselben Höhenprofil.
+Rayleigh streut ohne Absorption, Ozon absorbiert nur, Aerosol tut beides.
 
 ### 9.2 Phasenfunktionen
 
@@ -588,17 +574,11 @@ Rayleigh [27]:
 P_R(\theta) = \frac{3}{16\pi}\,(1 + \cos^2\theta).
 ```
 
-Mie nach Cornette und Shanks (1992) [28] mit Asymmetrieparameter $g = 0{,}8$ (Vorwärtsstreuung) [24; 26]:
-
-```math
-P_M(\theta) = \frac{3}{8\pi}\,
-  \frac{(1 - g^2)(1 + \cos^2\theta)}{(2 + g^2)\,(1 + g^2 - 2g\cos\theta)^{3/2}} .
-```
-
-$\theta$ ist der Winkel zwischen Blick- und Sonnenrichtung. Das ist die des Originals; sie ist nahe
-der Sonne glatt (bei 0° nur doppelt so stark wie bei 10°). Der Ring nutzt stattdessen die
-Phasenfunktion eines gemessenen Aerosols aus der Mie-Theorie, mit einer echten Vorwärtsspitze
-(Abschnitt [9.6](#96-aerosole-mie-theorie-und-eine-gemessene-größenverteilung)).
+$\theta$ ist der Winkel zwischen Blick- und Sonnenrichtung. Für das Aerosol verwenden Hillaire [24]
+und Bruneton [26] die Näherung von Cornette und Shanks (1992) [28]. Sie ist nahe der Sonne glatt, bei
+0° nur doppelt so stark wie bei 10°. Der Ring nutzt stattdessen die Phasenfunktion $P_M$ eines
+gemessenen Aerosols aus der Mie-Theorie, mit einer echten Vorwärtsspitze (Abschnitt
+[9.6](#96-aerosole-mie-theorie-und-eine-gemessene-größenverteilung)).
 
 ### 9.3 Transmission
 
@@ -617,7 +597,7 @@ explizit geprüft (`sunTransmittance`).
 ### 9.4 Einfachstreuung entlang des Sehstrahls
 
 Vom Beobachter $c$ am Boden aus wird der Sehstrahl $\vec v$ bis zur Oberkante in 32 Abschnitte
-$\Delta s$ geteilt. In jedem Mittelpunkt $x_j$ wird das dorthin gestreute Sonnenlicht gesammelt und
+$\Delta s$ geteilt, die mit dem Quadrat der Entfernung wachsen, $s_j = s_\mathrm{top}\,(j/32)^2$. In jedem Mittelpunkt $x_j$ wird das dorthin gestreute Sonnenlicht gesammelt und
 zum Beobachter hin abgeschwächt:
 
 ```math
@@ -626,13 +606,9 @@ L(\lambda) = E_\odot(\lambda)\sum_{j} T(c \to x_j)\Bigl[
    + \Psi_\mathrm{ms}(x_j)\bigl(\beta_R\rho_R + \beta_M\rho_M\bigr)\Bigr]\Delta s .
 ```
 
-$T(c \to x_j)$ ergibt sich ohne zusätzliche Integration als Quotient zweier Transmissionen bis zur
-Oberkante, $T(c \to \mathrm{top}) / T(x_j \to \mathrm{top})$ (bei Blick nach unten umgekehrt).
-$\Psi_\mathrm{ms}$ ist der Beitrag der Mehrfachstreuung (nächster Abschnitt, im Original 0).
-
-Für den Ring wachsen die Schritte mit dem Quadrat der Entfernung, $s_j = s_\mathrm{top}\,(j/32)^2$,
-und $T(c \to x_j)$ ist die unterwegs aufsummierte optische Tiefe. Mit Blick am Horizont entlang ist
-der erste Schritt dann etwa 1 km lang statt 35 km: Der Dunst in Bodennähe liegt in den ersten paar
+$T(c \to x_j)$ ist die unterwegs aufsummierte optische Tiefe, $\Psi_\mathrm{ms}$ der Beitrag der
+Mehrfachstreuung (nächster Abschnitt). Mit Blick am Horizont entlang ist
+der erste Schritt etwa 1 km lang statt 35 km: Der Dunst in Bodennähe liegt in den ersten paar
 Schritten, die ihm mit gleichen Schritten einen falschen, bräunlichen Farbton gaben.
 
 ### 9.5 Mehrfachstreuung (Hillaire 2020)
@@ -674,10 +650,8 @@ $\cos$(Sonnenzenitwinkel) und Höhe an [24].
 
 Code: [`Mie.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Mie.kt),
 [`Aerosol.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Aerosol.kt).
-Das Aerosol des Originals ist sehr dünn und seine Phasenfunktion glatt. Echter Dunst ist bis zu
-zehnmal dicker, streut stärker zur Seite und hat eine scharfe Vorwärtsspitze, die die helle Aureole
-um die Sonne macht. Das Aerosol des Rings wird deshalb aus einer gemessenen Teilchenpopulation
-berechnet.
+Echter Dunst streut stark zur Seite und hat eine scharfe Vorwärtsspitze, die die helle Aureole um die
+Sonne macht. Das Aerosol des Rings wird deshalb aus einer gemessenen Teilchenpopulation berechnet.
 
 **Größenverteilung.** AERONET, das weltweite Netz von Sonnenphotometern, leitet die
 Volumen-Größenverteilung des Aerosols aus Messungen des Himmels um die Sonne ab. Dubovik et al.
@@ -728,7 +702,7 @@ gemessen haben:
 | Ångström-Exponent 440–670 nm | 1,93 | 1,2 bis 2,3 |
 | Phasenfunktion bei 550 nm, 0° / 3° / 10° / 90° | 6,0 / 1,8 / 0,57 / 0,026 sr⁻¹ | |
 
-**Im Modell** behält das Aerosol das Höhenprofil des Originals: $\beta(h) = \tau(\lambda)/H \cdot e^{-h/H}$
+**Im Modell** hat das Aerosol das Höhenprofil aus Abschnitt 9.1: $\beta(h) = \tau(\lambda)/H \cdot e^{-h/H}$
 mit $H = 1{,}2$ km. Mit Blick am Horizont entlang durchquert die Sichtlinie so etwa das Hundertfache
 der senkrechten optischen Dicke. Bei Sonnenuntergang wird dieser bodennahe Dunst kaum noch
 beleuchtet: Der Horizont selbst wird dunkler, darüber liegt ein helleres Band, wie an diesigen
@@ -748,7 +722,7 @@ bestimmt die Farbe der Nacht ([PHYSIOLOGIE.md](PHYSIOLOGIE.md), Abschnitt 5).
 ## 10. Himmelsfarben: Spektrum, Farbmetrik, Bildaufbereitung
 
 Code: [`Spectrum.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/Spectrum.kt) und
-`toSrgb` in [`SkyModel.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyModel.kt).
+`perceiveLight` in [`SkyModel.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyModel.kt).
 
 ### 10.1 Spektrale Daten
 
@@ -768,8 +742,7 @@ Code: [`Spectrum.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/S
   \beta_O(\lambda) = \sigma_{O_3}(\lambda)\,n_\mathrm{max}.
   ```
 
-- **Rayleigh** $\beta_R(\lambda) = 1{,}24062\cdot10^{-6}\,\mathrm{m^{-1}}\cdot(\lambda/\mu\mathrm{m})^{-4}$ [26],
-  bei 680 nm also genau der RGB-Wert 5,802·10⁻⁶ des Originals.
+- **Rayleigh** $\beta_R(\lambda) = 1{,}24062\cdot10^{-6}\,\mathrm{m^{-1}}\cdot(\lambda/\mu\mathrm{m})^{-4}$ [26].
 
 Erst die spektrale Rechnung gibt das Blau der „blauen Stunde“ richtig wieder. Es entsteht vor allem
 durch die Chappuis-Absorption des Ozons, die breit über Gelb bis Rot reicht (Hulburt 1953 [37]). Mit nur drei
@@ -810,34 +783,28 @@ XYZ → lineares sRGB mit der Matrix für die Primärvalenzen von sRGB/Rec. 709 
 ```
 
 **Weißabgleich.** Jeder Kanal wird durch den Wert geteilt, den das Sonnenlicht oberhalb der
-Atmosphäre hätte. Ungefiltertes Sonnenlicht ist damit genau weiß (1, 1, 1), wie im Original mit
-seiner weißen Sonne. Die Farben sind also relativ zum Sonnenlicht, nicht zu D65.
+Atmosphäre hätte. Ungefiltertes Sonnenlicht ist damit genau weiß (1, 1, 1). Die Farben sind also relativ zum Sonnenlicht, nicht zu D65.
 
 ### 10.3 Belichtung
 
-- **Original:** feste Belichtung 25 auf dem linearen RGB. Die Leuchtdichte rechnet der Code dort
-  mit den Rec.-709-Gewichten [35]: $Y = 0{,}2126R + 0{,}7152G + 0{,}0722B$.
-- **Ring:** keine feste Belichtung. Das Licht wird in absoluten Einheiten genommen (Leuchtdichte in
-  cd/m²) und so in Displayfarben umgerechnet, wie ein an den ganzen
-  Himmel angepasstes Auge sie sieht: die Helligkeit nach dem Gesetz von Stevens, der Farbton mit
-  dem Beitrag der Stäbchen bei wenig Licht, die Farben verblassend, wenn es dunkel wird. All das
-  beschreibt [PHYSIOLOGIE.md](PHYSIOLOGIE.md).
+Es gibt keine feste Belichtung. Das Licht wird in absoluten Einheiten genommen (Leuchtdichte in
+cd/m²) und so in Displayfarben umgerechnet, wie ein an den ganzen Himmel angepasstes Auge sie sieht:
+die Helligkeit nach dem Gesetz von Stevens, der Farbton mit dem Beitrag der Stäbchen bei wenig Licht,
+die Farben verblassend, wenn es dunkel wird. All das beschreibt [PHYSIOLOGIE.md](PHYSIOLOGIE.md). Die
+Leuchtdichte einer Farbe rechnet der Code mit den Rec.-709-Gewichten [35]:
+$Y = 0{,}2126R + 0{,}7152G + 0{,}0722B$.
 
 ### 10.4 Tonwertabbildung
 
-Im Original nach der Belichtung, je Kanal (der Ring nutzt die Schritte 2 und 3, auf dem hellsten Kanal, siehe
-[PHYSIOLOGIE.md](PHYSIOLOGIE.md), Abschnitt 6):
+Am Ende, auf dem hellsten Kanal (siehe [PHYSIOLOGIE.md](PHYSIOLOGIE.md), Abschnitt 6):
 
-1. **Warmer Ausgleich für dunkle Himmel** (aus Horizon übernommen, rein gestalterisch): mit
-   $w = 1/(1 + 2Y)$ werden $R \cdot (1 + 0{,}05w)$, $G \cdot (1 - 0{,}05w)$, $B \cdot (1 + 0{,}1w)$
-   gerechnet.
-2. **ACES-Filmkurve** in der Näherung von Narkowicz (2016) [36]:
+1. **ACES-Filmkurve** in der Näherung von Narkowicz (2016) [36]:
 
    ```math
    f(x) = \operatorname{clamp}\!\left(\frac{x\,(2{,}51x + 0{,}03)}{x\,(2{,}43x + 0{,}59) + 0{,}14},\ 0,\ 1\right).
    ```
 
-3. **Gamma** $f^{1/2{,}2}$ als Näherung der sRGB-Übertragungsfunktion [33], dann auf 0…255.
+2. **Gamma** $f^{1/2{,}2}$ als Näherung der sRGB-Übertragungsfunktion [33], dann auf 0…255.
 
 ### 10.5 Mittelung über den Azimut
 
@@ -862,8 +829,7 @@ verteilt (gnomonische Projektion):
 u(e) = \frac{\tan e}{\tan e_t},\qquad e(u) = \arctan(u\,\tan e_t),\qquad e_t \le 80° .
 ```
 
-Die Begrenzung auf 80° (und $|e| \le 89°$) hält $\tan$ endlich. Das Original nutzt dieselbe
-Abbildung mit $e_t = 37{,}5°$ (halbes vertikales Sichtfeld von 75°).
+Die Begrenzung auf 80° (und $|e| \le 89°$) hält $\tan$ endlich.
 
 ### 11.2 Vorberechnete Tabelle
 

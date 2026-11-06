@@ -36,7 +36,7 @@ internal object Spectrum {
     /** Peak ozone number density (1/m³): 300 Dobson units spread over the triangular profile 30 km wide. */
     private const val OZONE_PEAK_DENSITY = 300.0 * 2.687e20 / 15e3
 
-    /** Rayleigh scattering coefficient (1/m) per [wavelengthsNm]; 5.802e-6 at 680 nm as in the RGB model. */
+    /** Rayleigh scattering coefficient (1/m) per [wavelengthsNm]. */
     val rayleighScattering = DoubleArray(wavelengthsNm.size) { 1.24062e-6 / (wavelengthsNm[it] / 1000.0).pow(4) }
 
     /** Ozone absorption coefficient (1/m) at the profile's peak, per [wavelengthsNm]. */
