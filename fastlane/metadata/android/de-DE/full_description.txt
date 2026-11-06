@@ -10,6 +10,6 @@
 <li>Farbmodus hell, dunkel oder automatisch, Ziffern und Zeiger in deinen Material-You-Farben. Frei skalierbar, mehrere Widgets mit eigenen Einstellungen.</li>
 </ul>
 
-<p><b>Datenschutz:</b> kein Tracking, keine Werbung, keine Standort-Berechtigung (Orte werden von Hand eingetragen). Ins Internet geht die App nur für den optionalen Wetterring: Etwa alle zwei Stunden sendet sie die Koordinaten deiner Orte an open-meteo.com, um die Vorhersage zu laden.</p>
+<p><b>Datenschutz:</b> kein Tracking, keine Werbung, keine Standort-Berechtigung (Orte werden von Hand eingetragen). Ins Internet geht die App nur für den optionalen Wetterring: Etwa alle zwei Stunden sendet sie die Koordinaten deiner Orte, auf etwa 100 m gerundet, an open-meteo.com, um die Vorhersage zu laden.</p>
 
 <p>Wetterdaten von Open-Meteo.com (CC BY 4.0). Sonne und Mond aus den Theorien ELP 2000-82B und VSOP87 (IMCCE, Pariser Sternwarte), Himmelsfarben nach Horizon (MIT).</p>

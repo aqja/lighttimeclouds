@@ -69,9 +69,9 @@ class OpenMeteoTest {
     }
 
     @Test
-    fun `url requests the needed variables with a locale-independent decimal point`() {
+    fun `url requests the needed variables with rounded coordinates and a locale-independent decimal point`() {
         val url = OpenMeteo.forecastUrl(52.5208, -13.4094)
-        assertTrue(url, url.contains("latitude=52.5208&longitude=-13.4094"))
+        assertTrue(url, url.contains("latitude=52.521&longitude=-13.409&"))
         assertTrue(url, url.contains("hourly=cloud_cover,precipitation,snowfall,precipitation_probability,temperature_2m,apparent_temperature"))
         assertTrue(url, url.contains("timeformat=unixtime"))
     }

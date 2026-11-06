@@ -10,6 +10,6 @@
 <li>Light, dark or automatic color mode, numerals and hands in your Material You colors. Freely resizable, several widgets with their own settings.</li>
 </ul>
 
-<p><b>Privacy:</b> no tracking, no ads, no location permission (places are entered by hand). The app only goes online for the optional weather ring: about every two hours it sends the coordinates of your places to open-meteo.com to fetch the forecast.</p>
+<p><b>Privacy:</b> no tracking, no ads, no location permission (places are entered by hand). The app only goes online for the optional weather ring: about every two hours it sends the coordinates of your places, rounded to about 100 m, to open-meteo.com to fetch the forecast.</p>
 
 <p>Weather data by Open-Meteo.com (CC BY 4.0). Sun and moon from the theories ELP 2000-82B and VSOP87 (IMCCE, Paris Observatory), sky colors ported from Horizon (MIT).</p>

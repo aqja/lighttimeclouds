@@ -26,10 +26,11 @@ object OpenMeteo {
      * Hourly cloud cover, precipitation (amount, snow, probability) and air/apparent temperature
      * from 24 h back to 48 h ahead, timestamps as Unix seconds. That covers the 12 h window (which
      * can start up to 12 h before now) and the whole local day in 24 h mode even for a cache that
-     * is half a day old.
+     * is half a day old. The coordinates leave the device rounded to three decimals, about 100 m:
+     * the forecast models are far coarser, so more would only say more about the place.
      */
     fun forecastUrl(latitude: Double, longitude: Double): String =
-        "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f".format(Locale.ROOT, latitude, longitude) +
+        "https://api.open-meteo.com/v1/forecast?latitude=%.3f&longitude=%.3f".format(Locale.ROOT, latitude, longitude) +
             "&hourly=cloud_cover,precipitation,snowfall,precipitation_probability,temperature_2m,apparent_temperature" +
             "&timeformat=unixtime&past_hours=24&forecast_hours=48"
 
