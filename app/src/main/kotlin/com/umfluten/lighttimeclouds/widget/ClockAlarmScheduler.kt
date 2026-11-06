@@ -15,7 +15,7 @@ import java.time.ZonedDateTime
  */
 object ClockAlarmScheduler {
     private const val REQUEST_CODE = 1001
-    const val ACTION_TICK = "com.umfluten.lighttimeclouds.action.TICK"
+    private const val ACTION_TICK = "com.umfluten.lighttimeclouds.action.TICK"
 
     private fun pendingIntent(context: Context): PendingIntent {
         val intent = Intent(context, ClockUpdateReceiver::class.java).apply { action = ACTION_TICK }

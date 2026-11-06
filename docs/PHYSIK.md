@@ -817,8 +817,8 @@ seiner weißen Sonne. Die Farben sind also relativ zum Sonnenlicht, nicht zu D65
 
 - **Original:** feste Belichtung 25 auf dem linearen RGB. Die Leuchtdichte rechnet der Code dort
   mit den Rec.-709-Gewichten [35]: $Y = 0{,}2126R + 0{,}7152G + 0{,}0722B$.
-- **Ring:** keine feste Belichtung. Das Licht wird in absoluten Einheiten genommen (photopische und
-  skotopische Leuchtdichte in cd/m²) und so in Displayfarben umgerechnet, wie ein an den ganzen
+- **Ring:** keine feste Belichtung. Das Licht wird in absoluten Einheiten genommen (Leuchtdichte in
+  cd/m²) und so in Displayfarben umgerechnet, wie ein an den ganzen
   Himmel angepasstes Auge sie sieht: die Helligkeit nach dem Gesetz von Stevens, der Farbton mit
   dem Beitrag der Stäbchen bei wenig Licht, die Farben verblassend, wenn es dunkel wird. All das
   beschreibt [PHYSIOLOGIE.md](PHYSIOLOGIE.md).
@@ -875,8 +875,11 @@ deshalb beim Build die Tabellen an:
   1°-Schritten (81 Spalten), je 3 Byte sRGB, zur Laufzeit bilinear interpoliert. Sonnenhöhen unter
   −18° zählen als −18°: Dann bleibt nur noch das Eigenleuchten des Nachthimmels.
 - **Sonne** ([`SunTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SunTable.kt)):
-  Sonnenhöhe 0°…90° in 0,5°-Schritten × 8 Farben der Scheibe von der Mitte bis zum Rand und 24
-  Farben ihrer Aureole vom Scheibenrand bis 12° (Abschnitt [12.2](#122-sonne-und-mond-im-ring)).
+  Sonnenhöhe 0°…90° in 0,5°-Schritten × die Farbe der Scheibe und 24 Farben ihrer Aureole vom
+  Scheibenrand bis 12° (Abschnitt [12.2](#122-sonne-und-mond-im-ring)).
+- **Mond** ([`MoonTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/MoonTable.kt)):
+  die Farbe seines beleuchteten Teils für Mondhöhen 0°…90° in 1°-Schritten, Sonnenhöhen −18°…90° in
+  2°-Schritten und einen beleuchteten Anteil von 2, 10, 30, 60 und 100 %, in allen dreien interpoliert.
 - **Mondheller Himmel** ([`MoonlitSky.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/MoonlitSky.kt)):
   keine Farben, sondern das Licht des Himmels, weil sich Licht addiert: je Höhe eines Himmelskörpers
   −18°…90° in 0,5°-Schritten und Blickhöhe 0°…80° in 1°-Schritten fünf Gleitkommazahlen (lineares

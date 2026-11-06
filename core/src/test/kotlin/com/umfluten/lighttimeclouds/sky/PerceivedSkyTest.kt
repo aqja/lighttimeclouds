@@ -30,15 +30,12 @@ class PerceivedSkyTest {
     /** The whole sky's mean luminance, which the eye adapts to, against typical measured values. */
     @Test
     fun `sky luminance spans day to night as measured`() {
-        val (day, _) = SkyModel.skyLuminance(40.0)
-        val (civil, _) = SkyModel.skyLuminance(-6.0)
-        val (night, nightScotopic) = SkyModel.skyLuminance(-25.0)
-        println("SKY " + listOf(60.0, 40.0, 20.0, 10.0, 5.0, 0.0, -3.0, -6.0, -9.0, -12.0, -15.0, -18.0).joinToString(" ") { a ->
-            SkyModel.skyLuminance(a).let { (p, s) -> "%.0f°: %.3g/%.3g".format(a, p, s) }
-        })
+        val day = SkyModel.skyLuminance(40.0)
+        val civil = SkyModel.skyLuminance(-6.0)
+        val night = SkyModel.skyLuminance(-25.0)
         assertTrue("day $day", day in 2_000.0..15_000.0)
         assertTrue("end of civil twilight $civil", civil in 0.5..20.0)
-        // Only the night sky's own glow (174 µcd/m²); rods see more of its sun-like spectrum.
-        assertTrue("night $night", night in 1.5e-4..2.5e-4 && nightScotopic > night)
+        // Only the night sky's own glow (174 µcd/m²).
+        assertTrue("night $night", night in 1.5e-4..2.5e-4)
     }
 }

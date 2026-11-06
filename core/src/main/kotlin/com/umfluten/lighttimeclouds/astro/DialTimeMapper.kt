@@ -14,7 +14,7 @@ import java.time.ZonedDateTime
  * the hour hand long ([dialHours]) and maps each angle to the one instant inside
  * that window with a matching hour-hand reading. On a 24-hour dial the window
  * decides where the shown day begins: at midnight, at another fixed time or
- * trailing just behind the current moment. The ring of sun/weather data drawn
+ * right at the current moment. The ring of sun/weather data drawn
  * around the dial is then simply "whichever window is currently active",
  * recomputed from scratch on every redraw (no explicit swap event needed).
  *
@@ -51,13 +51,11 @@ sealed interface DialTimeMapper {
     }
 
     /**
-     * The window boundary ("seam") trails [offsetMinutes] behind the current
-     * moment and slides continuously forward with it, instead of flipping at
-     * fixed times. Clamp [offsetMinutes] to a sane range (e.g. 0..180) in
-     * the UI - large values make the ring hard to read.
+     * The window boundary ("seam") lies at the current moment and slides
+     * continuously forward with it, instead of flipping at fixed times.
      */
-    data class TrailingOffset(val offsetMinutes: Int, override val dialHours: Int = 12) : DialTimeMapper {
-        override fun localWindowStart(now: LocalDateTime): LocalDateTime = now.minusMinutes(offsetMinutes.toLong())
+    data class Trailing(override val dialHours: Int = 12) : DialTimeMapper {
+        override fun localWindowStart(now: LocalDateTime): LocalDateTime = now
     }
 
     companion object {

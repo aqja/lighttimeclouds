@@ -207,14 +207,7 @@ internal fun PreviewTab(settings: WidgetSettings, padding: PaddingValues) {
             onChange = { minuteOfDay = it.roundToInt() },
         )
         if (settings.ringStyle == RingStyle.SKY || settings.showSunInRing || settings.showMoonInRing) {
-            LabeledSlider(
-                label = stringResource(R.string.sky_top_elevation_label),
-                value = stringResource(R.string.sky_top_elevation_value, skyTopElevation),
-                position = skyTopElevation.toFloat(),
-                range = SKY_TOP_ELEVATION_MIN.toFloat()..SKY_TOP_ELEVATION_MAX.toFloat(),
-                steps = (SKY_TOP_ELEVATION_MAX - SKY_TOP_ELEVATION_MIN) / SKY_TOP_ELEVATION_STEP - 1,
-                onChange = { skyTopElevation = it.roundToInt() },
-            )
+            SkyTopElevationSlider(skyTopElevation) { skyTopElevation = it }
         }
         TextButton(onClick = ::reset, modifier = Modifier.align(Alignment.End)) {
             Text(stringResource(R.string.preview_reset))

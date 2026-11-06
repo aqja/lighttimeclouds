@@ -7,9 +7,8 @@ import kotlin.math.sin
 /**
  * Orientation of the Earth at one moment, after the IERS Conventions (2010), IERS Technical
  * Note 36: nutation from the largest lunisolar terms of IAU 2000, five in longitude and four in
- * obliquity (to about 0.2″), mean
- * obliquity of IAU 2006, and the Greenwich apparent sidereal time from the Earth rotation angle.
- * Polar motion (< 0.5″) is left out.
+ * obliquity (to about 0.2″), mean obliquity of IAU 2006, and the Greenwich apparent sidereal time
+ * from the Earth rotation angle. Polar motion (< 0.5″) is left out.
  */
 internal class EarthOrientation private constructor(
     /** Julian centuries of TT since J2000. */

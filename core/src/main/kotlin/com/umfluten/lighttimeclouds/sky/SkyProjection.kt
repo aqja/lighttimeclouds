@@ -1,6 +1,5 @@
 package com.umfluten.lighttimeclouds.sky
 
-
 /**
  * How elevations above the horizon spread across a band from the horizon (0) to a far edge (1)
  * that stands for a top elevation: as in a perspective view like the original's, evenly in

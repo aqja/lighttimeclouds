@@ -18,12 +18,7 @@ object SkyGradientTable {
     val ROWS = ((90.0 - MIN_ALTITUDE) / ALTITUDE_STEP).toInt() + 1
     const val RESOURCE = "/com/umfluten/lighttimeclouds/sky/sky_gradients.bin"
 
-    private val table: ByteArray by lazy {
-        val bytes = SkyGradientTable::class.java.getResourceAsStream(RESOURCE)?.use { it.readBytes() }
-            ?: error("Missing resource $RESOURCE")
-        check(bytes.size == ROWS * STOPS * 3) { "$RESOURCE has ${bytes.size} bytes, expected ${ROWS * STOPS * 3}" }
-        bytes
-    }
+    private val table: ByteArray by lazy { readTable(RESOURCE, ROWS * STOPS * 3) }
 
     /** The table content as [SkyModel] computes it, in the resource's byte layout; only [rows] are filled. */
     fun compute(rows: Iterable<Int> = 0 until ROWS): ByteArray {
@@ -31,10 +26,7 @@ object SkyGradientTable {
         val elevations = DoubleArray(STOPS) { it * ELEVATION_STEP }
         rows.toList().parallelStream().forEach { row ->
             SkyModel.ringGradient(MIN_ALTITUDE + row * ALTITUDE_STEP, elevations).forEachIndexed { stop, rgb ->
-                val i = (row * STOPS + stop) * 3
-                bytes[i] = (rgb shr 16).toByte()
-                bytes[i + 1] = (rgb shr 8).toByte()
-                bytes[i + 2] = rgb.toByte()
+                bytes.putRgb((row * STOPS + stop) * 3, rgb)
             }
         }
         return bytes

@@ -127,7 +127,7 @@ class WidgetPrefsRepository(private val context: Context) {
     suspend fun isConfigured(widgetId: Int): Boolean =
         context.settingsDataStore.data.first()[Keys(widgetId).configured] ?: false
 
-    /** Removes every stored value of [widgetId], including keys of settings that no longer exist. */
+    /** Removes every stored value of [widgetId]. */
     suspend fun delete(widgetId: Int) {
         val prefix = prefixFor(widgetId)
         context.settingsDataStore.edit { prefs ->

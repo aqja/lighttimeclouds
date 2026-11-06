@@ -48,17 +48,6 @@ L_p = 683\,\tfrac{\mathrm{lm}}{\mathrm W}\sum_\lambda L(\lambda)\,V(\lambda)\,\D
 mit $V(\lambda)$, der photopischen Hellempfindlichkeit der CIE, hier die Normspektralwertfunktion
 $\bar y$ in der Näherung von Wyman, Sloan und Shirley (PHYSIK.md, Abschnitt 10.2).
 
-**Skotopische Leuchtdichte** (Stäbchensehen), in skotopischen cd/m²:
-
-```math
-L_s = 1700\,\tfrac{\mathrm{lm}}{\mathrm W}\sum_\lambda L(\lambda)\,V'(\lambda)\,\Delta\lambda ,
-```
-
-mit $V'(\lambda)$, der skotopischen Hellempfindlichkeit der CIE von 1951, tabelliert von 380 bis
-770 nm [11], mit dem Maximum bei 507 nm. Sonnenlicht und Taghimmel haben etwa 2,5- bis 3-mal so
-viel skotopische wie photopische Leuchtdichte; die Stäbchen sind für blaugrünes Licht
-empfindlicher.
-
 **Zapfenerregungen** $E_L, E_M, E_S$: die Zapfengrundempfindlichkeiten von Smith und Pokorny [10]
 als Linearkombinationen der Normspektralwertfunktionen,
 
@@ -70,10 +59,13 @@ S &\propto Z,
 \end{aligned}
 ```
 
-jede auf ein Maximum von 1 normiert, so wie Wanat und Mantiuk sie verwenden [9]. Die
-**Stäbchenerregung** $E_R$ ist die Summe mit $V'(\lambda)$ (Maximum 1). Smith und Pokorny haben ihre
-Transformation auf den nach Judd und Vos korrigierten Funktionen definiert; die App wendet sie auf
-CIE 1931 an (Abschnitt [8](#8-vereinfachungen-im-überblick)).
+jede auf ein Maximum von 1 normiert, so wie Wanat und Mantiuk sie verwenden [9]. Smith und Pokorny
+haben ihre Transformation auf den nach Judd und Vos korrigierten Funktionen definiert; die App wendet
+sie auf CIE 1931 an (Abschnitt [8](#8-vereinfachungen-im-überblick)).
+
+**Stäbchenerregung** $E_R$: die Summe $\sum_\lambda L(\lambda)\,V'(\lambda)\,\Delta\lambda$ mit
+$V'(\lambda)$, der skotopischen Hellempfindlichkeit der CIE von 1951, tabelliert von 380 bis 770 nm
+[11], mit dem Maximum von 1 bei 507 nm. Die Stäbchen sind für blaugrünes Licht empfindlicher.
 
 ## 2. Anpassung
 
@@ -82,8 +74,7 @@ langsam, deshalb nimmt das Modell ein Auge an, das in jedem Augenblick vollstän
 ohne zeitlichen Verlauf.
 
 Woran passt es sich an? Wer zum Himmel schaut, hat den Himmel selbst im Blickfeld. Das Modell nimmt
-die **mittlere Leuchtdichte des ganzen Himmels** über dem Horizont, getrennt für Zapfen und
-Stäbchen:
+die **mittlere photopische Leuchtdichte des ganzen Himmels** über dem Horizont:
 
 ```math
 L_{wa} = \frac{\sum_e \bar L(e)\cos e}{\sum_e \cos e},\qquad e = 3{,}75°, 11{,}25°, \dots, 86{,}25° ,
@@ -130,9 +121,9 @@ dargestellte Helligkeit des Anpassungsniveaus, $L_{da}\,m$, fällt stetig mit $L
 $1{,}2\,L_{da}$ bei Tageslicht bis $0{,}03\,L_{da}$ in der Dunkelheit ($\gamma \to 0$,
 $m \to C_\mathrm{max}^{-1/2}$). Die beiden Displayparameter bestimmen den Gesamteindruck: $L_{da}$,
 wie hell der Tag erscheint, $C_\mathrm{max}$, wie weit die Nacht darunter liegt; mit den
-Standardwerten der Toolbox war das Blau des hohen Himmels dunkel und die Nacht zu hell. Der Ring wird deshalb vom Tag über die Dämmerung bis in die Nacht
-gleichmäßig dunkler (ein Test prüft das ab 2° unter dem Horizont), und die Nacht ist dunkel, aber
-nicht schwarz.
+Standardwerten der Toolbox war das Blau des hohen Himmels dunkel und die Nacht zu hell. Der Ring
+wird deshalb vom Tag über die Dämmerung bis in die Nacht gleichmäßig dunkler (ein Test prüft das ab
+2° unter dem Horizont), und die Nacht ist dunkel, aber nicht schwarz.
 
 ### 3.2 Warum kein Schwellenmodell
 
@@ -253,8 +244,7 @@ nicht enthalten; über einer Stadt wie Berlin ist der Nachthimmel 10- bis 50-mal
 3. **Gamma** $f^{1/2{,}2}$ und 8 Bit je Kanal.
 
 Die Sonnenscheibe durchläuft dieselben Schritte, aber ohne den Hunt-Effekt: Sie ist um
-Größenordnungen heller als alles Gemessene und käme sonst bei tiefem Stand rein rot heraus. Weit
-heller als das Display, wird sie in voller Helligkeit mit erhaltenem Farbton gezeigt. Je Kanal
+Größenordnungen heller als alles, wofür es Messungen gibt. Weit heller als das Display, wird sie in voller Helligkeit mit erhaltenem Farbton gezeigt. Je Kanal
 getont, liefen Rot und Grün zuerst in die Begrenzung und machten aus einer orangen Sonne reines Gelb
 (PHYSIK.md, Abschnitt 12.2). Ihre Aureole ist der Himmel neben ihr, gesehen wie der übrige Himmel: die
 Ringfarbe in Sonnenhöhe plus der Überschuss des Himmels zur Sonne hin, durch dieselben Schritte 1 bis
@@ -296,14 +286,14 @@ sehen.
 Die mittlere Leuchtdichte des ganzen Himmels (Abschnitt 2) und die dargestellten Farben eines Rings
 bis 45° (Horizont / 15° / 30° / 80° darüber), mit dem Aerosol aus PHYSIK.md, Abschnitt 9.6:
 
-| Sonne | $L_{wa}$ photopisch | skotopisch | Ring (0° / 15° / 30° / 80°) |
-|---|---|---|---|
-| 40° | 6800 cd/m² | 19 000 | `#dfdccc` `#99bee7` `#85ace3` `#7296cf` |
-| 10° | 3200 | 8200 | `#e8c58b` `#c3dcdf` `#98b8d6` `#6886b3` |
-| 0° | 310 | 830 | `#8f9199` `#d6dbe0` `#a9bdde` `#8099c8` |
-| −6° | 2,1 | 6,6 | `#5d6474` `#8da3c4` `#6e89b9` `#536c9e` |
-| −10° | 0,029 | 0,084 | `#333133` `#525a6a` `#3f485b` `#343d4f` |
-| −18° | 2,0·10⁻⁴ | 5,1·10⁻⁴ | `#232326` `#232429` `#232429` `#232428` |
+| Sonne | $L_{wa}$ | Ring (0° / 15° / 30° / 80°) |
+|---|---|---|
+| 40° | 6800 cd/m² | `#dfdccc` `#99bee7` `#85ace3` `#7296cf` |
+| 10° | 3200 | `#e8c58b` `#c3dcdf` `#98b8d6` `#6886b3` |
+| 0° | 310 | `#8f9199` `#d6dbe0` `#a9bdde` `#8099c8` |
+| −6° | 2,1 | `#5d6474` `#8da3c4` `#6e89b9` `#536c9e` |
+| −10° | 0,029 | `#333133` `#525a6a` `#3f485b` `#343d4f` |
+| −18° | 2,0·10⁻⁴ | `#232326` `#232429` `#232429` `#232428` |
 
 - **Tag:** blau, zum dunstigen Horizont hin blasser.
 - **Sonnenuntergang:** Der Horizont selbst wird dunkler, darüber liegt ein helleres Band: Mit flachem

@@ -11,10 +11,7 @@ import kotlinx.coroutines.flow.first
 import java.text.Collator
 import java.time.ZoneId
 
-/**
- * Saved places, kept in the same DataStore as the widget settings (keys prefixed "place_<id>_")
- * so that migrating old per-widget coordinates into places happens in one atomic edit.
- */
+/** Saved places, kept in the same DataStore as the widget settings (keys prefixed "place_<id>_"), which refer to them by id. */
 class PlacesRepository(private val context: Context) {
 
     suspend fun all(): List<Place> {
@@ -50,42 +47,16 @@ class PlacesRepository(private val context: Context) {
         return deleted
     }
 
-    /**
-     * Makes sure at least one place exists, and converts settings from before places existed: each
-     * widget's own coordinates and label become a place (identical ones are merged) that the widget
-     * then refers to. Old values only knew the device time zone, so migrated places get that zone.
-     */
+    /** Makes sure at least one place exists. */
     suspend fun ensureInitialized() {
-        val prefs = context.settingsDataStore.data.first()
-        if (prefs.placeIds().isNotEmpty() && legacyWidgetIds(prefs).isEmpty()) return
-        context.settingsDataStore.edit { mutable ->
-            for (widgetId in legacyWidgetIds(mutable)) {
-                val lat = mutable[doublePreferencesKey("w${widgetId}_lat")] ?: Place.DEFAULT.latitude
-                val lon = mutable[doublePreferencesKey("w${widgetId}_lon")] ?: Place.DEFAULT.longitude
-                val label = mutable[stringPreferencesKey("w${widgetId}_location_label")].orEmpty()
-                val existing = mutable.placeIds().mapNotNull { readPlace(mutable, it) }
-                    .firstOrNull { it.latitude == lat && it.longitude == lon && (label.isBlank() || it.name == label) }
-                val place = existing ?: when {
-                    label.isBlank() && lat == Place.DEFAULT.latitude && lon == Place.DEFAULT.longitude -> Place.DEFAULT
-                    else -> Place.new(
-                        name = label.ifBlank { "%.4f°, %.4f°".format(lat, lon) },
-                        latitude = lat,
-                        longitude = lon,
-                    )
-                }
-                writePlace(mutable, place)
-                mutable[WidgetPrefsRepository.placeKey(widgetId)] = place.id
-                mutable -= doublePreferencesKey("w${widgetId}_lat")
-                mutable -= doublePreferencesKey("w${widgetId}_lon")
-                mutable -= stringPreferencesKey("w${widgetId}_location_label")
-            }
-            if (mutable.placeIds().isEmpty()) writePlace(mutable, Place.DEFAULT)
+        if (context.settingsDataStore.data.first().placeIds().isNotEmpty()) return
+        context.settingsDataStore.edit { prefs ->
+            if (prefs.placeIds().isEmpty()) writePlace(prefs, Place.DEFAULT)
         }
     }
 
     companion object {
         private val PLACE_IDS = stringSetPreferencesKey("place_ids")
-        private val LEGACY_LAT = Regex("""w(\d+)_lat""")
 
         private fun placePrefix(id: String) = "place_${id}_"
 
@@ -97,9 +68,6 @@ class PlacesRepository(private val context: Context) {
         private fun zoneKey(id: String) = stringPreferencesKey(placePrefix(id) + "zone")
 
         private fun Preferences.placeIds(): Set<String> = this[PLACE_IDS].orEmpty()
-
-        private fun legacyWidgetIds(prefs: Preferences): List<Int> =
-            prefs.asMap().keys.mapNotNull { LEGACY_LAT.matchEntire(it.name)?.groupValues?.get(1)?.toInt() }
 
         /** The place [id] from a preferences snapshot; null if unknown. An invalid zone falls back to the device zone. */
         internal fun readPlace(prefs: Preferences, id: String): Place? {

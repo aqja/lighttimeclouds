@@ -71,7 +71,7 @@ internal fun LocationSection(settings: WidgetSettings, viewModel: ConfigViewMode
             trailingContent = { TextButton(onClick = { showPicker = true }) { Text(stringResource(R.string.action_change)) } },
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         )
-        Text(stringResource(R.string.label_position_label), style = MaterialTheme.typography.labelLarge)
+        FieldLabel(stringResource(R.string.label_position_label))
         SegmentedChoice(
             options = listOf(
                 LabelPosition.NONE to R.string.label_position_none,

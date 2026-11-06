@@ -18,20 +18,17 @@ object SunTable {
     /** How far the aureole reaches from the sun's center (degrees): by then it has faded into the sky. */
     const val AUREOLE_EXTENT_DEG = 12.0
 
+    private const val ANGLES = 24
+
     /** Angles (degrees) from the sun's center at which the aureole is tabulated: from the disc's edge out to [AUREOLE_EXTENT_DEG], denser inside. */
-    val ANGLES_DEG = DoubleArray(24) { i ->
+    val ANGLES_DEG = DoubleArray(ANGLES) { i ->
         val start = SkyModel.SUN_SEMI_DIAMETER_DEG
-        start * Math.pow(AUREOLE_EXTENT_DEG / start, i / 23.0)
+        start * (AUREOLE_EXTENT_DEG / start).pow(i / (ANGLES - 1.0))
     }
 
     private val COLUMNS = 1 + ANGLES_DEG.size
 
-    private val table: ByteArray by lazy {
-        val bytes = SunTable::class.java.getResourceAsStream(RESOURCE)?.use { it.readBytes() }
-            ?: error("Missing resource $RESOURCE")
-        check(bytes.size == ROWS * COLUMNS * 3) { "$RESOURCE has ${bytes.size} bytes, expected ${ROWS * COLUMNS * 3}" }
-        bytes
-    }
+    private val table: ByteArray by lazy { readTable(RESOURCE, ROWS * COLUMNS * 3) }
 
     /** The table content as [SkyModel] computes it, in the resource's byte layout; only [rows] are filled. */
     fun compute(rows: Iterable<Int> = 0 until ROWS): ByteArray {
@@ -39,12 +36,7 @@ object SunTable {
         rows.toList().parallelStream().forEach { row ->
             val altitude = row * ALTITUDE_STEP
             val colors = intArrayOf(SkyModel.sunDisc(altitude)) + SkyModel.aureole(altitude, ANGLES_DEG)
-            colors.forEachIndexed { column, rgb ->
-                val i = (row * COLUMNS + column) * 3
-                bytes[i] = (rgb shr 16).toByte()
-                bytes[i + 1] = (rgb shr 8).toByte()
-                bytes[i + 2] = rgb.toByte()
-            }
+            colors.forEachIndexed { column, rgb -> bytes.putRgb((row * COLUMNS + column) * 3, rgb) }
         }
         return bytes
     }

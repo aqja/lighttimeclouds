@@ -23,12 +23,7 @@ object MoonTable {
 
     private val ROW_SIZE = SUN_ALTITUDES * FRACTIONS.size * 3
 
-    private val table: ByteArray by lazy {
-        val bytes = MoonTable::class.java.getResourceAsStream(RESOURCE)?.use { it.readBytes() }
-            ?: error("Missing resource $RESOURCE")
-        check(bytes.size == ROWS * ROW_SIZE) { "$RESOURCE has ${bytes.size} bytes, expected ${ROWS * ROW_SIZE}" }
-        bytes
-    }
+    private val table: ByteArray by lazy { readTable(RESOURCE, ROWS * ROW_SIZE) }
 
     /** The table content as [SkyModel] computes it, in the resource's byte layout; only [rows] are filled. */
     fun compute(rows: Iterable<Int> = 0 until ROWS): ByteArray {
@@ -36,10 +31,7 @@ object MoonTable {
         val sunAltitudes = DoubleArray(SUN_ALTITUDES) { MIN_SUN_ALTITUDE + it * SUN_STEP }
         rows.toList().parallelStream().forEach { row ->
             SkyModel.moonDiscs(row * MOON_STEP, sunAltitudes, FRACTIONS).forEachIndexed { cell, rgb ->
-                val i = row * ROW_SIZE + cell * 3
-                bytes[i] = (rgb shr 16).toByte()
-                bytes[i + 1] = (rgb shr 8).toByte()
-                bytes[i + 2] = rgb.toByte()
+                bytes.putRgb(row * ROW_SIZE + cell * 3, rgb)
             }
         }
         return bytes

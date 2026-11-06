@@ -42,9 +42,6 @@ internal class Aerosol(val tau440: Double) {
     /** Phase function (1/sr, ∫ P dΩ = 1) per wavelength at [phaseAngles]. */
     internal val phase: Array<DoubleArray>
 
-    /** Asymmetry parameter ⟨cos θ⟩ per wavelength. */
-    val asymmetry: DoubleArray
-
     init {
         val wavelengths = Spectrum.wavelengthsNm
         val mu = DoubleArray(PHASE_ANGLES) { cos(phaseAngles[it]) }
@@ -52,7 +49,6 @@ internal class Aerosol(val tau440: Double) {
         val radii = DoubleArray(RADII) { exp(ln(MIN_RADIUS) + it * step) }
         extinctionDepth = DoubleArray(wavelengths.size)
         scatteringDepth = DoubleArray(wavelengths.size)
-        asymmetry = DoubleArray(wavelengths.size)
         phase = Array(wavelengths.size) { k ->
             val lambda = wavelengths[k] / 1000.0
             val waveNumber = 2 * PI / lambda
@@ -70,21 +66,8 @@ internal class Aerosol(val tau440: Double) {
             extinctionDepth[k] = extinction
             scatteringDepth[k] = scattering
             // Σ N·s11 integrates to k²·Σ N·C_sca over the sphere: normalize to ∫ P dΩ = 1.
-            val p = DoubleArray(PHASE_ANGLES) { s11[it] / (waveNumber * waveNumber * scattering) }
-            asymmetry[k] = integrate { j -> p[j] * mu[j] }
-            p
+            DoubleArray(PHASE_ANGLES) { s11[it] / (waveNumber * waveNumber * scattering) }
         }
-    }
-
-    /** ∫ f dΩ over the sphere, trapezoidal in the scattering angle of the table. */
-    internal fun integrate(f: (Int) -> Double): Double {
-        var sum = 0.0
-        for (j in 1 until PHASE_ANGLES) {
-            val a = phaseAngles[j - 1]
-            val b = phaseAngles[j]
-            sum += 0.5 * (f(j - 1) * sin(a) + f(j) * sin(b)) * (b - a)
-        }
-        return 2 * PI * sum
     }
 
     /** Phase function at wavelength index [band] for the scattering angle [angle] (radians), interpolated linearly. */

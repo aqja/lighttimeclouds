@@ -46,16 +46,6 @@ L_p = 683\,\tfrac{\mathrm{lm}}{\mathrm W}\sum_\lambda L(\lambda)\,V(\lambda)\,\D
 with $V(\lambda)$ the CIE photopic luminous efficiency, here the color matching function $\bar y$ in
 the fit of Wyman, Sloan and Shirley (PHYSICS.md, section 10.2).
 
-**Scotopic luminance** (rod vision), in scotopic cd/m²:
-
-```math
-L_s = 1700\,\tfrac{\mathrm{lm}}{\mathrm W}\sum_\lambda L(\lambda)\,V'(\lambda)\,\Delta\lambda ,
-```
-
-with $V'(\lambda)$ the CIE 1951 scotopic luminous efficiency, tabulated from 380 to 770 nm [11],
-peaking at 507 nm. Sunlight and the daytime sky have about 2.5 to 3 times as much scotopic as
-photopic luminance; the rods are more sensitive to blue-green light.
-
 **Cone excitations** $E_L, E_M, E_S$: the cone fundamentals of Smith and Pokorny [10] as linear
 combinations of the color matching functions,
 
@@ -67,9 +57,13 @@ S &\propto Z,
 \end{aligned}
 ```
 
-each normalized to a peak of 1, as Wanat and Mantiuk use them [9]. The **rod excitation** $E_R$ is
-the sum with $V'(\lambda)$ (peak 1). Smith and Pokorny defined their transformation on the Judd-Vos
-corrected functions; the app applies it to CIE 1931 (section [8](#8-simplifications-at-a-glance)).
+each normalized to a peak of 1, as Wanat and Mantiuk use them [9]. Smith and Pokorny defined their
+transformation on the Judd-Vos corrected functions; the app applies it to CIE 1931 (section
+[8](#8-simplifications-at-a-glance)).
+
+**Rod excitation** $E_R$: the sum $\sum_\lambda L(\lambda)\,V'(\lambda)\,\Delta\lambda$ with
+$V'(\lambda)$ the CIE 1951 scotopic luminous efficiency, tabulated from 380 to 770 nm [11], peaking
+at 1 at 507 nm. The rods are more sensitive to blue-green light.
 
 ## 2. Adaptation
 
@@ -77,7 +71,7 @@ The eye adapts to the light around it, over seconds to minutes. Twilight changes
 model assumes an eye that is fully adapted at every moment, without a time course.
 
 What does it adapt to? Looking at the sky, the field of view is the sky itself. The model takes
-the **mean luminance of the whole sky** above the horizon, separately for cones and rods:
+the **mean photopic luminance of the whole sky** above the horizon:
 
 ```math
 L_{wa} = \frac{\sum_e \bar L(e)\cos e}{\sum_e \cos e},\qquad e = 3.75°, 11.25°, \dots, 86.25° ,
@@ -124,9 +118,8 @@ the adaptation level, $L_{da}\,m$, falls monotonically as $L_{wa}$ falls, from $
 daylight to $0.03\,L_{da}$ in darkness ($\gamma \to 0$, $m \to C_\mathrm{max}^{-1/2}$). The two
 display parameters set the overall look: $L_{da}$ how bright the day appears, $C_\mathrm{max}$ how
 far below it the night lies; with the toolbox's defaults the blue of the high sky came out dark and
-the night too light. The ring
-therefore darkens steadily from day through twilight into night (a test checks this from 2° below
-the horizon on), and the night is dark but not black.
+the night too light. The ring therefore darkens steadily from day through twilight into night (a
+test checks this from 2° below the horizon on), and the night is dark but not black.
 
 ### 3.2 Why not a threshold model
 
@@ -243,7 +236,7 @@ a dark blue-gray. Light pollution is not included; over a city like Berlin the n
 3. **Gamma** $f^{1/2.2}$ and 8 bits per channel.
 
 The Sun's disc goes through the same steps, but without the Hunt effect: it is orders of magnitude
-brighter than anything measured and would otherwise come out pure red when low. Far brighter than the
+brighter than anything there are measurements for. Far brighter than the
 display, it is shown at full brightness with its hue kept. Toned per channel, its red and green would
 both run into the limit first and turn an orange Sun pure yellow (PHYSICS.md, section 12.2).
 Its aureole is the sky next to it seen like the rest of the sky: the ring's color at the Sun's
@@ -283,14 +276,14 @@ luminance at each point, as next to the Moon the cones still see colors.
 The whole sky's mean luminance (section 2) and the ring's displayed colors for a ring up to 45°
 (horizon / 15° / 30° / 80° above it), with the aerosol of PHYSICS.md, section 9.6:
 
-| Sun | $L_{wa}$ photopic | scotopic | Ring (0° / 15° / 30° / 80°) |
-|---|---|---|---|
-| 40° | 6800 cd/m² | 19 000 | `#dfdccc` `#99bee7` `#85ace3` `#7296cf` |
-| 10° | 3200 | 8200 | `#e8c58b` `#c3dcdf` `#98b8d6` `#6886b3` |
-| 0° | 310 | 830 | `#8f9199` `#d6dbe0` `#a9bdde` `#8099c8` |
-| −6° | 2.1 | 6.6 | `#5d6474` `#8da3c4` `#6e89b9` `#536c9e` |
-| −10° | 0.029 | 0.084 | `#333133` `#525a6a` `#3f485b` `#343d4f` |
-| −18° | 2.0·10⁻⁴ | 5.1·10⁻⁴ | `#232326` `#232429` `#232429` `#232428` |
+| Sun | $L_{wa}$ | Ring (0° / 15° / 30° / 80°) |
+|---|---|---|
+| 40° | 6800 cd/m² | `#dfdccc` `#99bee7` `#85ace3` `#7296cf` |
+| 10° | 3200 | `#e8c58b` `#c3dcdf` `#98b8d6` `#6886b3` |
+| 0° | 310 | `#8f9199` `#d6dbe0` `#a9bdde` `#8099c8` |
+| −6° | 2.1 | `#5d6474` `#8da3c4` `#6e89b9` `#536c9e` |
+| −10° | 0.029 | `#333133` `#525a6a` `#3f485b` `#343d4f` |
+| −18° | 2.0·10⁻⁴ | `#232326` `#232429` `#232429` `#232428` |
 
 - **Day:** blue, paler toward the hazy horizon.
 - **Sunset:** the horizon itself darkens, a brighter band lies above it: looking flat, one sees

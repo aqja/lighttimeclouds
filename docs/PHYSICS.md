@@ -805,8 +805,8 @@ colors are therefore relative to sunlight, not to D65.
 
 - **Original:** fixed exposure 25 on linear RGB. The code computes luminance there with the
   Rec. 709 weights [35]: $Y = 0.2126R + 0.7152G + 0.0722B$.
-- **Ring:** no fixed exposure. The light is taken in absolute units (photopic and scotopic
-  luminance in cd/m²) and turned into display colors as an eye adapted to the whole sky sees them:
+- **Ring:** no fixed exposure. The light is taken in absolute units (luminance in cd/m²) and
+  turned into display colors as an eye adapted to the whole sky sees them:
   the brightness after Stevens' law, the hue with the rods' contribution in dim light, the colors
   fading as it gets dark. All of it is described in [PHYSIOLOGY.md](PHYSIOLOGY.md).
 
@@ -861,8 +861,11 @@ The scattering computation is too expensive for every minute. The Gradle task
   steps (81 columns), 3 bytes of sRGB each, interpolated bilinearly at run time. Sun altitudes
   below −18° count as −18°: by then only the night sky's own glow is left.
 - **Sun** ([`SunTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SunTable.kt)):
-  Sun altitude 0°…90° in 0.5° steps × 8 colors of the disc from its center to its edge and 24
-  colors of its aureole from the disc's edge out to 12° (section [12.2](#122-sun-and-moon-in-the-ring)).
+  Sun altitude 0°…90° in 0.5° steps × the color of the disc and 24 colors of its aureole from the
+  disc's edge out to 12° (section [12.2](#122-sun-and-moon-in-the-ring)).
+- **Moon** ([`MoonTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/MoonTable.kt)):
+  the color of its lit part for Moon altitudes 0°…90° in 1° steps, Sun altitudes −18°…90° in 2°
+  steps and a lit share of 2, 10, 30, 60 and 100 %, interpolated in all three.
 - **Moonlit sky** ([`MoonlitSky.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/MoonlitSky.kt)):
   not colors but the sky's light, as light adds up: for a body's altitude −18°…90° in 0.5° steps and
   view elevation 0°…80° in 1° steps five floats (linear RGB, the rods' signal, luminance), plus the

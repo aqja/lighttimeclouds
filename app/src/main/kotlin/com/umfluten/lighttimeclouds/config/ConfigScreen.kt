@@ -289,14 +289,7 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
                 selected = settings.skyHorizon,
                 onSelect = { viewModel.update { s -> s.copy(skyHorizon = it) } },
             )
-            LabeledSlider(
-                label = stringResource(R.string.sky_top_elevation_label),
-                value = stringResource(R.string.sky_top_elevation_value, settings.skyTopElevationDeg),
-                position = settings.skyTopElevationDeg.toFloat(),
-                range = SKY_TOP_ELEVATION_MIN.toFloat()..SKY_TOP_ELEVATION_MAX.toFloat(),
-                steps = (SKY_TOP_ELEVATION_MAX - SKY_TOP_ELEVATION_MIN) / SKY_TOP_ELEVATION_STEP - 1,
-                onChange = { viewModel.update { s -> s.copy(skyTopElevationDeg = it.roundToInt()) } },
-            )
+            SkyTopElevationSlider(settings.skyTopElevationDeg) { viewModel.update { s -> s.copy(skyTopElevationDeg = it) } }
         }
         SwitchRow(
             label = stringResource(R.string.show_minute_ticks),
@@ -543,10 +536,22 @@ private fun SwitchTimeRow(label: String, minutesOfDay: Int, onPicked: (Int) -> U
     }
 }
 
-/** Range and step (degrees) of the elevation shown at the far edge of the ring. */
-internal const val SKY_TOP_ELEVATION_MIN = 10
-internal const val SKY_TOP_ELEVATION_MAX = SkyProjection.MAX_TOP_ELEVATION_DEG.toInt()
-internal const val SKY_TOP_ELEVATION_STEP = 5
+/** Slider for the elevation (degrees) shown at the far edge of the ring. */
+@Composable
+internal fun SkyTopElevationSlider(elevationDeg: Int, onChange: (Int) -> Unit) {
+    LabeledSlider(
+        label = stringResource(R.string.sky_top_elevation_label),
+        value = stringResource(R.string.sky_top_elevation_value, elevationDeg),
+        position = elevationDeg.toFloat(),
+        range = SKY_TOP_ELEVATION_MIN.toFloat()..SKY_TOP_ELEVATION_MAX.toFloat(),
+        steps = (SKY_TOP_ELEVATION_MAX - SKY_TOP_ELEVATION_MIN) / SKY_TOP_ELEVATION_STEP - 1,
+        onChange = { onChange(it.roundToInt()) },
+    )
+}
+
+private const val SKY_TOP_ELEVATION_MIN = 10
+private const val SKY_TOP_ELEVATION_MAX = SkyProjection.MAX_TOP_ELEVATION_DEG.toInt()
+private const val SKY_TOP_ELEVATION_STEP = 5
 private const val RING_END_FADE_STEP = 5
 
 /** Weather, times, settings and preview. */

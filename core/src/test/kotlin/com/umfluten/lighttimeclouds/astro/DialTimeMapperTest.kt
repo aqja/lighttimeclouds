@@ -55,35 +55,32 @@ class DialTimeMapperTest {
     }
 
     @Test
-    fun `trailing offset - angle exactly at the window start resolves to now minus the offset`() {
-        val mapper = DialTimeMapper.TrailingOffset(offsetMinutes = 30)
+    fun `trailing - angle exactly at the window start resolves to now`() {
+        val mapper = DialTimeMapper.Trailing()
         val now = at(10, 0)
 
-        // Window starts at 09:30; hour-hand reading 9.5 (angle 285 deg) must resolve to exactly that.
-        val resolved = mapper.resolve(now, 285.0)
-        assertEquals(at(9, 30), resolved)
+        // The window starts now; hour-hand reading 10 (angle 300 deg) must resolve to exactly that.
+        assertEquals(now, mapper.resolve(now, 300.0))
     }
 
     @Test
-    fun `trailing offset - angle just ahead of the seam resolves one 12h cycle later`() {
-        val mapper = DialTimeMapper.TrailingOffset(offsetMinutes = 30)
+    fun `trailing - angle just ahead of the seam resolves one 12h cycle later`() {
+        val mapper = DialTimeMapper.Trailing()
         val now = at(10, 0)
 
-        // Just before the window start (9.5 - small delta) must wrap to the *next* cycle,
+        // Just before the window start (10 - small delta) must wrap to the *next* cycle,
         // i.e. nearly 12h after the seam, not nearly 12h before it.
-        val resolved = mapper.resolve(now, 284.0)
-        assertEquals(at(21, 28), resolved)
+        assertEquals(at(21, 58), mapper.resolve(now, 299.0))
     }
 
     @Test
-    fun `window start is the most recent switch time for fixed times and now minus offset for trailing`() {
+    fun `window start is the most recent switch time for fixed times and now for trailing`() {
         val fixed = DialTimeMapper.FixedTimes(listOf(LocalTime.of(6, 0), LocalTime.of(18, 0)))
         assertEquals(at(6, 0), fixed.windowStart(at(10, 0)))
         assertEquals(at(18, 0), fixed.windowStart(at(23, 30)))
         assertEquals(at(18, 0).minusDays(1), fixed.windowStart(at(2, 0)))
 
-        val trailing = DialTimeMapper.TrailingOffset(30)
-        assertEquals(at(9, 30), trailing.windowStart(at(10, 0)))
+        assertEquals(at(10, 0), DialTimeMapper.Trailing().windowStart(at(10, 0)))
     }
 
     @Test
@@ -100,10 +97,10 @@ class DialTimeMapperTest {
 
     @Test
     fun `24h trailing - angle just ahead of the seam resolves almost a day later`() {
-        val mapper = DialTimeMapper.TrailingOffset(offsetMinutes = 30, dialHours = 24)
+        val mapper = DialTimeMapper.Trailing(dialHours = 24)
         val now = at(10, 0)
-        assertEquals(at(9, 30), mapper.resolve(now, 142.5))
-        assertEquals(at(9, 26).plusDays(1), mapper.resolve(now, 141.5))
+        assertEquals(now, mapper.resolve(now, 150.0))
+        assertEquals(at(9, 56).plusDays(1), mapper.resolve(now, 149.0))
     }
 
     @Test
@@ -111,12 +108,10 @@ class DialTimeMapperTest {
         val mappers = listOf(
             DialTimeMapper.FixedTimes(listOf(LocalTime.of(6, 0), LocalTime.of(18, 0))),
             DialTimeMapper.FixedTimes(listOf(LocalTime.of(7, 30), LocalTime.of(19, 30))),
-            DialTimeMapper.TrailingOffset(0),
-            DialTimeMapper.TrailingOffset(180),
+            DialTimeMapper.Trailing(),
             DialTimeMapper.FixedTimes(listOf(LocalTime.MIDNIGHT), dialHours = 24),
             DialTimeMapper.FixedTimes(listOf(LocalTime.of(5, 45)), dialHours = 24),
-            DialTimeMapper.TrailingOffset(0, dialHours = 24),
-            DialTimeMapper.TrailingOffset(180, dialHours = 24),
+            DialTimeMapper.Trailing(dialHours = 24),
         )
         for (mapper in mappers) {
             for (minuteOfDay in 0 until 24 * 60 step 7) {
@@ -187,11 +182,10 @@ class DialTimeMapperTest {
         val mappers = listOf(
             DialTimeMapper.FixedTimes(listOf(LocalTime.of(6, 0), LocalTime.of(18, 0))),
             DialTimeMapper.FixedTimes(listOf(LocalTime.of(2, 30), LocalTime.of(14, 30))),
-            DialTimeMapper.TrailingOffset(0),
-            DialTimeMapper.TrailingOffset(90),
+            DialTimeMapper.Trailing(),
             DialTimeMapper.FixedTimes(listOf(LocalTime.MIDNIGHT), dialHours = 24),
             DialTimeMapper.FixedTimes(listOf(LocalTime.of(2, 30)), dialHours = 24),
-            DialTimeMapper.TrailingOffset(90, dialHours = 24),
+            DialTimeMapper.Trailing(dialHours = 24),
         )
         for (mapper in mappers) {
             for ((month, day) in listOf(3 to 28, 10 to 24)) {

@@ -57,8 +57,8 @@ object WidgetSizing {
         val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
         fun dp(key: String) = options.getInt(key, 0)
         val portrait = context.resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE
-        val minWidth = dp(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH).takeIf { it > 0 } ?: 110
-        val minHeight = dp(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT).takeIf { it > 0 } ?: 110
+        val minWidth = dp(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH).takeIf { it > 0 } ?: DEFAULT_SIZE_DP.toInt()
+        val minHeight = dp(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT).takeIf { it > 0 } ?: DEFAULT_SIZE_DP.toInt()
         val width = if (portrait) minWidth else dp(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH).coerceAtLeast(minWidth)
         val height = if (portrait) dp(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT).coerceAtLeast(minHeight) else minHeight
         return Size(dpToPx(context, width.toFloat()), dpToPx(context, height.toFloat()))

@@ -83,4 +83,4 @@ Alle Formeln, Konstanten und Vereinfachungen der Astronomie, des Himmelsmodells 
 
 ## Lizenz
 
-LightTimeClouds steht unter der [MIT-Lizenz](LICENSE). Portierte oder übernommene Teile fremder Projekte (Horizon, Precomputed Atmospheric Scattering) behalten ihre eigenen Lizenzen, siehe [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+LightTimeClouds steht unter der [MIT-Lizenz](LICENSE.md). Portierte oder übernommene Teile fremder Projekte (Horizon, Precomputed Atmospheric Scattering) behalten ihre eigenen Lizenzen, siehe [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

@@ -42,7 +42,7 @@ object SolarDay {
 
         val date = now.atZone(zone).toLocalDate()
         val times = listOf(date.minusDays(1), date, date.plusDays(1)).map(::timesFor)
-            .first { !it.solarMidnight.isAfter(now) && it.nextSolarMidnight.isAfter(now) }
+            .last { !it.solarMidnight.isAfter(now) }
 
         return listOf(
             SolarEvent(SolarEventType.SOLAR_MIDNIGHT, times.solarMidnight),

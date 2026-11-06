@@ -340,7 +340,7 @@ object ClockFaceRenderer {
         SkyGradientTable.colors(altitudeDeg, topElevationDeg, SKY_STOPS).map { it or OPAQUE }.toIntArray()
 
     /** [skyColors] with the sky also lit by the moon at [moonAltitudeDeg], lit by the share [fraction] ([MoonlitSky]). */
-    internal fun moonlitSkyColors(sunAltitudeDeg: Double, moonAltitudeDeg: Double, fraction: Double, topElevationDeg: Double): IntArray =
+    private fun moonlitSkyColors(sunAltitudeDeg: Double, moonAltitudeDeg: Double, fraction: Double, topElevationDeg: Double): IntArray =
         MoonlitSky.colors(sunAltitudeDeg, moonAltitudeDeg, fraction, topElevationDeg, SKY_STOPS).map { it or OPAQUE }.toIntArray()
 
     /**
@@ -432,9 +432,9 @@ object ClockFaceRenderer {
      * time, the distance from the horizon edge the current altitude, up to
      * [WidgetSettings.skyTopElevationDeg] at the far edge. A disc at its true size (the moon's lit
      * part only) while within that range, clipped by the band's edges like a body setting behind
-     * the horizon; above it a small dot at the far edge. Below the horizon neither shows: the hour hand already
-     * points there, and the ring's colors tell whether the sun is up. The moon's course over the
-     * shown time span is [drawMoonPathInRing].
+     * the horizon; above it a small dot at the far edge. Below the horizon neither shows: the hour
+     * hand already points there, and the ring's colors tell whether the sun is up. The moon's
+     * course over the shown time span is [drawMoonPathInRing].
      */
     private fun drawSkyBodies(
         canvas: Canvas,
@@ -728,7 +728,7 @@ object ClockFaceRenderer {
                 }
                 DialTimeMapper.FixedTimes(minutes.map { LocalTime.ofSecondOfDay((it * 60L).coerceIn(0, 86399)) }, dialHours)
             }
-            SwitchStrategyType.TRAILING -> DialTimeMapper.TrailingOffset(0, dialHours)
+            SwitchStrategyType.TRAILING -> DialTimeMapper.Trailing(dialHours)
         }
     }
 

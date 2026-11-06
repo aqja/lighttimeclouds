@@ -31,9 +31,7 @@ object MoonlitSky {
     private val SIZE get() = AUREOLE_OFFSET + AUREOLE_ROWS * ANGLES * CHANNELS
 
     private val table: FloatArray by lazy {
-        val bytes = MoonlitSky::class.java.getResourceAsStream(RESOURCE)?.use { it.readBytes() }
-            ?: error("Missing resource $RESOURCE")
-        check(bytes.size == SIZE * Float.SIZE_BYTES) { "$RESOURCE has ${bytes.size} bytes, expected ${SIZE * Float.SIZE_BYTES}" }
+        val bytes = readTable(RESOURCE, SIZE * Float.SIZE_BYTES)
         FloatArray(SIZE).also { ByteBuffer.wrap(bytes).asFloatBuffer().get(it) }
     }
 
@@ -46,7 +44,7 @@ object MoonlitSky {
         }
         rows.toList().parallelStream().forEach { row ->
             val altitude = MIN_ALTITUDE + row * ALTITUDE_STEP
-            floats[row] = SkyModel.skyLuminance(altitude).first.toFloat()
+            floats[row] = SkyModel.skyLuminance(altitude).toFloat()
             store(SKY_OFFSET + row * STOPS * CHANNELS, SkyModel.skyLight(altitude, elevations))
         }
         aureoleRows.toList().parallelStream().forEach { row ->

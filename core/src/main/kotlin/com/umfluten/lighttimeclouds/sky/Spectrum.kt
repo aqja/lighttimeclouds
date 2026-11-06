@@ -1,6 +1,5 @@
 package com.umfluten.lighttimeclouds.sky
 
-
 /**
  * Spectral data for [SkyModel]: wavelengths from 360 to 830 nm in 10 nm steps, with the
  * extraterrestrial solar irradiance and the ozone absorption cross-sections as in the demo of
@@ -85,28 +84,18 @@ internal object Spectrum {
         return 683.0 * sum * STEP_NM
     }
 
-    /** Scotopic luminance (cd/m², rod vision) of the spectral [radiance]: 1700 lm/W times V′(λ). */
-    fun scotopicLuminance(radiance: DoubleArray): Double {
-        var sum = 0.0
-        for (i in radiance.indices) sum += radiance[i] * scotopicEfficiency[i]
-        return 1700.0 * sum * STEP_NM
+    /** Excitation of the rods by the spectral [radiance]: summed with [scotopicEfficiency] like [toLinearSrgb]. */
+    fun rodExcitation(radiance: DoubleArray): Double {
+        var rods = 0.0
+        for (i in radiance.indices) rods += radiance[i] * scotopicEfficiency[i] * STEP_NM
+        return rods
     }
 
     /**
-     * Excitations of the L, M and S cones and of the rods by the spectral [radiance]: the cone
-     * fundamentals of Smith and Pokorny (1975) as linear combinations of X, Y and Z (here of CIE
-     * 1931, not the Judd-Vos correction they were defined on), each normalized to a peak of 1, and
-     * [scotopicEfficiency]; summed like [toLinearSrgb], so [linearSrgbOfCones] turns them back.
+     * Linear sRGB, balanced like [toLinearSrgb], of excitations [lms] of the L, M and S cones: the
+     * cone fundamentals of Smith and Pokorny (1975) as linear combinations of X, Y and Z (here of
+     * CIE 1931, not the Judd-Vos correction they were defined on), each normalized to a peak of 1.
      */
-    fun photoreceptors(radiance: DoubleArray): DoubleArray {
-        val xyz = xyz(radiance)
-        val lms = DoubleArray(3) { i -> (0..2).sumOf { j -> SMITH_POKORNY[i][j] * xyz[j] } / conePeaks[i] }
-        var rods = 0.0
-        for (i in radiance.indices) rods += radiance[i] * scotopicEfficiency[i] * STEP_NM
-        return doubleArrayOf(lms[0], lms[1], lms[2], rods)
-    }
-
-    /** Linear sRGB, balanced like [toLinearSrgb], of cone excitations [lms] in the units of [photoreceptors]. */
     fun linearSrgbOfCones(lms: DoubleArray): DoubleArray {
         val raw = DoubleArray(3) { lms[it] * conePeaks[it] }
         val xyz = DoubleArray(3) { i -> (0..2).sumOf { j -> xyzOfSmithPokorny[i][j] * raw[j] } }
