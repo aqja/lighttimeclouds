@@ -825,7 +825,7 @@ seiner weißen Sonne. Die Farben sind also relativ zum Sonnenlicht, nicht zu D65
 
 ### 10.4 Tonwertabbildung
 
-Im Original nach der Belichtung, je Kanal (der Ring nutzt die Schritte 2 und 3, siehe
+Im Original nach der Belichtung, je Kanal (der Ring nutzt die Schritte 2 und 3, auf dem hellsten Kanal, siehe
 [PHYSIOLOGIE.md](PHYSIOLOGIE.md), Abschnitt 6):
 
 1. **Warmer Ausgleich für dunkle Himmel** (aus Horizon übernommen, rein gestalterisch): mit

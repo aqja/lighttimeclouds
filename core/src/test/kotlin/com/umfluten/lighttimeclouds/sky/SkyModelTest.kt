@@ -226,12 +226,22 @@ class SkyModelTest {
     }
 
     @Test
+    fun `the day's sky is clearly blue, its hue kept and its colors as strong as in bright light`() {
+        for (sun in listOf(50.0, 30.0, 15.0)) {
+            val sky = SkyModel.ringGradient(sun, doubleArrayOf(30.0)).single()
+            val saturation = (blue(sky) - red(sky)).toDouble() / blue(sky)
+            assertTrue("sun $sun°: %06x".format(sky), saturation > 0.3)
+        }
+    }
+
+    @Test
     fun `aureole is brightest next to the sun and fades out completely`() {
         val brightness = { c: Int -> (c shr 16 and 255) + (c shr 8 and 255) + (c and 255) }
         for (altitude in listOf(2.0, 10.0, 40.0)) {
             val aureole = SunTable.aureole(altitude)
             assertTrue("sun at $altitude°", (1 until aureole.size).all { brightness(aureole[it]) <= brightness(aureole[it - 1]) })
-            assertTrue(brightness(aureole.first()) > 300)
+            // Beside a low sun it only has the red left to raise: the sky there is warm already.
+            assertTrue(brightness(aureole.first()) > 200)
             assertEquals(0, aureole.last())
         }
     }

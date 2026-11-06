@@ -812,7 +812,7 @@ colors are therefore relative to sunlight, not to D65.
 
 ### 10.4 Tone mapping
 
-In the original, after exposure, per channel (the ring uses steps 2 and 3, see
+In the original, after exposure, per channel (the ring uses steps 2 and 3, on the brightest channel, see
 [PHYSIOLOGY.md](PHYSIOLOGY.md), section 6):
 
 1. **Warm bias for dark skies** (taken from Horizon, purely aesthetic): with $w = 1/(1 + 2Y)$,

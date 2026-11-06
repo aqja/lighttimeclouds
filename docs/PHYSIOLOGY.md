@@ -21,7 +21,7 @@ build time, into the color tables the widget draws from (PHYSICS.md, section 11.
 1. [Measures of light for the eye](#1-measures-of-light-for-the-eye)
 2. [Adaptation](#2-adaptation)
 3. [Brightness](#3-brightness)
-4. [Color in dim light](#4-color-in-dim-light)
+4. [Color in dim and bright light](#4-color-in-dim-and-bright-light)
 5. [The night sky](#5-the-night-sky)
 6. [Onto the display](#6-onto-the-display)
 7. [What comes out](#7-what-comes-out)
@@ -141,7 +141,7 @@ became darker until the Sun was about 10° below the horizon and then brighter a
 predicts visibility at threshold, but "may not account well for suprathreshold appearance" [1].
 The ring is about appearance, so brightness is matched instead (section 3.1).
 
-## 4. Color in dim light
+## 4. Color in dim and bright light
 
 ### 4.1 The Purkinje shift: rods in the cones' channels
 
@@ -183,7 +183,37 @@ section 3. Their experiment reached down to about 0.1 cd/m²; below, the app hol
 value there, like the weights of section 4.1. Without this, a dim warm horizon would be shown in
 saturated orange at the brightness the rods give it.
 
-### 4.3 Not used: a blue tint for the night
+### 4.3 Stronger colors in bright light
+
+The other way round, colors look stronger the brighter it is: the Hunt effect [21]. The daytime sky
+shines about 60 times as bright as the display's white, so the same chromaticity looks paler there
+than in the sky. Section 4.2 does not cover this, $s$ is practically 1 above about 10 cd/m². Kim,
+Weyrich and Kautz [22] had colorfulness $M$ estimated up to 16,860 cd/m² and found it linear in the
+logarithm of the reference white's luminance $L_w$, with a chroma $C$ growing with the 0.62nd power
+of the opponent signals:
+
+```math
+M = C\,(0.11\log_{10} L_w + 0.61)
+```
+
+For a color on the display to look as colorful as in the sky, the opponent signals must therefore
+grow by
+
+```math
+h = \left(\frac{0.11\log_{10} L_{wa} + 0.61}{0.11\log_{10} L_{d,\max} + 0.61}\right)^{1/0.62}
+```
+
+The app multiplies the exponent of section 4.2 by $h$, which does roughly the same, as it spreads
+the channels' ratios in the logarithm. The sky's mean luminance $L_{wa}$ (section 2) serves as the
+reference white. Up to the display's white $h = 1$, as section 4.2 applies there, and above
+16,860 cd/m² nothing was measured, so the value stays. At 6000 cd/m², $h = 1.41$.
+
+Recomputed with the full model of Kim et al., the ring together with the tone curve of section 6
+reaches 0.9 to 1.04 times the colorfulness the model gives the sky from 15° up; before, it was often
+only 60 to 80 %. This checks the approximation, not the measurement, as yardstick and correction
+come from the same source.
+
+### 4.4 Not used: a blue tint for the night
 
 Night scenes in paintings and films are often blue. Durand and Dorsey [12] add a blue shift to
 dark scenes and give that tradition as its motivation; Thompson, Shirley and Ferwerda [17] describe
@@ -206,16 +236,21 @@ a dark blue-gray. Light pollution is not included; over a city like Berlin the n
 1. **Brightness** $L_d$ (section 3), **hue and saturation** (section 4), divided by $L_{d,\max}$.
 2. **Highlights** are compressed with the ACES filmic curve in Narkowicz' fit [14]
    (PHYSICS.md, section 10.4) instead of being clipped: clipping turns the bright hazy horizon
-   into a hard, slightly cyan band.
+   into a hard, slightly cyan band. The curve acts on the brightest channel and the others are
+   scaled in proportion, which keeps the hue. Applied per channel, it bleaches bright colors, which
+   made the daytime sky whitish, and its toe raises saturation in the dark, which is no property of
+   the eye.
 3. **Gamma** $f^{1/2.2}$ and 8 bits per channel.
 
-The Sun's disc goes through the same steps, but in step 2 the curve is applied to its brightest
-channel and the others are scaled in proportion: far brighter than the display, it is shown at full
-brightness with its hue kept. Applied per channel, its red and green would both run into the limit
-first and turn an orange Sun pure yellow (PHYSICS.md, section 12.2).
+The Sun's disc goes through the same steps, but without the Hunt effect: it is orders of magnitude
+brighter than anything measured and would otherwise come out pure red when low. Far brighter than the
+display, it is shown at full brightness with its hue kept. Toned per channel, its red and green would
+both run into the limit first and turn an orange Sun pure yellow (PHYSICS.md, section 12.2).
 Its aureole is the sky next to it seen like the rest of the sky: the ring's color at the Sun's
 altitude plus the excess of the sky toward the Sun, through the same steps 1 to 3, and laid over
-the ring in "screen" blending.
+the ring in "screen" blending. Toward the Sun it grows weaker in no channel: there the light lies so
+far above the display that the curve would show only its slightly bluer color, while to the eye it
+just grows brighter.
 
 The Moon differs in four ways. Unlike the sky, it is a small bright body the cones see in full
 even in the dark, so rods and fading colors (section 4) go by its own luminance, or its orange
@@ -225,9 +260,9 @@ sunlight, or a full Moon would come out dull. The Moon the eye looks at counts a
 the model assumes, like Ward Larson and others [18], a spot of 1° around the point of fixation,
 which the Moon's disc fills to 27 %, and counts the whole disc in every phase. Without this a thin
 crescent in a dark sky would come out dull and brownish, far darker than at dusk, as the brightness
-mapping compresses strongly at low adaptation. And it is toned in between: per channel like the sky
-and with its hue kept like the Sun, the more the larger the share of the Moon's own light. By day
-the first keeps it brighter than the sky behind it, at night the second keeps its colors.
+mapping compresses strongly at low adaptation. And when it is fainter than the sky, as mostly by day,
+it only adds light: where looking at it would dim a channel below the sky behind it, the sky's value
+stays. The Hunt effect goes by the sky here too, not by the spot on the disc.
 
 The spot is a choice, not physiology. As measured, the eye pools far more narrowly, in the simplest
 model with a Gaussian of σ = 0.131° over the logarithm of luminance [19], and adapts to a crescent
@@ -250,12 +285,12 @@ The whole sky's mean luminance (section 2) and the ring's displayed colors for a
 
 | Sun | $L_{wa}$ photopic | scotopic | Ring (0° / 15° / 30° / 80°) |
 |---|---|---|---|
-| 40° | 6800 cd/m² | 19 000 | `#dfdeda` `#c8d8e3` `#b2c9dc` `#87a5c4` |
-| 10° | 3200 | 8200 | `#e6ddc3` `#d6dedf` `#b3c6d2` `#6986a8` |
-| 0° | 310 | 830 | `#8f9198` `#dddee0` `#c5d0dd` `#8aa4c5` |
-| −6° | 2.1 | 6.6 | `#555f74` `#95abc4` `#6a8cb9` `#43649e` |
-| −10° | 0.029 | 0.084 | `#323033` `#49536a` `#34405b` `#2a344f` |
-| −18° | 2.0·10⁻⁴ | 5.1·10⁻⁴ | `#212126` `#212229` `#212229` `#212228` |
+| 40° | 6800 cd/m² | 19 000 | `#dfdccc` `#99bee7` `#85ace3` `#7296cf` |
+| 10° | 3200 | 8200 | `#e8c58b` `#c3dcdf` `#98b8d6` `#6886b3` |
+| 0° | 310 | 830 | `#8f9199` `#d6dbe0` `#a9bdde` `#8099c8` |
+| −6° | 2.1 | 6.6 | `#5d6474` `#8da3c4` `#6e89b9` `#536c9e` |
+| −10° | 0.029 | 0.084 | `#333133` `#525a6a` `#3f485b` `#343d4f` |
+| −18° | 2.0·10⁻⁴ | 5.1·10⁻⁴ | `#232326` `#232429` `#232429` `#232428` |
 
 - **Day:** blue, paler toward the hazy horizon.
 - **Sunset:** the horizon itself darkens, a brighter band lies above it: looking flat, one sees
@@ -275,7 +310,8 @@ The whole sky's mean luminance (section 2) and the ring's displayed colors for a
 | Cone fundamentals from CIE 1931 instead of Judd-Vos | small differences in the violet and blue | [1](#1-measures-of-light-for-the-eye) |
 | Night sky uniform, with the Sun's spectrum, no light pollution | the night color of a natural, moonless sky | [5](#5-the-night-sky) |
 | Adaptation to the Moon over a spot of 1°, with the whole disc in every phase | the eye pools more narrowly; the brightness of the phases still fits the measurements, but checked only roughly | [6](#6-onto-the-display) |
-| ACES curve for highlights | aesthetic compression of the brightest parts | [6](#6-onto-the-display) |
+| Hunt effect from measurements on color patches against a dark surround, reference white equal to the sky's mean luminance | its strength is uncertain: colorfulness is hard to estimate (scatter around 23 %), and a bright background lowers it; nothing was measured for looking freely at the sky | [4.3](#43-stronger-colors-in-bright-light) |
+| ACES curve for highlights, on the brightest channel | aesthetic compression of the brightest parts; the hue stays even where the eye sees nearly white | [6](#6-onto-the-display) |
 
 ---
 
@@ -326,3 +362,7 @@ The whole sky's mean luminance (section 2) and the ring's displayed colors for a
 20. J. C. Stevens, S. S. Stevens: Brightness Function: Effects of Adaptation. *Journal of the Optical
     Society of America* 53 (3), 375 (1963). Read off a later redrawing of the curves.
     <https://opg.optica.org/josa/abstract.cfm?uri=josa-53-3-375>
+21. R. W. G. Hunt: Light and Dark Adaptation and the Perception of Color. *Journal of the Optical
+    Society of America* 42 (3), 190–199 (1952). <https://doi.org/10.1364/JOSA.42.000190>
+22. M. H. Kim, T. Weyrich, J. Kautz: Modeling Human Color Perception under Extended Luminance Levels.
+    *ACM Transactions on Graphics* 28 (3), 27 (2009). <https://doi.org/10.1145/1531326.1531333>

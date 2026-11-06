@@ -87,13 +87,13 @@ object MoonlitSky {
         val position = moon / AUREOLE_STEP
         val row = floor(position).toInt().coerceAtMost(AUREOLE_ROWS - 2)
         val t = position - row
-        return IntArray(ANGLES) { angle ->
+        return SkyModel.risingInward(IntArray(ANGLES) { angle ->
             val total = DoubleArray(CHANNELS) { channel ->
                 fun at(r: Int) = table[AUREOLE_OFFSET + (r * ANGLES + angle) * CHANNELS + channel].toDouble()
                 ring[channel] + ratio * (at(row) + (at(row + 1) - at(row)) * t)
             }
             SkyModel.screenOver(background, seen(total))
-        }
+        })
     }
 
     private fun adaptation(sunAltitudeDeg: Double, moonAltitudeDeg: Double, ratio: Double): Double {

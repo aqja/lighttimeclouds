@@ -22,7 +22,7 @@ beim Build, in die Farbtabellen, aus denen das Widget zeichnet (PHYSIK.md, Absch
 1. [Maße des Lichts für das Auge](#1-maße-des-lichts-für-das-auge)
 2. [Anpassung](#2-anpassung)
 3. [Helligkeit](#3-helligkeit)
-4. [Farbe bei wenig Licht](#4-farbe-bei-wenig-licht)
+4. [Farbe bei wenig und viel Licht](#4-farbe-bei-wenig-und-viel-licht)
 5. [Der Nachthimmel](#5-der-nachthimmel)
 6. [Auf das Display](#6-auf-das-display)
 7. [Was herauskommt](#7-was-herauskommt)
@@ -148,7 +148,7 @@ kontrastbasierter Operator sagt die Sichtbarkeit an der Schwelle voraus, „may 
 suprathreshold appearance“ [1]. Beim Ring geht es um das Aussehen, darum wird stattdessen die
 Helligkeit angeglichen (Abschnitt 3.1).
 
-## 4. Farbe bei wenig Licht
+## 4. Farbe bei wenig und viel Licht
 
 ### 4.1 Der Purkinje-Effekt: Stäbchen in den Kanälen der Zapfen
 
@@ -192,7 +192,37 @@ Abschnitt 3. Ihr Experiment reichte bis etwa 0,1 cd/m²; darunter hält die App 
 fest, wie die Gewichte aus Abschnitt 4.1. Ohne das würde ein schwacher, warmer Horizont in
 gesättigtem Orange gezeigt, mit der Helligkeit, die ihm die Stäbchen geben.
 
-### 4.3 Nicht verwendet: ein Blauton für die Nacht
+### 4.3 Kräftigere Farben im Hellen
+
+Umgekehrt wirken Farben umso kräftiger, je heller es ist: der Hunt-Effekt [21]. Der Taghimmel leuchtet
+rund 60-mal so hell wie das Weiß des Displays, dieselbe Farbart wirkt dort also blasser als am Himmel.
+Abschnitt 4.2 erfasst das nicht, $s$ ist oberhalb von etwa 10 cd/m² praktisch 1. Kim, Weyrich und
+Kautz [22] haben die Buntheit $M$ bis 16 860 cd/m² schätzen lassen und fanden sie linear im
+Logarithmus der Leuchtdichte $L_w$ des Referenzweiß, mit einem Chroma $C$, das mit der Potenz 0,62
+der Gegenfarbensignale wächst:
+
+```math
+M = C\,(0{,}11\log_{10} L_w + 0{,}61)
+```
+
+Damit eine Farbe auf dem Display so bunt wirkt wie am Himmel, müssen die Gegenfarbensignale also um
+
+```math
+h = \left(\frac{0{,}11\log_{10} L_{wa} + 0{,}61}{0{,}11\log_{10} L_{d,\max} + 0{,}61}\right)^{1/0{,}62}
+```
+
+wachsen. Die App multipliziert den Exponenten aus Abschnitt 4.2 mit $h$, was näherungsweise
+dasselbe tut, weil er die Verhältnisse der Kanäle im Logarithmus spreizt. Als Referenzweiß dient
+die mittlere Leuchtdichte des Himmels $L_{wa}$ (Abschnitt 2). Bis zum Weiß des Displays ist $h = 1$, dort gilt
+Abschnitt 4.2, und über 16 860 cd/m² gibt es keine Messung, also bleibt der Wert dort stehen. Bei
+6000 cd/m² ist $h = 1{,}41$.
+
+Nachgerechnet mit dem vollständigen Modell von Kim et al. erreicht der Ring zusammen mit der
+Tonkurve aus Abschnitt 6 ab 15° Höhe das 0,9- bis 1,04-Fache der Buntheit, die das Modell dem Himmel
+zuschreibt; vorher waren es oft nur 60 bis 80 %. Das prüft die Näherung, nicht die Messung, denn
+Maßstab und Korrektur stammen aus derselben Quelle.
+
+### 4.4 Nicht verwendet: ein Blauton für die Nacht
 
 Nachtszenen sind in Gemälden und Filmen oft blau. Durand und Dorsey [12] fügen dunklen Szenen eine
 Blauverschiebung hinzu und nennen diese Tradition als Begründung; Thompson, Shirley und Ferwerda [17]
@@ -216,16 +246,21 @@ nicht enthalten; über einer Stadt wie Berlin ist der Nachthimmel 10- bis 50-mal
    $L_{d,\max}$.
 2. **Lichter** werden mit der ACES-Filmkurve in der Näherung von Narkowicz [14] gestaucht
    (PHYSIK.md, Abschnitt 10.4), statt abgeschnitten zu werden: Abschneiden macht aus dem hellen,
-   dunstigen Horizont ein hartes, leicht türkises Band.
+   dunstigen Horizont ein hartes, leicht türkises Band. Die Kurve wirkt auf den hellsten Kanal, die
+   übrigen werden im selben Verhältnis skaliert, und so bleibt der Farbton erhalten. Je Kanal
+   angewandt, bleicht sie helle Farben aus, was den Taghimmel weißlich machte, und ihr Fuß hebt im
+   Dunkeln die Sättigung, was keine Eigenschaft des Auges ist.
 3. **Gamma** $f^{1/2{,}2}$ und 8 Bit je Kanal.
 
-Die Sonnenscheibe durchläuft dieselben Schritte, nur wird in Schritt 2 die Kurve auf ihren hellsten
-Kanal angewandt und die übrigen werden im selben Verhältnis skaliert: Weit heller als das Display,
-wird sie in voller Helligkeit mit erhaltenem Farbton gezeigt. Je Kanal angewandt, liefen Rot und
-Grün zuerst in die Begrenzung und machten aus einer orangen Sonne reines Gelb (PHYSIK.md,
-Abschnitt 12.2). Ihre Aureole ist der Himmel neben ihr, gesehen wie der übrige Himmel: die Ringfarbe
-in Sonnenhöhe plus der Überschuss des Himmels zur Sonne hin, durch dieselben Schritte 1 bis 3, und in
-„Screen“-Mischung über den Ring gelegt.
+Die Sonnenscheibe durchläuft dieselben Schritte, aber ohne den Hunt-Effekt: Sie ist um
+Größenordnungen heller als alles Gemessene und käme sonst bei tiefem Stand rein rot heraus. Weit
+heller als das Display, wird sie in voller Helligkeit mit erhaltenem Farbton gezeigt. Je Kanal
+getont, liefen Rot und Grün zuerst in die Begrenzung und machten aus einer orangen Sonne reines Gelb
+(PHYSIK.md, Abschnitt 12.2). Ihre Aureole ist der Himmel neben ihr, gesehen wie der übrige Himmel: die
+Ringfarbe in Sonnenhöhe plus der Überschuss des Himmels zur Sonne hin, durch dieselben Schritte 1 bis
+3, und in „Screen“-Mischung über den Ring gelegt. Zur Sonne hin wird sie in keinem Kanal schwächer:
+Dort liegt das Licht so weit über dem Display, dass die Kurve nur noch seine etwas blauere Farbe
+zeigte, während es für das Auge einfach heller wird.
 
 Der Mond unterscheidet sich in vier Punkten. Anders als der Himmel ist er ein kleiner heller Körper,
 den die Zapfen auch im Dunkeln voll sehen; Stäbchen und verblassende Farben (Abschnitt 4) richten sich
@@ -236,9 +271,9 @@ ein Vollmond matt heraus. Außerdem zählt der Mond selbst mit, auf den das Auge
 dafür wie Ward Larson und andere [18] einen Fleck von 1° um den Fixierpunkt an, den die Mondscheibe zu
 27 % füllt, und zählt in jeder Phase die ganze Scheibe. Ohne das fiele eine schmale Sichel am dunklen
 Himmel matt und bräunlich aus, viel dunkler als in der Dämmerung, weil die Helligkeitsabbildung bei
-geringer Anpassung stark staucht. Und er wird dazwischen getont: je Kanal wie der Himmel und mit
-erhaltenem Farbton wie die Sonne, umso stärker, je größer der Anteil des Mondlichts ist. Am Tag hält das
-Erste ihn heller als den Himmel hinter ihm, nachts erhält das Zweite seine Farben.
+geringer Anpassung stark staucht. Und ist er schwächer als der Himmel, wie meist am Tag, fügt er ihm nur
+Licht hinzu: Wo der Blick auf ihn einen Kanal unter den Himmel dahinter senken würde, bleibt dessen Wert.
+Der Hunt-Effekt richtet sich auch bei ihm nach dem Himmel, nicht nach dem Fleck auf der Scheibe.
 
 Der Fleck ist eine Festlegung, keine Physiologie. Gemessen mittelt das Auge viel enger, in seinem
 einfachsten Modell mit einem Gaußkern von σ = 0,131° über die logarithmierte Leuchtdichte [19], und passt
@@ -263,12 +298,12 @@ bis 45° (Horizont / 15° / 30° / 80° darüber), mit dem Aerosol aus PHYSIK.md
 
 | Sonne | $L_{wa}$ photopisch | skotopisch | Ring (0° / 15° / 30° / 80°) |
 |---|---|---|---|
-| 40° | 6800 cd/m² | 19 000 | `#dfdeda` `#c8d8e3` `#b2c9dc` `#87a5c4` |
-| 10° | 3200 | 8200 | `#e6ddc3` `#d6dedf` `#b3c6d2` `#6986a8` |
-| 0° | 310 | 830 | `#8f9198` `#dddee0` `#c5d0dd` `#8aa4c5` |
-| −6° | 2,1 | 6,6 | `#555f74` `#95abc4` `#6a8cb9` `#43649e` |
-| −10° | 0,029 | 0,084 | `#323033` `#49536a` `#34405b` `#2a344f` |
-| −18° | 2,0·10⁻⁴ | 5,1·10⁻⁴ | `#212126` `#212229` `#212229` `#212228` |
+| 40° | 6800 cd/m² | 19 000 | `#dfdccc` `#99bee7` `#85ace3` `#7296cf` |
+| 10° | 3200 | 8200 | `#e8c58b` `#c3dcdf` `#98b8d6` `#6886b3` |
+| 0° | 310 | 830 | `#8f9199` `#d6dbe0` `#a9bdde` `#8099c8` |
+| −6° | 2,1 | 6,6 | `#5d6474` `#8da3c4` `#6e89b9` `#536c9e` |
+| −10° | 0,029 | 0,084 | `#333133` `#525a6a` `#3f485b` `#343d4f` |
+| −18° | 2,0·10⁻⁴ | 5,1·10⁻⁴ | `#232326` `#232429` `#232429` `#232428` |
 
 - **Tag:** blau, zum dunstigen Horizont hin blasser.
 - **Sonnenuntergang:** Der Horizont selbst wird dunkler, darüber liegt ein helleres Band: Mit flachem
@@ -289,7 +324,8 @@ bis 45° (Horizont / 15° / 30° / 80° darüber), mit dem Aerosol aus PHYSIK.md
 | Zapfengrundempfindlichkeiten aus CIE 1931 statt Judd-Vos | kleine Abweichungen im Violetten und Blauen | [1](#1-maße-des-lichts-für-das-auge) |
 | Nachthimmel gleichmäßig, mit dem Spektrum der Sonne, ohne Lichtverschmutzung | die Nachtfarbe eines natürlichen, mondlosen Himmels | [5](#5-der-nachthimmel) |
 | Anpassung an den Mond über einen Fleck von 1° mit der ganzen Scheibe in jeder Phase | das Auge mittelt enger; die Helligkeit der Phasen passt trotzdem zu den Messungen, aber nur grob geprüft | [6](#6-auf-das-display) |
-| ACES-Kurve für die Lichter | gestalterische Stauchung der hellsten Stellen | [6](#6-auf-das-display) |
+| Hunt-Effekt aus Messungen an Farbfeldern vor dunklem Umfeld, Referenzweiß gleich mittlerer Himmelsleuchtdichte | die Stärke ist unsicher: Buntheit ist schwer zu schätzen (Streuung um 23 %), und ein heller Hintergrund senkt sie; für freien Blick in den Himmel gibt es keine Messung | [4.3](#43-kräftigere-farben-im-hellen) |
+| ACES-Kurve für die Lichter, auf dem hellsten Kanal | gestalterische Stauchung der hellsten Stellen; der Farbton bleibt auch dort, wo das Auge fast Weiß sieht | [6](#6-auf-das-display) |
 
 ---
 
@@ -340,3 +376,7 @@ bis 45° (Horizont / 15° / 30° / 80° darüber), mit dem Aerosol aus PHYSIK.md
 20. J. C. Stevens, S. S. Stevens: Brightness Function: Effects of Adaptation. *Journal of the Optical
     Society of America* 53 (3), 375 (1963). Abgelesen aus einer späteren Nachzeichnung der Kurven.
     <https://opg.optica.org/josa/abstract.cfm?uri=josa-53-3-375>
+21. R. W. G. Hunt: Light and Dark Adaptation and the Perception of Color. *Journal of the Optical
+    Society of America* 42 (3), 190–199 (1952). <https://doi.org/10.1364/JOSA.42.000190>
+22. M. H. Kim, T. Weyrich, J. Kautz: Modeling Human Color Perception under Extended Luminance Levels.
+    *ACM Transactions on Graphics* 28 (3), 27 (2009). <https://doi.org/10.1145/1531326.1531333>

@@ -230,20 +230,22 @@ object SkyModel {
      * display, for an eye in the given [adaptation]:
      *  - the hue from the cones, with the rods' signal entering their channels as Cao et al.
      *    (2008) measured ([rodIntrusion]), which shifts it towards blue as the light fades;
-     *  - colors fading as the cones lose sensitivity (Wanat and Mantiuk 2014, [saturationFactor]);
+     *  - colors fading as the cones lose sensitivity (Wanat and Mantiuk 2014, [saturationFactor]),
+     *    and growing stronger in bright light (the Hunt effect, [huntFactor]);
      *  - the brightness from Stevens' brightness law, matched between the sky and the display by
      *    the revised operator of Tumblin and Rushmeier (Tumblin, Hodgins and Guenter 1999);
-     *  - highlights compressed by the ACES curve, then gamma-encoded.
+     *  - highlights compressed by the ACES curve on the brightest channel, with the others in
+     *    proportion so that it keeps the hue, then gamma-encoded.
      *
      * Rods and fading colors go by [colorLuminance]: for the sky that of the whole sky, for a small
-     * bright body in a dark sky its own, which the cones see in full.
+     * bright body in a dark sky its own, which the cones see in full. [hunt] is the [huntFactor].
      */
     private fun perceive(
         radiance: DoubleArray,
         adaptation: Adaptation,
-        preserveHue: Boolean = false,
         colorLuminance: Double = adaptation.photopic,
-    ): Int = perceiveLight(light(radiance), adaptation.photopic, preserveHue, colorLuminance)
+        hunt: Double = huntFactor(adaptation.photopic),
+    ): Int = perceiveLight(light(radiance), adaptation.photopic, colorLuminance, hunt)
 
     /** Values in a [light] array. */
     internal const val LIGHT_CHANNELS = 5
@@ -264,15 +266,15 @@ object SkyModel {
     internal fun perceiveLight(
         light: DoubleArray,
         adaptation: Double,
-        preserveHue: Boolean = false,
         colorLuminance: Double = adaptation,
+        hunt: Double = huntFactor(adaptation),
     ): Int {
         val (k1, k2) = rodIntrusion(colorLuminance)
         val rods = light[3]
         val intrusion = Spectrum.linearSrgbOfCones(doubleArrayOf(k1 * rods, k1 * rods, k2 * rods))
         val seen = DoubleArray(3) { light[it] + intrusion[it] }
         val seenLuminance = luminance(seen).coerceAtLeast(1e-300)
-        val saturation = saturationFactor(colorLuminance) / saturationFactor(DISPLAY_ADAPTATION)
+        val saturation = saturationFactor(colorLuminance) / saturationFactor(DISPLAY_ADAPTATION) * hunt
 
         val world = stevensGamma(adaptation)
         val display = stevensGamma(DISPLAY_ADAPTATION)
@@ -280,9 +282,8 @@ object SkyModel {
         val brightness = DISPLAY_ADAPTATION * m * (light[LIGHT_LUMINANCE] / adaptation).pow(world / display)
 
         val linear = DoubleArray(3) { (seen[it].coerceAtLeast(0.0) / seenLuminance).pow(saturation) * brightness / DISPLAY_MAX_LUMINANCE }
-        // The curve per channel, or on the brightest channel with the others in proportion.
         val brightest = linear.max().coerceAtLeast(1e-300)
-        val toned = if (preserveHue) DoubleArray(3) { linear[it] * aces(brightest) / brightest } else DoubleArray(3) { aces(linear[it]) }
+        val toned = DoubleArray(3) { linear[it] * aces(brightest) / brightest }
         fun channel(i: Int): Int = (toned[i].pow(1.0 / GAMMA) * 255.0).roundToInt().coerceIn(0, 255)
         return (channel(0) shl 16) or (channel(1) shl 8) or channel(2)
     }
@@ -320,6 +321,22 @@ object SkyModel {
         return l / (l + 0.108)
     }
 
+    /**
+     * How much stronger colors must be on the display to look as colorful as under an eye adapted
+     * to [adaptation] cd/m², the Hunt effect. Kim, Weyrich and Kautz (2009, eq. 10 and 11) measured
+     * colorfulness up to [HUNT_MAX_WHITE] cd/m² as chroma times 0.11 log₁₀ L_w + 0.61, with chroma
+     * the 0.62nd power of the opponent signals. The factor is that term for the sky's mean
+     * luminance as L_w over the display's white, to the inverse power, and multiplies the exponent
+     * of [saturationFactor]. Up to the display's white it is 1: colors fade by [saturationFactor].
+     */
+    private fun huntFactor(adaptation: Double): Double {
+        fun scale(white: Double) = 0.11 * StrictMath.log10(white) + 0.61
+        return (scale(adaptation.coerceIn(DISPLAY_MAX_LUMINANCE, HUNT_MAX_WHITE)) / scale(DISPLAY_MAX_LUMINANCE)).pow(1.0 / 0.62)
+    }
+
+    /** Highest white (cd/m²) at which Kim, Weyrich and Kautz (2009) measured colorfulness. */
+    private const val HUNT_MAX_WHITE = 16860.0
+
     /** ACES filmic curve (Narkowicz 2016). */
     private fun aces(c: Double) = ((c * (2.51 * c + 0.03)) / (c * (2.43 * c + 0.59) + 0.14)).coerceIn(0.0, 1.0)
 
@@ -337,15 +354,14 @@ object SkyModel {
      * air near the horizon dims it does its color show, yellow, orange and red, until in the haze
      * it hardly stands out from the sky.
      */
-    fun sunDisc(altitudeDeg: Double): Int = sunDisc(altitudeDeg, preserveHue = true)
-
-    internal fun sunDisc(altitudeDeg: Double, preserveHue: Boolean): Int {
+    fun sunDisc(altitudeDeg: Double): Int {
         val altitude = altitudeDeg.coerceIn(0.0, 90.0)
         val transmitted = transmittance(RING, 0.0, Math.toRadians(90.0 - altitude), SUN_SAMPLES)
         val solidAngle = Math.PI * Math.toRadians(SUN_SEMI_DIAMETER_DEG).pow(2)
         val sky = skySpectra(altitude, doubleArrayOf(altitude)).first()
         val radiance = DoubleArray(RING.bands) { k -> RING.sun[k] * transmitted[k] / solidAngle + sky[k] }
-        return perceive(radiance, adaptation(altitude), preserveHue)
+        // Colorfulness was measured up to [HUNT_MAX_WHITE]; the disc is many orders of magnitude brighter.
+        return perceive(radiance, adaptation(altitude), hunt = 1.0)
     }
 
     /**
@@ -364,9 +380,24 @@ object SkyModel {
         val ring = skySpectra(altitudeDeg, doubleArrayOf(altitudeDeg)).first()
         val background = perceive(ring, adaptation)
         val last = sky.last()
-        return sky.map { s ->
+        return risingInward(sky.map { s ->
             screenOver(background, perceive(DoubleArray(s.size) { ring[it] + max(0.0, s[it] - last[it]) }, adaptation))
-        }.toIntArray()
+        }.toIntArray())
+    }
+
+    /**
+     * The [aureole], from the body outward, with no channel weaker than further out. Next to the
+     * body the light lies far above the display, where the curve keeping the hue shows only its
+     * color, a little bluer than further out, while to the eye it just grows brighter.
+     */
+    internal fun risingInward(aureole: IntArray): IntArray {
+        val rising = aureole.copyOf()
+        for (i in rising.lastIndex - 1 downTo 0) {
+            var color = 0
+            for (shift in intArrayOf(16, 8, 0)) color = color or (max(rising[i] shr shift and 255, rising[i + 1] shr shift and 255) shl shift)
+            rising[i] = color
+        }
+        return rising
     }
 
     /** The color that, laid over [background] in "screen" blending, gives [target], or as near as it can. */
@@ -493,28 +524,32 @@ object SkyModel {
                 val ratio = moonlightRatio(lit)
                 val solidAngle = lit * Math.PI * Math.toRadians(MOON_SEMI_DIAMETER_DEG).pow(2)
                 val moon = DoubleArray(RING.bands) { k -> RING.sun[k] * ratio * transmitted[k] / solidAngle }
-                val adapted = Adaptation(
-                    moonlessSky.photopic + ratio * moonlitSky.photopic + MOON_FOVEA_SHARE * Spectrum.photopicLuminance(moon),
-                    moonlessSky.scotopic + ratio * moonlitSky.scotopic + MOON_FOVEA_SHARE * Spectrum.scotopicLuminance(moon),
+                val skyAdaptation = Adaptation(
+                    moonlessSky.photopic + ratio * moonlitSky.photopic,
+                    moonlessSky.scotopic + ratio * moonlitSky.scotopic,
                 )
-                moonColor(moon, sky, adapted)
+                val adapted = Adaptation(
+                    skyAdaptation.photopic + MOON_FOVEA_SHARE * Spectrum.photopicLuminance(moon),
+                    skyAdaptation.scotopic + MOON_FOVEA_SHARE * Spectrum.scotopicLuminance(moon),
+                )
+                moonColor(moon, sky, adapted, skyAdaptation)
             }
         }.toIntArray()
     }
 
-    /** The [moon]'s radiance in front of the [sky], seen with [adaptation]; see [moonDisc]. */
-    private fun moonColor(moon: DoubleArray, sky: DoubleArray, adaptation: Adaptation): Int {
+    /**
+     * The [moon]'s radiance in front of the [sky], seen with [adaptation]; see [moonDisc]. The
+     * [huntFactor] goes by the sky, [skyAdaptation], the scene's white, not by the spot on the moon
+     * the eye rests on. A moon fainter than the sky only adds to it: where looking at it would dim
+     * a channel below the sky behind it, the sky's stays.
+     */
+    private fun moonColor(moon: DoubleArray, sky: DoubleArray, adaptation: Adaptation, skyAdaptation: Adaptation): Int {
         val radiance = DoubleArray(RING.bands) { k -> moon[k] + sky[k] }
-        val luminance = Spectrum.photopicLuminance(radiance)
-        val share = Spectrum.photopicLuminance(moon) / luminance
-        val likeSky = perceive(radiance, adaptation, colorLuminance = luminance)
-        val likeSun = perceive(radiance, adaptation, preserveHue = true, colorLuminance = luminance)
+        val seen = perceive(radiance, adaptation, Spectrum.photopicLuminance(radiance), huntFactor(skyAdaptation.photopic))
+        if (Spectrum.photopicLuminance(moon) >= Spectrum.photopicLuminance(sky)) return seen
+        val behind = perceive(sky, skyAdaptation)
         var color = 0
-        for (shift in intArrayOf(16, 8, 0)) {
-            val a = likeSky shr shift and 255
-            val b = likeSun shr shift and 255
-            color = color or ((a + (b - a) * share).roundToInt() shl shift)
-        }
+        for (shift in intArrayOf(16, 8, 0)) color = color or (max(seen shr shift and 255, behind shr shift and 255) shl shift)
         return color
     }
 
