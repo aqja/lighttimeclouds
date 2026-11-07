@@ -366,7 +366,7 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
         )
     }
 
-    SettingsFileSection(viewModel)
+    SettingsFileSection(widgetId, viewModel)
 }
 
 /**

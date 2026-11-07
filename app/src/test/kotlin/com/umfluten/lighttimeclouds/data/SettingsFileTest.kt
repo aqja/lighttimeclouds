@@ -6,6 +6,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.lang.reflect.Modifier
+import java.time.LocalDate
 import java.time.ZoneId
 
 class SettingsFileTest {
@@ -47,6 +48,11 @@ class SettingsFileTest {
 
     private fun fileWith(settings: String = "{}", place: String = """{"id":"a","name":"Berlin","latitude":52.5208,"longitude":13.4094,"zone":"Europe/Berlin"}""") =
         """{"format":"lighttimeclouds-settings","version":1,"places":[$place],"settings":$settings}"""
+
+    @Test
+    fun `the file name starts with the date and ends with the widget`() {
+        assertEquals("2026-03-05-lighttimeclouds-settings-42.json", SettingsFile.fileName(LocalDate.of(2026, 3, 5), widgetId = 42))
+    }
 
     @Test
     fun `settings and places come back as they were, for the widget reading the file`() {

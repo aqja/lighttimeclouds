@@ -13,6 +13,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
+import java.time.LocalDate
 import java.time.ZoneId
 
 /**
@@ -22,7 +23,6 @@ import java.time.ZoneId
  * [WidgetSettings] defaults, so a file outlives changes to the options; its places must be sound.
  */
 object SettingsFile {
-    const val FILE_NAME = "lighttimeclouds-settings.json"
     private const val FORMAT = "lighttimeclouds-settings"
     private const val VERSION = 1
     private val LATITUDES = -90.0..90.0
@@ -32,6 +32,9 @@ object SettingsFile {
 
     /** What a file holds: its [places], and its settings for the widget they were decoded for. */
     class Contents(val places: List<Place>, val settings: WidgetSettings)
+
+    /** Suggested name for the file of [widgetId], written on [date]: files of several widgets and days stay apart. */
+    fun fileName(date: LocalDate, widgetId: Int): String = "$date-$FORMAT-$widgetId.json"
 
     fun encode(settings: WidgetSettings, places: List<Place>): String {
         val root = buildJsonObject {

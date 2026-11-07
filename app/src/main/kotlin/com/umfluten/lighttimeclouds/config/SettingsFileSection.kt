@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.data.SettingsFile
+import java.time.LocalDate
 
 /** How the last export or import went. */
 private class FileResult(val message: String, val failed: Boolean)
@@ -28,7 +29,7 @@ private class FileResult(val message: String, val failed: Boolean)
  * file. The system's file dialogs grant access to just that file, so no permission is needed.
  */
 @Composable
-internal fun SettingsFileSection(viewModel: ConfigViewModel) {
+internal fun SettingsFileSection(widgetId: Int, viewModel: ConfigViewModel) {
     val resources = LocalResources.current
     var result by remember { mutableStateOf<FileResult?>(null) }
     val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(JSON_TYPE)) { uri ->
@@ -57,7 +58,7 @@ internal fun SettingsFileSection(viewModel: ConfigViewModel) {
     Section(stringResource(R.string.section_settings_file)) {
         Hint(stringResource(R.string.settings_file_hint))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = { exporter.launch(SettingsFile.FILE_NAME) }, modifier = Modifier.weight(1f)) {
+            OutlinedButton(onClick = { exporter.launch(SettingsFile.fileName(LocalDate.now(), widgetId)) }, modifier = Modifier.weight(1f)) {
                 Text(stringResource(R.string.settings_file_export))
             }
             OutlinedButton(onClick = { importer.launch(IMPORT_TYPES) }, modifier = Modifier.weight(1f)) {
