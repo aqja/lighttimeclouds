@@ -1,5 +1,7 @@
 package com.umfluten.lighttimeclouds.data
 
+import com.umfluten.lighttimeclouds.sky.SkyProjection
+
 enum class DisplayMode { TWELVE_HOUR, TWENTY_FOUR_HOUR }
 
 enum class TapAction { OWN_APP, SYSTEM_CLOCK }
@@ -103,5 +105,7 @@ data class WidgetSettings(
         const val DEFAULT_WIDGET_ID = 0
 
         const val MAX_RING_END_FADE_DEG = 30
+        const val MIN_SKY_TOP_ELEVATION_DEG = 10
+        const val MAX_SKY_TOP_ELEVATION_DEG = SkyProjection.MAX_TOP_ELEVATION_DEG.toInt()
     }
 }

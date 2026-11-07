@@ -28,7 +28,10 @@
     <string name="section_dial">Zifferblatt</string>
     <string name="display_mode_12h">12 Stunden</string>
     <string name="display_mode_24h">24 Stunden</string>
-    <string name="ring_style_label">Tag/Nacht-Ring</string>
+    <string name="section_ring">Tag/Nacht-Ring</string>
+    <string name="section_moon">Mond</string>
+    <string name="section_weather">Wetter</string>
+    <string name="ring_style_label">Färbung</string>
     <string name="ring_style_sky">Himmel</string>
     <string name="ring_style_bands">Feste Farben</string>
     <string name="sky_horizon_label">Horizont im Ring</string>
@@ -94,6 +97,19 @@
     <string name="section_tap_action">Antippen öffnet</string>
     <string name="tap_action_system_clock">Uhr-App</string>
     <string name="tap_action_own_app">Diese App</string>
+
+    <!-- Settings file -->
+    <string name="section_settings_file">Einstellungsdatei</string>
+    <string name="settings_file_hint">Die Datei enthält die Einstellungen dieses Widgets und alle Orte mit ihren Koordinaten. Damit ziehst du auf ein neues Gerät um oder überträgst die Einstellungen auf ein anderes Widget; ein Backup über das System gibt es nicht.</string>
+    <string name="settings_file_export">Exportieren</string>
+    <string name="settings_file_import">Importieren</string>
+    <string name="settings_file_exported">Einstellungen exportiert.</string>
+    <string name="settings_file_export_failed">Die Datei konnte nicht geschrieben werden.</string>
+    <string name="settings_file_import_failed">Das ist keine lesbare Einstellungsdatei.</string>
+    <plurals name="settings_file_imported">
+        <item quantity="one">%d Ort übernommen. Die Einstellungen gelten nach dem Speichern.</item>
+        <item quantity="other">%d Orte übernommen. Die Einstellungen gelten nach dem Speichern.</item>
+    </plurals>
 
     <!-- Places -->
     <string name="section_location">Standort</string>

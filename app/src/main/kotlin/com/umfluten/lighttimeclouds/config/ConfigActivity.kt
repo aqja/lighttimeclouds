@@ -31,6 +31,8 @@ class ConfigActivity : ComponentActivity() {
         setContent {
             ConfigRoot(
                 initialWidgetId = appWidgetId,
+                // Tapping the widget can open the app too, with its id but as a plain visit.
+                startOnSettings = intent?.action == AppWidgetManager.ACTION_APPWIDGET_CONFIGURE,
                 onFinishedWithResult = { editedWidgetId -> finishWithResult(editedWidgetId) },
             )
         }

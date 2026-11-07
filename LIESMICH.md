@@ -20,6 +20,7 @@ Ein Ring um ein gewöhnliches Zifferblatt zeigt den Tagesverlauf von Nacht über
 - Gespeicherte Orte mit Name, Koordinaten und Zeitzone; jedes Widget zeigt die Ortszeit (Weltuhr mit mehreren Widgets). Nur manuelle Eingabe, kein GPS, keine Standort-Berechtigung. Koordinaten behält die App mit höchstens drei Nachkommastellen, also auf etwa 100 m genau. Netzwerkzugriff nur für den optionalen Wetter-Ring
 - Antippen öffnet wahlweise die System-Uhr-App oder die App selbst
 - Eigenes Launcher-Icon für die Konfiguration, unabhängig vom Widget
+- Einstellungsdatei (JSON) zum Exportieren und Importieren der Einstellungen eines Widgets mit allen Orten; System-Backups und Geräteumzüge lässt die App aus
 - Frei skalierbares, quadratisches Widget (Standard 2×2), mehrere Instanzen mit eigenen Einstellungen möglich
 - Farbmodi Hell/Dunkel/Automatisch (folgt dem System-Dunkelmodus); Ziffern und Zeiger in Material-You-Akzentfarben
 - Optionaler Wetter-Ring um den Tag/Nacht-Ring herum (Standard) oder direkt innerhalb davon: Bewölkung als Grauton (bei klarem Himmel durchsichtig), darüber Niederschlag in Blau (Schnee violett) – je dunkler, desto mehr; je deckender, desto wahrscheinlicher. Vergangene Stunden abgeschwächt. Vorhersage von Open-Meteo, etwa alle zwei Stunden im Hintergrund geladen (nicht bei niedrigem Akkustand), nur wenn ein Widget den Ring nutzt; dafür werden die Koordinaten des Orts an open-meteo.com übertragen

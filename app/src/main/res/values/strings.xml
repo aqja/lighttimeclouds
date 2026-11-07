@@ -29,7 +29,10 @@
     <string name="section_dial">Clock face</string>
     <string name="display_mode_12h">12 hours</string>
     <string name="display_mode_24h">24 hours</string>
-    <string name="ring_style_label">Day/night ring</string>
+    <string name="section_ring">Day/night ring</string>
+    <string name="section_moon">Moon</string>
+    <string name="section_weather">Weather</string>
+    <string name="ring_style_label">Coloring</string>
     <string name="ring_style_sky">Sky</string>
     <string name="ring_style_bands">Fixed colors</string>
     <string name="sky_horizon_label">Horizon in the ring</string>
@@ -95,6 +98,19 @@
     <string name="section_tap_action">Tapping opens</string>
     <string name="tap_action_system_clock">Clock app</string>
     <string name="tap_action_own_app">This app</string>
+
+    <!-- Settings file -->
+    <string name="section_settings_file">Settings file</string>
+    <string name="settings_file_hint">The file holds this widget\'s settings and all places with their coordinates. Use it to move to a new device or to carry the settings over to another widget; there is no system backup.</string>
+    <string name="settings_file_export">Export</string>
+    <string name="settings_file_import">Import</string>
+    <string name="settings_file_exported">Settings exported.</string>
+    <string name="settings_file_export_failed">The file could not be written.</string>
+    <string name="settings_file_import_failed">This is not a readable settings file.</string>
+    <plurals name="settings_file_imported">
+        <item quantity="one">%d place imported. The settings apply once saved.</item>
+        <item quantity="other">%d places imported. The settings apply once saved.</item>
+    </plurals>
 
     <!-- Places -->
     <string name="section_location">Location</string>

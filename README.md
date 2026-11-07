@@ -20,6 +20,7 @@ A ring around an ordinary clock face shows the course of the day at the current 
 - Saved places with name, coordinates and time zone; every widget shows the local time of its place (world clock with several widgets). Manual entry only, no GPS, no location permission. The app keeps coordinates to at most three decimals, about 100 m. Network access only for the optional weather ring
 - Tapping opens either the system clock app or the app itself
 - Separate launcher icon for the settings, independent of the widget
+- Settings file (JSON) to export and import a widget's settings with all places; the app keeps out of system backups and device transfers
 - Freely resizable, square widget (2×2 by default); several instances with their own settings
 - Light, dark and automatic color modes (following the system dark mode); numerals and hands in Material You accent colors
 - Optional weather ring around the day/night ring (default) or just inside it: cloud cover in gray (transparent when the sky is clear), precipitation on top in blue (snow in violet): the darker, the more; the more opaque, the more likely. Past hours are dimmed. Forecast from Open-Meteo, loaded in the background about every two hours (not when the battery is low) and only if a widget uses the ring; for this, the place's coordinates are sent to open-meteo.com

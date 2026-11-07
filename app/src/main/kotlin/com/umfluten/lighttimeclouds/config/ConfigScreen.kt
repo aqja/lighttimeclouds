@@ -71,7 +71,6 @@ import com.umfluten.lighttimeclouds.data.TemperatureDisplay
 import com.umfluten.lighttimeclouds.data.TemperaturePosition
 import com.umfluten.lighttimeclouds.data.WeatherRingPosition
 import com.umfluten.lighttimeclouds.data.WidgetSettings
-import com.umfluten.lighttimeclouds.sky.SkyProjection
 import com.umfluten.lighttimeclouds.widget.ClockWidgetProvider
 import com.umfluten.lighttimeclouds.widget.WidgetIds
 import kotlinx.coroutines.launch
@@ -80,13 +79,14 @@ import kotlin.math.roundToInt
 /**
  * Entry point of the config UI: edits [initialWidgetId] directly, or - when opened from the
  * launcher icon - the template (no widget placed), the only widget, or one picked from a list.
+ * With [startOnSettings] the editor opens on its settings instead of the first tab.
  */
 @Composable
-fun ConfigRoot(initialWidgetId: Int, onFinishedWithResult: (Int) -> Unit) {
+fun ConfigRoot(initialWidgetId: Int, startOnSettings: Boolean, onFinishedWithResult: (Int) -> Unit) {
     val context = LocalContext.current
     ConfigTheme {
         if (initialWidgetId != WidgetIds.NO_WIDGET_ID) {
-            WidgetEditorScreen(widgetId = initialWidgetId, onDone = { onFinishedWithResult(initialWidgetId) })
+            WidgetEditorScreen(widgetId = initialWidgetId, startOnSettings, onDone = { onFinishedWithResult(initialWidgetId) })
         } else {
             var chosenWidgetId by remember { mutableStateOf<Int?>(null) }
             val activeIds = remember { WidgetIds.activeWidgetIds(context).toList() }
@@ -96,7 +96,7 @@ fun ConfigRoot(initialWidgetId: Int, onFinishedWithResult: (Int) -> Unit) {
                 else -> null
             }
             if (editId != null) {
-                WidgetEditorScreen(widgetId = editId, onDone = { onFinishedWithResult(editId) })
+                WidgetEditorScreen(widgetId = editId, startOnSettings = false, onDone = { onFinishedWithResult(editId) })
             } else {
                 WidgetPickerScreen(widgetIds = activeIds, onPicked = { chosenWidgetId = it })
             }
@@ -134,7 +134,7 @@ private fun WidgetPickerScreen(widgetIds: List<Int>, onPicked: (Int) -> Unit) {
 }
 
 @Composable
-private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
+private fun WidgetEditorScreen(widgetId: Int, startOnSettings: Boolean, onDone: () -> Unit) {
     val application = LocalContext.current.applicationContext as Application
     val viewModel: ConfigViewModel = viewModel(factory = ConfigViewModel.Factory(application, widgetId))
     val loaded by viewModel.settings.collectAsState()
@@ -154,7 +154,8 @@ private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
 
     // Tabs and pager share one state, so a tab can be chosen by tapping it or by swiping. The weather
     // tab only exists while the weather ring is on, since only then is a forecast downloaded. What
-    // the place looks like today comes first, so the app opens on it; the widget's setup follows.
+    // the place looks like today comes first, so the app opens on it; the widget's setup follows,
+    // and is where editing a widget from the home screen starts.
     val tabs = buildList {
         if (settings.showWeather) add(R.string.tab_weather)
         add(R.string.tab_times)
@@ -164,7 +165,9 @@ private fun WidgetEditorScreen(widgetId: Int, onDone: () -> Unit) {
     // Page count and page keys read the same state, so the pager never sees a count and keys from
     // two different tab lists while the weather tab comes or goes.
     val currentTabs by rememberUpdatedState(tabs)
-    val pagerState = rememberPagerState { currentTabs.size }
+    val pagerState = rememberPagerState(initialPage = if (startOnSettings) tabs.indexOf(R.string.tab_settings) else 0) {
+        currentTabs.size
+    }
     val currentTab = tabs.getOrNull(pagerState.currentPage)
     val scope = rememberCoroutineScope()
     ConfigScaffold(
@@ -252,6 +255,22 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             onSelect = { viewModel.update { s -> s.copy(displayMode = it) } },
         )
         RingSwitchSetting(settings, viewModel)
+        SwitchRow(
+            label = stringResource(R.string.show_minute_ticks),
+            checked = settings.showMinuteTicks,
+            onCheckedChange = { viewModel.update { s -> s.copy(showMinuteTicks = it) } },
+        )
+        SwitchRow(
+            label = stringResource(R.string.show_next_alarm),
+            checked = settings.showNextAlarm,
+            onCheckedChange = { viewModel.update { s -> s.copy(showNextAlarm = it) } },
+        )
+        if (settings.showNextAlarm) {
+            Hint(stringResource(R.string.next_alarm_hint))
+        }
+    }
+
+    Section(stringResource(R.string.section_ring)) {
         FieldLabel(stringResource(R.string.ring_style_label))
         SegmentedChoice(
             options = listOf(
@@ -292,11 +311,6 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             SkyTopElevationSlider(settings.skyTopElevationDeg) { viewModel.update { s -> s.copy(skyTopElevationDeg = it) } }
         }
         SwitchRow(
-            label = stringResource(R.string.show_minute_ticks),
-            checked = settings.showMinuteTicks,
-            onCheckedChange = { viewModel.update { s -> s.copy(showMinuteTicks = it) } },
-        )
-        SwitchRow(
             label = stringResource(R.string.show_solar_marks),
             checked = settings.showSolarMarks,
             onCheckedChange = { viewModel.update { s -> s.copy(showSolarMarks = it) } },
@@ -306,6 +320,10 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             checked = settings.showSunriseSunsetMarks,
             onCheckedChange = { viewModel.update { s -> s.copy(showSunriseSunsetMarks = it) } },
         )
+        RingEndFadeSetting(settings, viewModel)
+    }
+
+    Section(stringResource(R.string.section_moon)) {
         SwitchRow(
             label = stringResource(R.string.show_moon),
             checked = settings.showMoon,
@@ -331,14 +349,9 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
                 onCheckedChange = { viewModel.update { s -> s.copy(showMoonCompass = it) } },
             )
         }
-        SwitchRow(
-            label = stringResource(R.string.show_next_alarm),
-            checked = settings.showNextAlarm,
-            onCheckedChange = { viewModel.update { s -> s.copy(showNextAlarm = it) } },
-        )
-        if (settings.showNextAlarm) {
-            Hint(stringResource(R.string.next_alarm_hint))
-        }
+    }
+
+    Section(stringResource(R.string.section_weather)) {
         WeatherSetting(settings, viewModel)
     }
 
@@ -365,6 +378,8 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             onSelect = { viewModel.update { s -> s.copy(tapAction = it) } },
         )
     }
+
+    SettingsFileSection(viewModel)
 }
 
 /**
@@ -452,10 +467,7 @@ private fun WeatherSetting(settings: WidgetSettings, viewModel: ConfigViewModel)
 private fun hasNetworkPermission(context: Context): Boolean =
     context.checkSelfPermission(Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED
 
-/**
- * Where the ring's shown window begins: at fixed times (two on the 12h dial, one on the 24h dial) or
- * at the hand; and how far before its end the ring fades out.
- */
+/** Where the ring's shown window begins: at fixed times (two on the 12h dial, one on the 24h dial) or at the hand. */
 @Composable
 private fun RingSwitchSetting(settings: WidgetSettings, viewModel: ConfigViewModel) {
     val twelveHour = settings.displayMode == DisplayMode.TWELVE_HOUR
@@ -489,6 +501,11 @@ private fun RingSwitchSetting(settings: WidgetSettings, viewModel: ConfigViewMod
         }
         SwitchStrategyType.TRAILING -> Unit
     }
+}
+
+/** How far before the end of the shown window the ring fades out. */
+@Composable
+private fun RingEndFadeSetting(settings: WidgetSettings, viewModel: ConfigViewModel) {
     val fade = settings.ringEndFadeDeg
     LabeledSlider(
         label = stringResource(R.string.ring_end_fade_label),
@@ -543,14 +560,12 @@ internal fun SkyTopElevationSlider(elevationDeg: Int, onChange: (Int) -> Unit) {
         label = stringResource(R.string.sky_top_elevation_label),
         value = stringResource(R.string.sky_top_elevation_value, elevationDeg),
         position = elevationDeg.toFloat(),
-        range = SKY_TOP_ELEVATION_MIN.toFloat()..SKY_TOP_ELEVATION_MAX.toFloat(),
-        steps = (SKY_TOP_ELEVATION_MAX - SKY_TOP_ELEVATION_MIN) / SKY_TOP_ELEVATION_STEP - 1,
+        range = WidgetSettings.MIN_SKY_TOP_ELEVATION_DEG.toFloat()..WidgetSettings.MAX_SKY_TOP_ELEVATION_DEG.toFloat(),
+        steps = (WidgetSettings.MAX_SKY_TOP_ELEVATION_DEG - WidgetSettings.MIN_SKY_TOP_ELEVATION_DEG) / SKY_TOP_ELEVATION_STEP - 1,
         onChange = { onChange(it.roundToInt()) },
     )
 }
 
-private const val SKY_TOP_ELEVATION_MIN = 10
-private const val SKY_TOP_ELEVATION_MAX = SkyProjection.MAX_TOP_ELEVATION_DEG.toInt()
 private const val SKY_TOP_ELEVATION_STEP = 5
 private const val RING_END_FADE_STEP = 5
 

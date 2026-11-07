@@ -6,7 +6,6 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import com.umfluten.lighttimeclouds.sky.SkyProjection
 import kotlinx.coroutines.flow.first
 
 /**
@@ -69,7 +68,7 @@ class WidgetPrefsRepository(private val context: Context) {
             ringStyle = prefs.enumOr(k.ringStyle, d.ringStyle),
             skyHorizon = prefs.enumOr(k.skyHorizon, d.skyHorizon),
             skyTopElevationDeg = (prefs[k.skyTopElevation] ?: d.skyTopElevationDeg)
-                .coerceAtMost(SkyProjection.MAX_TOP_ELEVATION_DEG.toInt()),
+                .coerceAtMost(WidgetSettings.MAX_SKY_TOP_ELEVATION_DEG),
             showSunInRing = prefs[k.sunInRing] ?: d.showSunInRing,
             showMoonInRing = prefs[k.moonInRing] ?: d.showMoonInRing,
             showMoonPathInRing = prefs[k.moonPathInRing] ?: d.showMoonPathInRing,
