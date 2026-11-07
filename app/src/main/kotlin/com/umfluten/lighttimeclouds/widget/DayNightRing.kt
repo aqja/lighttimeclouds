@@ -10,7 +10,6 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.SweepGradient
 import com.umfluten.lighttimeclouds.astro.SunMoonCalculator
-import com.umfluten.lighttimeclouds.data.RingStyle
 import com.umfluten.lighttimeclouds.data.SkyHorizon
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.sky.MoonlitSky
@@ -63,8 +62,8 @@ internal fun Dial.drawDayNightRing() {
         style = Paint.Style.STROKE
         strokeWidth = ringOuter - ringInner
     }
-    // Sky style: per sample a radial gradient from the horizon colors to the upper sky (inner to
-    // outer edge, or reversed per [WidgetSettings.skyHorizon]), stops spread evenly across the band.
+    // Per sample a radial gradient from the horizon colors to the upper sky (inner to outer edge,
+    // or reversed per [WidgetSettings.skyHorizon]), stops spread evenly across the band.
     val skyPositions = FloatArray(SKY_STOPS) { k ->
         (ringInner + (ringOuter - ringInner) * k / (SKY_STOPS - 1)) / ringOuter
     }
@@ -78,25 +77,21 @@ internal fun Dial.drawDayNightRing() {
         val mid = (a0 + a1) / 2.0
         val instant = resolveInstantForAngle(mid, settings, now)
         val altitude = SunMoonCalculator.sunAltitudeDegrees(instant, latitude, longitude)
-        if (settings.ringStyle == RingStyle.SKY) {
-            val top = settings.skyTopElevationDeg.toDouble()
-            // With the sun up, moonlight adds nothing the eye could see.
-            val sky = if (moonFraction != null && altitude < 0.0) {
-                val moonAltitude = SunMoonCalculator.moonAltitudeDegrees(instant, latitude, longitude)
-                moonlitSkyColors(altitude, moonAltitude, moonFraction, top)
-            } else {
-                skyColors(altitude, top)
-            }
-            val colors = if (settings.skyHorizon == SkyHorizon.OUTER) sky.reversedArray() else sky
-            paint.shader = RadialGradient(cx, cy, ringOuter, colors, skyPositions, Shader.TileMode.CLAMP)
+        val top = settings.skyTopElevationDeg.toDouble()
+        // With the sun up, moonlight adds nothing the eye could see.
+        val sky = if (moonFraction != null && altitude < 0.0) {
+            val moonAltitude = SunMoonCalculator.moonAltitudeDegrees(instant, latitude, longitude)
+            moonlitSkyColors(altitude, moonAltitude, moonFraction, top)
         } else {
-            paint.color = ringColor(altitude, settings)
+            skyColors(altitude, top)
         }
+        val colors = if (settings.skyHorizon == SkyHorizon.OUTER) sky.reversedArray() else sky
+        paint.shader = RadialGradient(cx, cy, ringOuter, colors, skyPositions, Shader.TileMode.CLAMP)
         canvas.drawArc(rect, (a0 - 90.0).toFloat(), (a1 - a0).toFloat() + 0.75f, false, paint)
     }
 }
 
-/** Gradient stops across the band in the sky style. */
+/** Gradient stops across the band. */
 private const val SKY_STOPS = 24
 
 /**
@@ -146,82 +141,12 @@ internal fun Dial.drawSolarMarks() {
 }
 
 /**
- * Mid grey between the bright and the dark ring. WCAG contrast at the marks: about 3.5:1 on the
- * fixed colors by day and by night; on the sky about 2.4:1 at noon, 2.9:1 at sunrise and sunset,
- * 2.8:1 at midnight and 1.6:1 under a high full moon.
+ * Mid grey between the bright and the dark sky, with about the same WCAG contrast to both at the
+ * marks: 2.5:1 at noon, 2.6:1 at midnight, 3.1:1 at sunrise and sunset, 1.5:1 under a high full moon.
  * Used for sun marks and the moon hand/path, and by the config app's time list to match.
  */
-internal val MARK_COLOR = Color.rgb(105, 105, 105)
+internal val MARK_COLOR = Color.rgb(100, 100, 100)
 
-private val GRADIENT_STOPS: List<Pair<Double, Int>> = listOf(
-    -90.0 to Color.rgb(5, 8, 20),
-    -18.0 to Color.rgb(10, 15, 35),
-    -12.0 to Color.rgb(25, 35, 70),
-    -6.0 to Color.rgb(70, 60, 110),
-    -0.833 to Color.rgb(230, 140, 90),
-    6.0 to Color.rgb(255, 210, 140),
-    90.0 to Color.rgb(135, 206, 250),
-)
-
-private fun gradientColor(altitudeDeg: Double): Int {
-    val clamped = altitudeDeg.coerceIn(GRADIENT_STOPS.first().first, GRADIENT_STOPS.last().first)
-    for (i in 0 until GRADIENT_STOPS.size - 1) {
-        val (a0, c0) = GRADIENT_STOPS[i]
-        val (a1, c1) = GRADIENT_STOPS[i + 1]
-        if (clamped in a0..a1) {
-            val t = if (a1 > a0) (clamped - a0) / (a1 - a0) else 0.0
-            return lerpColor(c0, c1, t)
-        }
-    }
-    return GRADIENT_STOPS.last().second
-}
-
-internal fun lerpColor(c0: Int, c1: Int, t: Double): Int {
-    val tf = t.toFloat().coerceIn(0f, 1f)
-    fun ch(a: Int, b: Int) = (a + (b - a) * tf).toInt().coerceIn(0, 255)
-    return Color.rgb(
-        ch(Color.red(c0), Color.red(c1)),
-        ch(Color.green(c0), Color.green(c1)),
-        ch(Color.blue(c0), Color.blue(c1)),
-    )
-}
-
-/**
- * One fixed color per sky phase, for [RingStyle.BANDS]: [gradientColor] at a representative
- * altitude inside each phase.
- */
-private fun bandColor(state: SunMoonCalculator.SkyState): Int = gradientColor(
-    when (state) {
-        SunMoonCalculator.SkyState.NIGHT -> -18.0
-        SunMoonCalculator.SkyState.ASTRONOMICAL_TWILIGHT -> -15.0
-        SunMoonCalculator.SkyState.NAUTICAL_TWILIGHT -> -9.0
-        SunMoonCalculator.SkyState.CIVIL_TWILIGHT -> -3.4
-        SunMoonCalculator.SkyState.GOLDEN_HOUR -> 2.6
-        SunMoonCalculator.SkyState.DAY -> 30.0
-    },
-)
-
-/**
- * Ring color for a sun altitude under [settings] (ring style only - the color mode never tints
- * the ring); also used by the config app's weather chart.
- */
-internal fun ringColor(altitudeDeg: Double, settings: WidgetSettings): Int = when (settings.ringStyle) {
-    // A single representative color: the sky about halfway up the band.
-    RingStyle.SKY -> skyColors(altitudeDeg, settings.skyTopElevationDeg.toDouble())[SKY_STOPS / 2]
-    RingStyle.BANDS -> bandColor(SunMoonCalculator.classify(altitudeDeg))
-}
-
-/**
- * The ring's colors for a sun altitude under [settings], from the horizon up to
- * [topElevationDeg] (by default the far edge's elevation, whichever side of the ring that is):
- * the sky's gradient in the sky style, a single color with fixed colors. The config app's time
- * list shows them as a slice of the ring.
- */
-internal fun ringColorsUpward(
-    altitudeDeg: Double,
-    settings: WidgetSettings,
-    topElevationDeg: Double = settings.skyTopElevationDeg.toDouble(),
-): IntArray = when (settings.ringStyle) {
-    RingStyle.SKY -> skyColors(altitudeDeg, topElevationDeg)
-    RingStyle.BANDS -> intArrayOf(bandColor(SunMoonCalculator.classify(altitudeDeg)))
-}
+/** A single color for a sun altitude under [settings], the sky about halfway up the band, for the config app's weather chart. */
+internal fun ringColor(altitudeDeg: Double, settings: WidgetSettings): Int =
+    skyColors(altitudeDeg, settings.skyTopElevationDeg.toDouble())[SKY_STOPS / 2]

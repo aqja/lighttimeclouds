@@ -25,7 +25,6 @@ class SettingsFileTest {
         switchTime2Minutes = 1000,
         switchTime24hMinutes = 120,
         ringEndFadeDeg = 25,
-        ringStyle = RingStyle.BANDS,
         skyHorizon = SkyHorizon.OUTER,
         skyTopElevationDeg = 60,
         showSunInRing = false,

@@ -27,7 +27,6 @@ class WidgetPrefsRepository(private val context: Context) {
         val switchTime2 = intPreferencesKey(prefix + "switch_t2")
         val switchTime24h = intPreferencesKey(prefix + "switch_t24h")
         val ringEndFade = intPreferencesKey(prefix + "ring_end_fade")
-        val ringStyle = stringPreferencesKey(prefix + "ring_style")
         val skyHorizon = stringPreferencesKey(prefix + "sky_horizon")
         val skyTopElevation = intPreferencesKey(prefix + "sky_top_elevation")
         val sunInRing = booleanPreferencesKey(prefix + "sun_in_ring")
@@ -65,7 +64,6 @@ class WidgetPrefsRepository(private val context: Context) {
             switchTime2Minutes = prefs[k.switchTime2] ?: d.switchTime2Minutes,
             switchTime24hMinutes = prefs[k.switchTime24h] ?: d.switchTime24hMinutes,
             ringEndFadeDeg = (prefs[k.ringEndFade] ?: d.ringEndFadeDeg).coerceIn(0, WidgetSettings.MAX_RING_END_FADE_DEG),
-            ringStyle = prefs.enumOr(k.ringStyle, d.ringStyle),
             skyHorizon = prefs.enumOr(k.skyHorizon, d.skyHorizon),
             skyTopElevationDeg = (prefs[k.skyTopElevation] ?: d.skyTopElevationDeg)
                 .coerceAtMost(WidgetSettings.MAX_SKY_TOP_ELEVATION_DEG),
@@ -100,7 +98,6 @@ class WidgetPrefsRepository(private val context: Context) {
             prefs[k.switchTime2] = settings.switchTime2Minutes
             prefs[k.switchTime24h] = settings.switchTime24hMinutes
             prefs[k.ringEndFade] = settings.ringEndFadeDeg
-            prefs[k.ringStyle] = settings.ringStyle.name
             prefs[k.skyHorizon] = settings.skyHorizon.name
             prefs[k.skyTopElevation] = settings.skyTopElevationDeg
             prefs[k.sunInRing] = settings.showSunInRing

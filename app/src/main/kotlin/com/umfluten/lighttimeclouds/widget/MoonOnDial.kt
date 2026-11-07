@@ -304,3 +304,13 @@ internal fun moonLitPath(cx: Float, cy: Float, r: Float, fraction: Double, brigh
 
 /** Segments of each half of the lit part's outline. */
 private const val MOON_PHASE_STEPS = 32
+
+private fun lerpColor(c0: Int, c1: Int, t: Double): Int {
+    val tf = t.toFloat().coerceIn(0f, 1f)
+    fun ch(a: Int, b: Int) = (a + (b - a) * tf).toInt().coerceIn(0, 255)
+    return Color.rgb(
+        ch(Color.red(c0), Color.red(c1)),
+        ch(Color.green(c0), Color.green(c1)),
+        ch(Color.blue(c0), Color.blue(c1)),
+    )
+}

@@ -404,12 +404,6 @@ hintereinander stehen, wird dessen Funktionswert halbiert. Das verhindert die la
 Konvergenz der reinen Regula falsi. Abbruch, sobald das Intervall kürzer als 0,5 s ist (höchstens
 60 Schritte).
 
-### 6.4 Himmelszustand
-
-Für den Ringstil „Phasenfarben“ ordnet `classify` die Sonnenhöhe einer Stufe zu:
-Nacht (< −18°), astronomische (−18…−12°), nautische (−12…−6°) und bürgerliche Dämmerung
-(−6…−0,833°), goldene Stunde (−0,833…6°) und Tag (≥ 6°).
-
 ---
 
 ## 7. Mond: Auf- und Untergang, Phase, Nachlauf, Neigung
@@ -869,15 +863,10 @@ Zifferblatt kommen und wo die Darstellung bewusst von der Physik abweicht.
 ### 12.1 Ringfarbe
 
 Jeder Ringabschnitt steht für einen Zeitpunkt $t$. Dafür wird die **geometrische** Sonnenhöhe
-$h_\odot(t)$ am Ort berechnet, und:
-
-- **„Himmel“:** 24 Farben aus der Tabelle (Abschnitt [11.2](#112-vorberechnete-tabelle)) vom
-  Horizont bis $e_t$. Die Farbe der Nacht ist das Eigenleuchten des Nachthimmels, so wie das Auge
-  es sieht (Abschnitt [9.7](#97-der-nachthimmel)), und was der Mond hinzufügt (Abschnitt
-  [12.2](#122-sonne-und-mond-im-ring)).
-- **„Phasenfarben“:** eine feste Farbe je Himmelszustand (Abschnitt [6.4](#64-himmelszustand)),
-  entnommen einer gestalteten Palette, die zwischen Stützstellen an den physikalischen Schwellen
-  −18°, −12°, −6°, −0,833°, 6° und 90° linear interpoliert ist.
+$h_\odot(t)$ am Ort berechnet, und aus der Tabelle (Abschnitt [11.2](#112-vorberechnete-tabelle))
+kommen 24 Farben vom Horizont bis $e_t$. Die Farbe der Nacht ist das Eigenleuchten des Nachthimmels,
+so wie das Auge es sieht (Abschnitt [9.7](#97-der-nachthimmel)), und was der Mond hinzufügt
+(Abschnitt [12.2](#122-sonne-und-mond-im-ring)).
 
 ### 12.2 Sonne und Mond im Ring
 

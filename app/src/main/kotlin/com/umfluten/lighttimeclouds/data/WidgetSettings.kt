@@ -15,12 +15,6 @@ enum class SwitchStrategyType { FIXED_TIMES, TRAILING }
 /** Where the place name is shown in the widget, if at all. */
 enum class LabelPosition { NONE, ABOVE, BELOW }
 
-/**
- * How the day/night ring is colored: [SKY] shows the modeled sky from the horizon upward across
- * the ring's width (see [SkyHorizon]); [BANDS] one fixed color per sky phase.
- */
-enum class RingStyle { SKY, BANDS }
-
 /** Whether the horizon is at the inner or the outer edge of the ring (sky gradient, sun and moon in the ring). */
 enum class SkyHorizon { INNER, OUTER }
 
@@ -66,7 +60,6 @@ data class WidgetSettings(
      * start; never before the current time.
      */
     val ringEndFadeDeg: Int = 15,
-    val ringStyle: RingStyle = RingStyle.SKY,
     val skyHorizon: SkyHorizon = SkyHorizon.INNER,
     /**
      * Elevation above the horizon (degrees) that the ring's far edge stands for: the sky gradient

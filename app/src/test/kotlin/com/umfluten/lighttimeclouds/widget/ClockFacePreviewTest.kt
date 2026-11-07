@@ -9,7 +9,6 @@ import com.umfluten.lighttimeclouds.data.ColorMode
 import com.umfluten.lighttimeclouds.data.DisplayMode
 import com.umfluten.lighttimeclouds.data.MoonStyle
 import com.umfluten.lighttimeclouds.data.Place
-import com.umfluten.lighttimeclouds.data.RingStyle
 import com.umfluten.lighttimeclouds.data.SkyHorizon
 import com.umfluten.lighttimeclouds.data.SwitchStrategyType
 import com.umfluten.lighttimeclouds.data.TemperatureDisplay
@@ -224,10 +223,9 @@ class ClockFacePreviewTest {
      */
     @Test
     fun sunInRingFollowsTheHorizonEdge() {
-        // Fixed colors: the ring is the same across its width, so the aureole changes it most at its center.
         val sunOnly = WidgetSettings(
             widgetId = 1, displayMode = DisplayMode.TWENTY_FOUR_HOUR, showMoon = false, showMoonInRing = false,
-            showSolarMarks = false, showSunriseSunsetMarks = false, ringStyle = RingStyle.BANDS,
+            showSolarMarks = false, showSunriseSunsetMarks = false,
         )
         val altitude = SunMoonCalculator.sunAltitudeDegrees(now.toInstant(), Place.DEFAULT.latitude, Place.DEFAULT.longitude)
         val fraction = SkyProjection.fraction(altitude, 45.0).toFloat()

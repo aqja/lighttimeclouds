@@ -39,7 +39,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.umfluten.lighttimeclouds.R
-import com.umfluten.lighttimeclouds.data.RingStyle
 import com.umfluten.lighttimeclouds.data.SummaryPosition
 import com.umfluten.lighttimeclouds.data.WeatherRepository
 import com.umfluten.lighttimeclouds.data.WidgetSettings
@@ -208,9 +207,7 @@ internal fun PreviewTab(settings: WidgetSettings, padding: PaddingValues) {
             range = 0f..(24 * 60 - 1).toFloat(),
             onChange = { minuteOfDay = it.roundToInt() },
         )
-        if (settings.ringStyle == RingStyle.SKY || settings.showSunInRing || settings.showMoonInRing) {
-            SkyTopElevationSlider(skyTopElevation) { skyTopElevation = it }
-        }
+        SkyTopElevationSlider(skyTopElevation) { skyTopElevation = it }
         TextButton(onClick = ::reset, modifier = Modifier.align(Alignment.End)) {
             Text(stringResource(R.string.preview_reset))
         }

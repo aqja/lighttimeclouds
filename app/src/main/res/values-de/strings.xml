@@ -31,9 +31,6 @@
     <string name="section_ring">Tag/Nacht-Ring</string>
     <string name="section_moon">Mond</string>
     <string name="section_weather">Wetter</string>
-    <string name="ring_style_label">Färbung</string>
-    <string name="ring_style_sky">Himmel</string>
-    <string name="ring_style_bands">Feste Farben</string>
     <string name="sky_horizon_label">Horizont im Ring</string>
     <string name="sky_horizon_inner">Innen</string>
     <string name="sky_horizon_outer">Außen</string>

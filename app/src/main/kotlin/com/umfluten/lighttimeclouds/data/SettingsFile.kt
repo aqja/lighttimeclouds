@@ -50,7 +50,6 @@ object SettingsFile {
                 put("switchTime2Minutes", settings.switchTime2Minutes)
                 put("switchTime24hMinutes", settings.switchTime24hMinutes)
                 put("ringEndFadeDeg", settings.ringEndFadeDeg)
-                put("ringStyle", settings.ringStyle.name)
                 put("skyHorizon", settings.skyHorizon.name)
                 put("skyTopElevationDeg", settings.skyTopElevationDeg)
                 put("showSunInRing", settings.showSunInRing)
@@ -103,7 +102,6 @@ object SettingsFile {
             switchTime2Minutes = minutes("switchTime2Minutes", d.switchTime2Minutes),
             switchTime24hMinutes = minutes("switchTime24hMinutes", d.switchTime24hMinutes),
             ringEndFadeDeg = (s.int("ringEndFadeDeg") ?: d.ringEndFadeDeg).coerceIn(0, WidgetSettings.MAX_RING_END_FADE_DEG),
-            ringStyle = s.enumOr("ringStyle", d.ringStyle),
             skyHorizon = s.enumOr("skyHorizon", d.skyHorizon),
             skyTopElevationDeg = (s.int("skyTopElevationDeg") ?: d.skyTopElevationDeg)
                 .coerceIn(WidgetSettings.MIN_SKY_TOP_ELEVATION_DEG, WidgetSettings.MAX_SKY_TOP_ELEVATION_DEG),

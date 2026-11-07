@@ -398,12 +398,6 @@ after which $[a, b]$ is shortened to the side with the sign change. If one end s
 row, its function value is halved. This prevents the slow one-sided convergence of the plain
 regula falsi. The search stops once the interval is shorter than 0.5 s (at most 60 steps).
 
-### 6.4 Sky state
-
-For the ring style "phase colors", `classify` maps the Sun's altitude to a
-bucket: night (< −18°), astronomical (−18…−12°), nautical (−12…−6°) and civil twilight
-(−6…−0.833°), golden hour (−0.833…6°) and day (≥ 6°).
-
 ---
 
 ## 7. Moon: rise and set, phase, lag, tilt
@@ -853,15 +847,10 @@ where the drawing deliberately departs from the physics.
 ### 12.1 Ring color
 
 Each ring segment stands for a moment $t$. For it, the **geometric** Sun altitude $h_\odot(t)$ at
-the place is computed, and:
-
-- **"Sky":** 24 colors from the table (section [11.2](#112-precomputed-table)) from the horizon up
-  to $e_t$. The night's color is the night sky's own glow as the eye sees it (section
-  [9.7](#97-the-night-sky)), and what the Moon adds to it (section
-  [12.2](#122-sun-and-moon-in-the-ring)).
-- **"Phase colors":** one fixed color per sky state (section [6.4](#64-sky-state)), taken from a
-  designed palette that is interpolated linearly between stops at the physical thresholds −18°,
-  −12°, −6°, −0.833°, 6° and 90°.
+the place is computed, and the table (section [11.2](#112-precomputed-table)) gives 24 colors from
+the horizon up to $e_t$. The night's color is the night sky's own glow as the eye sees it (section
+[9.7](#97-the-night-sky)), and what the Moon adds to it (section
+[12.2](#122-sun-and-moon-in-the-ring)).
 
 ### 12.2 Sun and Moon in the ring
 

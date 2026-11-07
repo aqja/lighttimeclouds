@@ -61,7 +61,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.data.ColorMode
 import com.umfluten.lighttimeclouds.data.DisplayMode
-import com.umfluten.lighttimeclouds.data.RingStyle
 import com.umfluten.lighttimeclouds.data.MoonStyle
 import com.umfluten.lighttimeclouds.data.SkyHorizon
 import com.umfluten.lighttimeclouds.data.SummaryPosition
@@ -271,15 +270,6 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
     }
 
     Section(stringResource(R.string.section_ring)) {
-        FieldLabel(stringResource(R.string.ring_style_label))
-        SegmentedChoice(
-            options = listOf(
-                RingStyle.SKY to R.string.ring_style_sky,
-                RingStyle.BANDS to R.string.ring_style_bands,
-            ),
-            selected = settings.ringStyle,
-            onSelect = { viewModel.update { s -> s.copy(ringStyle = it) } },
-        )
         SwitchRow(
             label = stringResource(R.string.show_sun_in_ring),
             checked = settings.showSunInRing,
@@ -290,8 +280,7 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             checked = settings.showMoonInRing,
             onCheckedChange = { viewModel.update { s -> s.copy(showMoonInRing = it) } },
         )
-        val bodiesInRing = settings.showSunInRing || settings.showMoonInRing
-        if (bodiesInRing) {
+        if (settings.showSunInRing || settings.showMoonInRing) {
             Hint(stringResource(R.string.bodies_in_ring_hint))
         }
         if (settings.showMoonInRing) {
@@ -301,15 +290,13 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
                 onCheckedChange = { viewModel.update { s -> s.copy(showMoonPathInRing = it) } },
             )
         }
-        if (settings.ringStyle == RingStyle.SKY || bodiesInRing) {
-            FieldLabel(stringResource(R.string.sky_horizon_label))
-            SegmentedChoice(
-                options = listOf(SkyHorizon.INNER to R.string.sky_horizon_inner, SkyHorizon.OUTER to R.string.sky_horizon_outer),
-                selected = settings.skyHorizon,
-                onSelect = { viewModel.update { s -> s.copy(skyHorizon = it) } },
-            )
-            SkyTopElevationSlider(settings.skyTopElevationDeg) { viewModel.update { s -> s.copy(skyTopElevationDeg = it) } }
-        }
+        FieldLabel(stringResource(R.string.sky_horizon_label))
+        SegmentedChoice(
+            options = listOf(SkyHorizon.INNER to R.string.sky_horizon_inner, SkyHorizon.OUTER to R.string.sky_horizon_outer),
+            selected = settings.skyHorizon,
+            onSelect = { viewModel.update { s -> s.copy(skyHorizon = it) } },
+        )
+        SkyTopElevationSlider(settings.skyTopElevationDeg) { viewModel.update { s -> s.copy(skyTopElevationDeg = it) } }
         SwitchRow(
             label = stringResource(R.string.show_solar_marks),
             checked = settings.showSolarMarks,

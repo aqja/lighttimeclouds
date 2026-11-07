@@ -12,16 +12,6 @@ import java.time.ZonedDateTime
 class SunMoonCalculatorTest {
 
     @Test
-    fun `classify buckets match the defined altitude thresholds`() {
-        assertEquals(SunMoonCalculator.SkyState.NIGHT, SunMoonCalculator.classify(-30.0))
-        assertEquals(SunMoonCalculator.SkyState.ASTRONOMICAL_TWILIGHT, SunMoonCalculator.classify(-15.0))
-        assertEquals(SunMoonCalculator.SkyState.NAUTICAL_TWILIGHT, SunMoonCalculator.classify(-9.0))
-        assertEquals(SunMoonCalculator.SkyState.CIVIL_TWILIGHT, SunMoonCalculator.classify(-3.0))
-        assertEquals(SunMoonCalculator.SkyState.GOLDEN_HOUR, SunMoonCalculator.classify(2.0))
-        assertEquals(SunMoonCalculator.SkyState.DAY, SunMoonCalculator.classify(45.0))
-    }
-
-    @Test
     fun `solar noon is the altitude maximum for the day`() {
         // Berlin, DE (TV tower)
         val lat = 52.5208

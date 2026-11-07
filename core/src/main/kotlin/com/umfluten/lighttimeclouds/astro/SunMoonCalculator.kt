@@ -61,9 +61,6 @@ object SunMoonCalculator {
         val nextSolarMidnight: Instant,
     )
 
-    /** Sky brightness bucket used to color the day/twilight/night ring. */
-    enum class SkyState { NIGHT, ASTRONOMICAL_TWILIGHT, NAUTICAL_TWILIGHT, CIVIL_TWILIGHT, GOLDEN_HOUR, DAY }
-
     /** The Sun's center at −50′: the upper limb on the horizon, with 34′ refraction and 16′ radius. */
     const val SUNRISE_ALTITUDE = -0.833
 
@@ -74,16 +71,6 @@ object SunMoonCalculator {
     const val CIVIL_TWILIGHT_ALTITUDE = -6.0
     const val NAUTICAL_TWILIGHT_ALTITUDE = -12.0
     const val ASTRONOMICAL_TWILIGHT_ALTITUDE = -18.0
-
-    /** Classifies a sun altitude (degrees) into the sky-brightness bucket used for ring coloring. */
-    fun classify(altitudeDegrees: Double): SkyState = when {
-        altitudeDegrees < ASTRONOMICAL_TWILIGHT_ALTITUDE -> SkyState.NIGHT
-        altitudeDegrees < NAUTICAL_TWILIGHT_ALTITUDE -> SkyState.ASTRONOMICAL_TWILIGHT
-        altitudeDegrees < CIVIL_TWILIGHT_ALTITUDE -> SkyState.NAUTICAL_TWILIGHT
-        altitudeDegrees < SUNRISE_ALTITUDE -> SkyState.CIVIL_TWILIGHT
-        altitudeDegrees < GOLDEN_HOUR_ALTITUDE -> SkyState.GOLDEN_HOUR
-        else -> SkyState.DAY
-    }
 
     // --- Sun -------------------------------------------------------------------------------------
 

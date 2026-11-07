@@ -35,7 +35,7 @@ import com.umfluten.lighttimeclouds.astro.SolarEventType
 import com.umfluten.lighttimeclouds.astro.SunMoonCalculator
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.widget.MARK_COLOR
-import com.umfluten.lighttimeclouds.widget.ringColorsUpward
+import com.umfluten.lighttimeclouds.widget.skyColors
 import java.time.Instant
 import java.time.ZonedDateTime
 
@@ -82,8 +82,7 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
             // horizon at the bottom, where twilight shows its colors.
             val skySlice = event.instant?.let { instant ->
                 val altitude = SunMoonCalculator.sunAltitudeDegrees(instant.plusSeconds(60), place.latitude, place.longitude)
-                val colors = ringColorsUpward(altitude, settings, SKY_SLICE_TOP_DEG).map(::Color).reversed()
-                colors.singleOrNull()?.let(::SolidColor) ?: Brush.verticalGradient(colors)
+                Brush.verticalGradient(skyColors(altitude, SKY_SLICE_TOP_DEG).map(::Color).reversed())
             }
             EventRow(
                 label = stringResource(solarEventLabel(event.type)),
