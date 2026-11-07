@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name" translatable="false">LightTimeClouds</string>
     <string name="widget_content_description">Sun and moon clock</string>
+    <string name="widget_open_clock">Open clock app</string>
 
     <!-- Common actions -->
     <string name="action_save">Save</string>
@@ -95,6 +96,8 @@
     <string name="section_tap_action">Tapping opens</string>
     <string name="tap_action_system_clock">Clock app</string>
     <string name="tap_action_own_app">This app</string>
+    <string name="tap_action_split">Both</string>
+    <string name="tap_action_split_hint">Tapping inside the rings opens the clock app, tapping outside them this app.</string>
 
     <!-- Settings file -->
     <string name="section_settings_file">Settings file</string>

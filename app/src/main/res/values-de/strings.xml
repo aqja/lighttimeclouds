@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="widget_content_description">Sonnen- und Monduhr</string>
+    <string name="widget_open_clock">Uhr-App öffnen</string>
 
     <!-- Common actions -->
     <string name="action_save">Speichern</string>
@@ -94,6 +95,8 @@
     <string name="section_tap_action">Antippen öffnet</string>
     <string name="tap_action_system_clock">Uhr-App</string>
     <string name="tap_action_own_app">Diese App</string>
+    <string name="tap_action_split">Beide</string>
+    <string name="tap_action_split_hint">Antippen innerhalb der Ringe öffnet die Uhr-App, außerhalb diese App.</string>
 
     <!-- Settings file -->
     <string name="section_settings_file">Einstellungsdatei</string>

@@ -31,13 +31,39 @@
             android:gravity="center_vertical|end"
             android:visibility="gone" />
 
-        <ImageView
-            android:id="@+id/widget_clock_image"
+        <FrameLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:contentDescription="@string/widget_content_description"
-            android:scaleType="fitCenter" />
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/widget_clock_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@string/widget_content_description"
+                android:scaleType="fitCenter" />
+
+            <!-- Together these take the taps inside the rings: a widget's views can only be tapped
+                 as rectangles, so three of them, sized at runtime, trace the circle. -->
+            <FrameLayout
+                android:id="@+id/widget_tap_area_wide"
+                style="@style/WidgetTapArea"
+                android:importantForAccessibility="no"
+                tools:ignore="UselessLeaf" />
+
+            <FrameLayout
+                android:id="@+id/widget_tap_area_tall"
+                style="@style/WidgetTapArea"
+                android:importantForAccessibility="no"
+                tools:ignore="UselessLeaf" />
+
+            <FrameLayout
+                android:id="@+id/widget_tap_area_square"
+                style="@style/WidgetTapArea"
+                android:contentDescription="@string/widget_open_clock"
+                tools:ignore="UselessLeaf" />
+
+        </FrameLayout>
 
         <TextView
             android:id="@+id/widget_summary_right"

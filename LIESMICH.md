@@ -18,7 +18,7 @@ Ein Ring um ein gewöhnliches Zifferblatt zeigt den Tagesverlauf von Nacht über
 - Tab „Vorschau“ in der App: das Widget mit den aktuellen, auch noch nicht gespeicherten Einstellungen; Schieberegler für Breiten- und Längengrad, Datum im Jahresverlauf und Uhrzeit verändern nur die Vorschau
 - Tab „Zeiten“ in der App: alle Sonnenereignisse des Sonnentags, Mondphase, Mondauf- und -untergang
 - Gespeicherte Orte mit Name, Koordinaten und Zeitzone; jedes Widget zeigt die Ortszeit (Weltuhr mit mehreren Widgets). Nur manuelle Eingabe, kein GPS, keine Standort-Berechtigung. Koordinaten behält die App mit höchstens drei Nachkommastellen, also auf etwa 100 m genau. Netzwerkzugriff nur für den optionalen Wetter-Ring
-- Antippen öffnet wahlweise die System-Uhr-App oder die App selbst
+- Antippen öffnet die System-Uhr-App, die App selbst oder beides: innerhalb der Ringe die Uhr-App, außerhalb die App (ab Android 12)
 - Eigenes Launcher-Icon für die Konfiguration, unabhängig vom Widget
 - Einstellungsdatei (JSON) zum Exportieren und Importieren der Einstellungen eines Widgets mit allen Orten; System-Backups und Geräteumzüge lässt die App aus
 - Frei skalierbares, quadratisches Widget (Standard 2×2), mehrere Instanzen mit eigenen Einstellungen möglich

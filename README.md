@@ -18,7 +18,7 @@ A ring around an ordinary clock face shows the course of the day at the current 
 - "Preview" tab in the app: the widget with the current settings, including unsaved ones; sliders for latitude, longitude, date in the course of the year and time of day change only the preview
 - "Times" tab in the app: all sun events of the solar day, moon phase, moonrise and moonset
 - Saved places with name, coordinates and time zone; every widget shows the local time of its place (world clock with several widgets). Manual entry only, no GPS, no location permission. The app keeps coordinates to at most three decimals, about 100 m. Network access only for the optional weather ring
-- Tapping opens either the system clock app or the app itself
+- Tapping opens the system clock app, the app itself, or both: the clock app inside the rings and the app outside them (Android 12 and later)
 - Separate launcher icon for the settings, independent of the widget
 - Settings file (JSON) to export and import a widget's settings with all places; the app keeps out of system backups and device transfers
 - Freely resizable, square widget (2×2 by default); several instances with their own settings

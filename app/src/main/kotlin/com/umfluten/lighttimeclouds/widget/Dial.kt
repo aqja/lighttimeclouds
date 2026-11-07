@@ -60,6 +60,12 @@ internal fun ringBandsFor(settings: WidgetSettings): RingBands =
         BANDS_WEATHER_INSIDE
     }
 
+/** Where the ring(s) begin, as a fraction of the dial radius. */
+internal fun innerRingEdge(settings: WidgetSettings): Float {
+    val bands = ringBandsFor(settings)
+    return if (settings.showWeather) minOf(bands.sunInner, bands.weatherInner) else bands.sunInner
+}
+
 /** Radii (fractions of the dial radius) and sizes of everything inside the ring(s). */
 internal class DialLayout(
     val tickOuter: Float,

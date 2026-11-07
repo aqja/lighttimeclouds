@@ -6,6 +6,8 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.graphics.Paint
 import android.os.Bundle
+import android.text.StaticLayout
+import android.text.TextPaint
 import android.util.Size
 import android.view.View
 import android.widget.RemoteViews
@@ -78,6 +80,14 @@ class ClockWidgetProvider : AppWidgetProvider() {
     }
 
     companion object {
+        /** The weather summary to show (only with the weather ring), null while the forecast does not cover the current time. */
+        private fun summaryText(context: Context, settings: WidgetSettings, weather: WeatherForecast?): String? =
+            if (settings.showWeather && settings.summaryPosition != SummaryPosition.NONE) {
+                WeatherSummaryText.of(context.resources, weather, Instant.now())
+            } else {
+                null
+            }
+
         /** Shows the place name above or below the clock per [WidgetSettings.labelPosition], in the dial's chrome color. */
         private fun bindPlaceLabel(context: Context, views: RemoteViews, settings: WidgetSettings) {
             val color = chromeColor(context, settings)
@@ -93,15 +103,9 @@ class ClockWidgetProvider : AppWidgetProvider() {
 
         /**
          * Shows the weather summary left of, right of or below the clock per
-         * [WidgetSettings.summaryPosition] (only with the weather ring), in the dial's chrome color.
-         * Stays hidden while the forecast does not cover the current time.
+         * [WidgetSettings.summaryPosition], in the dial's chrome color; a null [text] hides it.
          */
-        private fun bindSummary(context: Context, views: RemoteViews, settings: WidgetSettings, weather: WeatherForecast?, widgetSize: Size) {
-            val text = if (settings.showWeather && settings.summaryPosition != SummaryPosition.NONE) {
-                WeatherSummaryText.of(context.resources, weather, Instant.now())
-            } else {
-                null
-            }
+        private fun bindSummary(context: Context, views: RemoteViews, settings: WidgetSettings, text: String?, widgetSize: Size) {
             val color = chromeColor(context, settings)
             for ((viewId, position) in listOf(
                 R.id.widget_summary_left to SummaryPosition.LEFT,
@@ -135,6 +139,33 @@ class ClockWidgetProvider : AppWidgetProvider() {
             } else {
                 ((widgetSize.height - label) / line).toInt().coerceAtLeast(1)
             }
+        }
+
+        /**
+         * Side (px) of the clock as shown in a widget of [widgetSize]: the shorter side of what the
+         * place name and the summary leave free. Those are measured by the launcher, so this
+         * measures their text the same way but can be a little off.
+         */
+        private fun shownClockSide(context: Context, settings: WidgetSettings, summary: String?, widgetSize: Size): Int {
+            var width = widgetSize.width.toFloat()
+            var height = widgetSize.height.toFloat()
+            if (settings.labelPosition != LabelPosition.NONE) height -= lineHeight(context, R.dimen.widget_label_text_size, 1f)
+            if (summary != null) {
+                val paint = TextPaint().apply { textSize = context.resources.getDimension(R.dimen.widget_summary_text_size) }
+                when (val position = settings.summaryPosition) {
+                    SummaryPosition.NONE -> Unit
+                    SummaryPosition.BELOW -> {
+                        val lines = StaticLayout.Builder.obtain(summary, 0, summary.length, paint, widgetSize.width).build().lineCount
+                            .coerceAtMost(summaryMaxLines(context, settings, position, widgetSize))
+                        height -= lines * lineHeight(context, R.dimen.widget_summary_text_size, SUMMARY_LINE_SPACING)
+                    }
+                    SummaryPosition.LEFT, SummaryPosition.RIGHT -> {
+                        val padding = 2 * context.resources.getDimension(R.dimen.widget_summary_side_padding)
+                        width -= minOf(paint.measureText(summary) + padding, widgetSize.width * MAX_SIDE_SUMMARY_WIDTH)
+                    }
+                }
+            }
+            return minOf(width, height).toInt().coerceAtLeast(1)
         }
 
         /** Height (px) of one line of text in the size [textSizeRes], with [spacing] as in the style's lineSpacingMultiplier. */
@@ -185,11 +216,10 @@ class ClockWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_clock)
             views.setImageViewBitmap(R.id.widget_clock_image, bitmap)
             bindPlaceLabel(context, views, settings)
-            bindSummary(context, views, settings, weather, WidgetSizing.currentWidgetSizePx(context, appWidgetManager, appWidgetId))
-            views.setOnClickPendingIntent(
-                R.id.widget_root,
-                TapActionResolver.buildPendingIntent(context, appWidgetId, settings.tapAction),
-            )
+            val widgetSize = WidgetSizing.currentWidgetSizePx(context, appWidgetManager, appWidgetId)
+            val summary = summaryText(context, settings, weather)
+            bindSummary(context, views, settings, summary, widgetSize)
+            TapActionResolver.bind(context, views, appWidgetId, settings, shownClockSide(context, settings, summary, widgetSize))
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }

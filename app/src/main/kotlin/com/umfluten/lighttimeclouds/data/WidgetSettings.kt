@@ -4,7 +4,8 @@ import com.umfluten.lighttimeclouds.sky.SkyProjection
 
 enum class DisplayMode { TWELVE_HOUR, TWENTY_FOUR_HOUR }
 
-enum class TapAction { OWN_APP, SYSTEM_CLOCK }
+/** What tapping the widget opens; [SPLIT] is the system clock inside the rings and this app outside them. */
+enum class TapAction { OWN_APP, SYSTEM_CLOCK, SPLIT }
 
 /** Light/dark variant of the dial chrome (numerals, ticks, hands); [AUTO] follows the system dark mode. */
 enum class ColorMode { LIGHT, DARK, AUTO }

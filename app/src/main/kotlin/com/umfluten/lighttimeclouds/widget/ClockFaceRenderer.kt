@@ -35,18 +35,10 @@ object ClockFaceRenderer {
     ): Bitmap {
         val size = sizePx.coerceAtLeast(1)
         val bitmap = createBitmap(size, size)
-        val fullRadius = size / 2f * 0.96f
         val dark = chromeIsDark(context, settings.colorMode)
         val temperatureKind = temperatureKindFor(settings)
-        val temperaturesOutside = temperatureKind != null && settings.temperaturePosition == TemperaturePosition.OUTSIDE
-        val outsidePaint = temperaturePaint(fullRadius * OUTSIDE_TEMPERATURE_SIZE)
-        val gap = fullRadius * OUTSIDE_TEMPERATURE_GAP
-        // Everything but an outside temperature scale is drawn within this radius.
-        val radius = if (temperaturesOutside) {
-            size / 2f - gap - 2f * TEMPERATURE_ANGLES.maxOf { labelExtent(outsidePaint, OUTSIDE_TEMPERATURE_WIDEST, it) }
-        } else {
-            fullRadius
-        }
+        val temperaturesOutside = hasOutsideTemperatures(settings)
+        val radius = dialRadius(size, settings)
         val layout = when {
             temperatureKind != null && !temperaturesOutside -> LAYOUT_TEMPERATURE
             settings.showWeather -> LAYOUT_WEATHER
@@ -72,7 +64,8 @@ object ClockFaceRenderer {
                     weather,
                     temperatureKind,
                     placement = if (temperaturesOutside) {
-                        TemperaturePlacement.Outside(radius + gap, outsidePaint.textSize)
+                        val fullRadius = fullDialRadius(size)
+                        TemperaturePlacement.Outside(radius + fullRadius * OUTSIDE_TEMPERATURE_GAP, fullRadius * OUTSIDE_TEMPERATURE_SIZE)
                     } else {
                         TemperaturePlacement.Between(radius * layout.temperatureRadius, radius * layout.temperatureSize)
                     },
@@ -84,6 +77,21 @@ object ClockFaceRenderer {
         }
         return bitmap
     }
+}
+
+/** Radius (px) of a dial filling a clock [size] px wide. */
+private fun fullDialRadius(size: Int): Float = size / 2f * 0.96f
+
+private fun hasOutsideTemperatures(settings: WidgetSettings): Boolean =
+    temperatureKindFor(settings) != null && settings.temperaturePosition == TemperaturePosition.OUTSIDE
+
+/** Radius (px) of the dial on a clock [size] px wide; everything but an outside temperature scale is drawn within it. */
+internal fun dialRadius(size: Int, settings: WidgetSettings): Float {
+    val fullRadius = fullDialRadius(size)
+    if (!hasOutsideTemperatures(settings)) return fullRadius
+    val paint = temperaturePaint(fullRadius * OUTSIDE_TEMPERATURE_SIZE)
+    val gap = fullRadius * OUTSIDE_TEMPERATURE_GAP
+    return size / 2f - gap - 2f * TEMPERATURE_ANGLES.maxOf { labelExtent(paint, OUTSIDE_TEMPERATURE_WIDEST, it) }
 }
 
 private fun Dial.drawTicksAndNumerals() {

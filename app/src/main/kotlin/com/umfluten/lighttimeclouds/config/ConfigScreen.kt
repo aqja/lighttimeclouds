@@ -71,6 +71,7 @@ import com.umfluten.lighttimeclouds.data.TemperaturePosition
 import com.umfluten.lighttimeclouds.data.WeatherRingPosition
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.widget.ClockWidgetProvider
+import com.umfluten.lighttimeclouds.widget.TapActionResolver
 import com.umfluten.lighttimeclouds.widget.WidgetIds
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -360,10 +361,17 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
 
     Section(stringResource(R.string.section_tap_action)) {
         SegmentedChoice(
-            options = listOf(TapAction.SYSTEM_CLOCK to R.string.tap_action_system_clock, TapAction.OWN_APP to R.string.tap_action_own_app),
+            options = buildList {
+                add(TapAction.SYSTEM_CLOCK to R.string.tap_action_system_clock)
+                add(TapAction.OWN_APP to R.string.tap_action_own_app)
+                if (TapActionResolver.splitAvailable) add(TapAction.SPLIT to R.string.tap_action_split)
+            },
             selected = settings.tapAction,
             onSelect = { viewModel.update { s -> s.copy(tapAction = it) } },
         )
+        if (settings.tapAction == TapAction.SPLIT) {
+            Hint(stringResource(R.string.tap_action_split_hint))
+        }
     }
 
     SettingsFileSection(widgetId, viewModel)
