@@ -23,23 +23,27 @@ object TapActionResolver {
 
     /**
      * Whether [TapAction.SPLIT] works here: its tap areas are sized at runtime, which widgets only
-     * allow from Android 12 on. Before, it acts like [TapAction.SYSTEM_CLOCK].
+     * allow from Android 12 on.
      */
     @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
     val splitAvailable: Boolean get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
+    /**
+     * What [tapAction] does on this device. A settings file can bring [TapAction.SPLIT] to one that
+     * does not offer it; it then acts like [TapAction.SYSTEM_CLOCK], but stays saved as it is, for
+     * the next device.
+     */
+    fun effective(tapAction: TapAction): TapAction =
+        if (tapAction == TapAction.SPLIT && !splitAvailable) TapAction.SYSTEM_CLOCK else tapAction
+
     /** Binds the taps of widget [widgetId], whose clock is shown [clockSidePx] wide. */
     fun bind(context: Context, views: RemoteViews, widgetId: Int, settings: WidgetSettings, clockSidePx: Int) {
-        val rootOpensClock = when (settings.tapAction) {
-            TapAction.OWN_APP -> false
-            TapAction.SYSTEM_CLOCK -> true
-            TapAction.SPLIT -> !splitAvailable
-        }
+        val tapAction = effective(settings.tapAction)
         views.setOnClickPendingIntent(
             R.id.widget_root,
-            if (rootOpensClock) clockPendingIntent(context, widgetId) else ownAppPendingIntent(context, widgetId),
+            if (tapAction == TapAction.SYSTEM_CLOCK) clockPendingIntent(context, widgetId) else ownAppPendingIntent(context, widgetId),
         )
-        if (settings.tapAction == TapAction.SPLIT && splitAvailable) {
+        if (tapAction == TapAction.SPLIT && splitAvailable) {
             val ringRadius = dialRadius(clockSidePx, settings) * innerRingEdge(settings)
             bindTapAreas(views, clockPendingIntent(context, widgetId), ringRadius)
         } else {

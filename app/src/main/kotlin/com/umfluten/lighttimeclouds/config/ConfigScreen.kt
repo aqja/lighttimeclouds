@@ -360,16 +360,17 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
     }
 
     Section(stringResource(R.string.section_tap_action)) {
+        val tapAction = TapActionResolver.effective(settings.tapAction)
         SegmentedChoice(
             options = buildList {
                 add(TapAction.SYSTEM_CLOCK to R.string.tap_action_system_clock)
                 add(TapAction.OWN_APP to R.string.tap_action_own_app)
                 if (TapActionResolver.splitAvailable) add(TapAction.SPLIT to R.string.tap_action_split)
             },
-            selected = settings.tapAction,
+            selected = tapAction,
             onSelect = { viewModel.update { s -> s.copy(tapAction = it) } },
         )
-        if (settings.tapAction == TapAction.SPLIT) {
+        if (tapAction == TapAction.SPLIT) {
             Hint(stringResource(R.string.tap_action_split_hint))
         }
     }

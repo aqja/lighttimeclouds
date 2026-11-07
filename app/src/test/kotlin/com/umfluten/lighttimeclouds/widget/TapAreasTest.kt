@@ -71,6 +71,23 @@ class TapAreasTest {
     }
 
     @Test
+    fun `the split stays the split where it is available`() {
+        assertEquals(TapAction.SPLIT, TapActionResolver.effective(TapAction.SPLIT))
+    }
+
+    @Test
+    @Config(sdk = [30])
+    fun `before Android 12 the split acts like the clock app, without tap areas`() {
+        assertEquals(TapAction.SYSTEM_CLOCK, TapActionResolver.effective(TapAction.SPLIT))
+        assertEquals(TapAction.OWN_APP, TapActionResolver.effective(TapAction.OWN_APP))
+
+        val context = RuntimeEnvironment.getApplication()
+        val shown = remoteViews(TapAction.SPLIT).apply(context, FrameLayout(context))
+        assertEquals(View.GONE, shown.findViewById<View>(R.id.widget_tap_area_square).visibility)
+        assertTrue(shown.findViewById<View>(R.id.widget_root).hasOnClickListeners())
+    }
+
+    @Test
     fun `the rings begin further in with the weather ring on either side`() {
         assertEquals(0.82f, innerRingEdge(WidgetSettings(widgetId = 1, showWeather = false)), 0f)
         for (position in WeatherRingPosition.entries) {
