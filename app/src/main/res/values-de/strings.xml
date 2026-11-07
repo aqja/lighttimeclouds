@@ -157,11 +157,9 @@
     </plurals>
 
     <!-- Weather tab -->
-    <string name="weather_intro">Stundenwerte aus dem Wettermodell von Open-Meteo, auch für vergangene Stunden. Oben die Himmelsfarben wie auf dem Ring. Unter den Temperaturen hängt die Bewölkung von oben herab, der Niederschlag wächst von unten, gefärbt wie auf dem Wetterring.</string>
     <string name="weather_no_forecast">Noch keine Vorhersage geladen. Sie wird nach dem Speichern heruntergeladen, sobald ein Widget dieses Orts den Wetterring zeigt.</string>
-    <string name="weather_hourly_values">Stundenwerte</string>
     <string name="weather_legend_now">Jetzt</string>
-    <string name="weather_column_time">Zeit</string>
+    <string name="weather_chart_hour">Stunde wählen</string>
     <string name="weather_column_air">Luft</string>
     <string name="weather_column_apparent">Gefühlt</string>
     <string name="weather_column_clouds">Wolken</string>
@@ -180,10 +178,8 @@
     <string name="preview_reset">Zurücksetzen</string>
 
     <!-- Times tab -->
-    <string name="times_intro">Sonnentag von Sonnenmitternacht bis Sonnenmitternacht. Die Liste wechselt zu Sonnenmitternacht.</string>
     <string name="event_does_not_occur">tritt an diesem Tag nicht ein</string>
     <string name="date_time">%1$s, %2$s</string>
-    <string name="moon_title">Mond</string>
     <string name="moon_phase">Mondphase</string>
     <string name="moon_illuminated">%1$d %% beleuchtet</string>
     <string name="moon_no_events">Kein Mondauf- oder -untergang an diesem Sonnentag</string>

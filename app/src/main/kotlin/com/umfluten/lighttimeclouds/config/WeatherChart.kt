@@ -1,6 +1,8 @@
 package com.umfluten.lighttimeclouds.config
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
@@ -12,6 +14,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -21,7 +26,15 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -45,10 +58,20 @@ import kotlin.math.roundToInt
  * The whole forecast at a glance, on one time axis: a strip in the ring's sky colors marking day and
  * night, air and apparent temperature as two lines, and below them cloud cover hanging from the top
  * and precipitation rising from the bottom, colored as on the weather ring. Thin lines separate the
- * days, a stronger one marks [now].
+ * days, a stronger one marks [now]. The hour at index [selected] is highlighted; tapping another or
+ * sliding along the chart hands its index to [onSelect]. A screen reader gets the chart as a slider
+ * over the hours, which says [spokenHour] for the selected one.
  */
 @Composable
-internal fun WeatherChart(rows: List<HourRow>, settings: WidgetSettings, now: ZonedDateTime, formats: UiFormats) {
+internal fun WeatherChart(
+    rows: List<HourRow>,
+    settings: WidgetSettings,
+    now: ZonedDateTime,
+    formats: UiFormats,
+    selected: Int,
+    spokenHour: String,
+    onSelect: (Int) -> Unit,
+) {
     if (rows.isEmpty()) return
     val start = rows.first().time
     val end = rows.last().time.plus(Duration.ofHours(1))
@@ -65,12 +88,45 @@ internal fun WeatherChart(rows: List<HourRow>, settings: WidgetSettings, now: Zo
     val (tMin, tMax, tStep) = temperatureScale(temperatures)
     val maxPrecipitation = ceil(maxOf(MIN_PRECIPITATION_SCALE_MM, rows.maxOf { it.precipitation.precipitationMm }))
     val precipitationScaleLabel = stringResource(R.string.weather_amount, maxPrecipitation.toInt().toString())
+    // Computed once: the chart redraws with every hour passed while sliding along it.
+    val skyStrip = remember(start, end, place, settings.skyTopElevationDeg) {
+        generateSequence(start) { it.plus(SKY_SAMPLE) }.takeWhile { it.isBefore(end) }.map { t ->
+            val altitude = SunMoonCalculator.sunAltitudeDegrees(t.plus(SKY_SAMPLE.dividedBy(2)), place.latitude, place.longitude)
+            t to Color(ringColor(altitude, settings))
+        }.toList()
+    }
+    val currentOnSelect by rememberUpdatedState(onSelect)
+    val gutter = with(LocalDensity.current) { GUTTER.toPx() }
+    fun select(x: Float, chartWidth: Int) = currentOnSelect(hourIndexAt(rows, (x - gutter) / (chartWidth - gutter)))
+    val sliderLabel = stringResource(R.string.weather_chart_hour)
 
     Canvas(
         Modifier
             .fillMaxWidth()
             .height(CHART_HEIGHT)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            .pointerInput(rows, gutter) { detectTapGestures { select(it.x, size.width) } }
+            // Sideways only: the list keeps scrolling over the chart.
+            .pointerInput(rows, gutter) {
+                detectHorizontalDragGestures { change, _ ->
+                    change.consume()
+                    select(change.position.x, size.width)
+                }
+            }
+            .semantics(mergeDescendants = true) {
+                contentDescription = sliderLabel
+                stateDescription = spokenHour
+                // One step per hour: the steps between the first and the last.
+                progressBarRangeInfo = ProgressBarRangeInfo(
+                    selected.toFloat(),
+                    0f..rows.lastIndex.toFloat(),
+                    steps = (rows.size - 2).coerceAtLeast(0),
+                )
+                setProgress { target ->
+                    currentOnSelect(target.roundToInt().coerceIn(rows.indices))
+                    true
+                }
+            },
     ) {
         val left = GUTTER.toPx()
         val width = size.width - left
@@ -87,16 +143,12 @@ internal fun WeatherChart(rows: List<HourRow>, settings: WidgetSettings, now: Zo
         fun y(celsius: Double): Float = (tempBottom - (celsius - tMin) / (tMax - tMin) * (tempBottom - tempTop)).toFloat()
 
         // Sky strip, sampled every 20 minutes.
-        var t = start
-        while (t.isBefore(end)) {
-            val next = t.plus(SKY_SAMPLE)
-            val altitude = SunMoonCalculator.sunAltitudeDegrees(t.plus(SKY_SAMPLE.dividedBy(2)), place.latitude, place.longitude)
+        for ((t, color) in skyStrip) {
             drawRect(
-                Color(ringColor(altitude, settings)),
+                color,
                 topLeft = Offset(x(t), skyTop),
-                size = Size(x(next) - x(t) + 0.5f, skyBottom - skyTop),
+                size = Size(x(t.plus(SKY_SAMPLE)) - x(t) + 0.5f, skyBottom - skyTop),
             )
-            t = next
         }
 
         // Temperature grid with labels in the gutter.
@@ -154,6 +206,14 @@ internal fun WeatherChart(rows: List<HourRow>, settings: WidgetSettings, now: Zo
             midnight = next
         }
 
+        val hour = rows[selected]
+        val hourStart = x(hour.time)
+        drawRect(
+            nowColor.copy(alpha = SELECTED_HOUR_ALPHA),
+            topLeft = Offset(hourStart, skyTop),
+            size = Size(x(hour.time.plus(Duration.ofHours(1))) - hourStart, weatherBottom - skyTop),
+        )
+
         temperatureLine(rows.map { it.time to it.apparentTemperatureC }, ::x, ::y, apparentColor, dashed = true)
         temperatureLine(rows.map { it.time to it.temperatureC }, ::x, ::y, airColor, dashed = false)
 
@@ -161,6 +221,9 @@ internal fun WeatherChart(rows: List<HourRow>, settings: WidgetSettings, now: Zo
         if (nowX in left..size.width) {
             drawLine(nowColor, Offset(nowX, skyTop), Offset(nowX, weatherBottom), strokeWidth = 2.dp.toPx())
         }
+
+        hour.apparentTemperatureC?.let { drawCircle(apparentColor, SELECTED_POINT.toPx(), Offset(hourStart, y(it))) }
+        hour.temperatureC?.let { drawCircle(airColor, SELECTED_POINT.toPx(), Offset(hourStart, y(it))) }
     }
 
     FlowRow(
@@ -178,6 +241,14 @@ internal fun WeatherChart(rows: List<HourRow>, settings: WidgetSettings, now: Zo
         }
         LegendItem(stringResource(R.string.weather_legend_now), labelStyle) { drawLegendLine(nowColor, dashed = false, vertical = true) }
     }
+}
+
+/** Index of the hour in [rows] at [fraction] of the time they span, the last one before it if [rows] has a gap there. */
+internal fun hourIndexAt(rows: List<HourRow>, fraction: Float): Int {
+    val start = rows.first().time
+    val span = Duration.between(start, rows.last().time.plus(Duration.ofHours(1)))
+    val instant = start.plusMillis((span.toMillis() * fraction.coerceIn(0f, 1f).toDouble()).toLong())
+    return rows.indexOfLast { !it.time.isAfter(instant) }
 }
 
 /** Polyline through the hourly values, broken where a value is missing. */
@@ -253,6 +324,8 @@ private val WEATHER_PANEL = 50.dp
 private val AXIS_LABELS = 20.dp
 private val CHART_HEIGHT = SKY_STRIP + GAP + TEMPERATURE_PANEL + GAP * 2 + WEATHER_PANEL + AXIS_LABELS
 private val SKY_SAMPLE: Duration = Duration.ofMinutes(20)
+private val SELECTED_POINT = 4.dp
+private const val SELECTED_HOUR_ALPHA = 0.3f
 private const val MIN_TEMPERATURE_SPAN = 10.0
 
 /** The precipitation bars span at least this much, so a drizzle does not fill the panel. */

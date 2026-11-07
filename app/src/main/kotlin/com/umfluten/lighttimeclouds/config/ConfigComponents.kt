@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
@@ -14,9 +15,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.Slider
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -38,11 +39,12 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.umfluten.lighttimeclouds.R
-import kotlinx.coroutines.delay
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import kotlinx.coroutines.delay
 
 /** Follows the system's light/dark setting and, from Android 12 on, the wallpaper-derived system colors. */
 @Composable
@@ -127,6 +129,26 @@ internal fun <T> SegmentedChoice(options: List<Pair<T, Int>>, selected: T, onSel
 @Composable
 internal fun Hint(text: String) {
     Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+/**
+ * A value under its label, with room for a [note] below it even while empty, so that a row of them
+ * keeps its height and its values stay in line.
+ */
+@Composable
+internal fun RowScope.LabeledValue(
+    label: String,
+    value: String,
+    note: String = "",
+    weight: Float = 1f,
+    color: Color = Color.Unspecified,
+    fontWeight: FontWeight? = null,
+) {
+    Column(Modifier.weight(weight)) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodyLarge, color = color, fontWeight = fontWeight)
+        Text(note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
 }
 
 /** Heading of the control below it, inside a [Section]. */

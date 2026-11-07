@@ -5,12 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
@@ -18,15 +17,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.astro.MoonEventType
@@ -34,15 +31,14 @@ import com.umfluten.lighttimeclouds.astro.SolarDay
 import com.umfluten.lighttimeclouds.astro.SolarEventType
 import com.umfluten.lighttimeclouds.astro.SunMoonCalculator
 import com.umfluten.lighttimeclouds.data.WidgetSettings
-import com.umfluten.lighttimeclouds.widget.MARK_COLOR
 import com.umfluten.lighttimeclouds.widget.skyColors
 import java.time.Instant
 import java.time.ZonedDateTime
 
 /**
- * All sun events of the current solar day at the widget's (possibly not yet saved) place, in that
- * place's time zone, followed by the moon's phase, rise and set.
- * Past events are dimmed, the next one is highlighted; refreshes every minute.
+ * The moon's phase, rise and set side by side, below them all sun events of the current solar day,
+ * at the widget's (possibly not yet saved) place, in that place's time zone. Dates only show where
+ * they change. Past events are dimmed, the next one is highlighted; refreshes every minute.
  */
 @Composable
 internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
@@ -60,21 +56,52 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
             SolarDay.moonEventsBetween(start, end, now.zone, place.latitude, place.longitude)
         }
     }
-    val firstDate = events.first().instant?.atZone(now.zone)?.toLocalDate()
     val nextIndex = events.indexOfFirst { it.instant?.isAfter(now.toInstant()) == true }
     val nextMoonIndex = moonEvents.indexOfFirst { it.instant.isAfter(now.toInstant()) }
     val formats = rememberUiFormats()
 
     LazyColumn(contentPadding = padding) {
         item {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(place.name, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    formats.coordinates(place.latitude, place.longitude) + " · " + place.zone.id,
-                    style = MaterialTheme.typography.bodyMedium,
+            val heading = MaterialTheme.typography.titleMedium.toSpanStyle()
+            Text(
+                buildAnnotatedString {
+                    withStyle(heading) { append(place.name) }
+                    append(" · " + formats.coordinates(place.latitude, place.longitude) + " · " + place.zone.id)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(16.dp),
+            )
+        }
+        item {
+            val illumination = SunMoonCalculator.moonIllumination(now.toInstant())
+            Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                LabeledValue(
+                    label = stringResource(R.string.moon_phase),
+                    value = stringResource(moonPhaseLabel(SunMoonCalculator.moonPhaseOf(illumination.phase))),
+                    note = stringResource(R.string.moon_illuminated, (illumination.fraction * 100).toInt()),
+                    weight = MOON_PHASE_WEIGHT,
                 )
-                Hint(stringResource(R.string.times_intro))
+                if (moonEvents.isEmpty()) {
+                    val up = SunMoonCalculator.moonAltitudeDegrees(now.toInstant(), place.latitude, place.longitude) > 0
+                    LabeledValue(
+                        label = stringResource(R.string.moon_no_events),
+                        value = stringResource(if (up) R.string.moon_stays_up else R.string.moon_stays_down),
+                    )
+                }
+                moonEvents.forEachIndexed { index, event ->
+                    val local = event.instant.atZone(now.zone)
+                    val isNext = index == nextMoonIndex
+                    LabeledValue(
+                        label = stringResource(if (event.type == MoonEventType.MOONRISE) R.string.moonrise else R.string.moonset),
+                        // Without the zone, which the line above names, so three columns fit in any language.
+                        value = formats.timeOfDay(local.hour * 60 + local.minute),
+                        note = if (local.toLocalDate() != now.toLocalDate()) formats.date(local) else "",
+                        color = timelineColor(highlighted = isNext, past = event.instant.isBefore(now.toInstant())),
+                        fontWeight = if (isNext) FontWeight.Bold else null,
+                    )
+                }
             }
+            HorizontalDivider(Modifier.padding(top = 8.dp))
         }
         items(events.size) { index ->
             val event = events[index]
@@ -84,58 +111,15 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
                 val altitude = SunMoonCalculator.sunAltitudeDegrees(instant.plusSeconds(60), place.latitude, place.longitude)
                 Brush.verticalGradient(skyColors(altitude, SKY_SLICE_TOP_DEG).map(::Color).reversed())
             }
+            val previous = events.take(index).lastOrNull { it.instant != null }?.instant
             EventRow(
                 label = stringResource(solarEventLabel(event.type)),
                 instant = event.instant,
                 now = now,
                 formats = formats,
                 isNext = index == nextIndex,
-                showDate = event.instant?.atZone(now.zone)?.toLocalDate() != firstDate,
+                showDate = previous != null && event.instant?.atZone(now.zone)?.toLocalDate() != previous.atZone(now.zone).toLocalDate(),
                 marker = skySlice,
-                markerShape = SKY_SLICE_SHAPE,
-                markerSize = SKY_SLICE_SIZE,
-            )
-        }
-
-        item {
-            HorizontalDivider(Modifier.padding(top = 8.dp))
-            Text(
-                stringResource(R.string.moon_title),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
-            )
-        }
-        item {
-            val illumination = SunMoonCalculator.moonIllumination(now.toInstant())
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.moon_phase)) },
-                supportingContent = { Text(stringResource(moonPhaseLabel(SunMoonCalculator.moonPhaseOf(illumination.phase)))) },
-                trailingContent = { Text(stringResource(R.string.moon_illuminated, (illumination.fraction * 100).toInt())) },
-            )
-        }
-        if (moonEvents.isEmpty()) {
-            item {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.moon_no_events)) },
-                    supportingContent = {
-                        val up = SunMoonCalculator.moonAltitudeDegrees(now.toInstant(), place.latitude, place.longitude) > 0
-                        Text(stringResource(if (up) R.string.moon_stays_up else R.string.moon_stays_down))
-                    },
-                )
-            }
-        }
-        items(moonEvents.size) { index ->
-            val event = moonEvents[index]
-            EventRow(
-                label = stringResource(if (event.type == MoonEventType.MOONRISE) R.string.moonrise else R.string.moonset),
-                instant = event.instant,
-                now = now,
-                formats = formats,
-                isNext = index == nextMoonIndex,
-                showDate = event.instant.atZone(now.zone).toLocalDate() != firstDate,
-                marker = SolidColor(Color(MARK_COLOR)),
-                markerShape = CircleShape,
-                markerSize = MOON_DOT_SIZE,
             )
         }
     }
@@ -150,13 +134,9 @@ private val SKY_SLICE_SHAPE = RoundedCornerShape(3.dp)
  */
 private const val SKY_SLICE_TOP_DEG = 30.0
 private val SKY_SLICE_SIZE = 24.dp
-private val MOON_DOT_SIZE = 14.dp
+private const val MOON_PHASE_WEIGHT = 1.4f
 
-/**
- * One event line: [marker] (nothing while null) in [markerShape], centered in the width of the
- * largest marker so all labels line up; label, optional date, and time; dimmed if past,
- * highlighted if next.
- */
+/** One event line: [marker] (nothing while null), label, optional date, and time; dimmed if past, highlighted if next. */
 @Composable
 private fun EventRow(
     label: String,
@@ -166,8 +146,6 @@ private fun EventRow(
     isNext: Boolean,
     showDate: Boolean,
     marker: Brush?,
-    markerShape: Shape,
-    markerSize: Dp,
 ) {
     val local = instant?.atZone(now.zone)
     val isPast = instant?.isAfter(now.toInstant()) == false
@@ -175,16 +153,14 @@ private fun EventRow(
     val weight = if (isNext) FontWeight.Bold else null
     ListItem(
         leadingContent = {
-            Box(Modifier.size(SKY_SLICE_SIZE), contentAlignment = Alignment.Center) {
-                // The outline lies around the fill, not over its edge, which keeps the horizon in view.
-                Box(
-                    Modifier
-                        .size(markerSize)
-                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, markerShape)
-                        .padding(1.dp)
-                        .then(if (marker != null) Modifier.background(marker, markerShape) else Modifier),
-                )
-            }
+            // The outline lies around the fill, not over its edge, which keeps the horizon in view.
+            Box(
+                Modifier
+                    .size(SKY_SLICE_SIZE)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, SKY_SLICE_SHAPE)
+                    .padding(1.dp)
+                    .then(if (marker != null) Modifier.background(marker, SKY_SLICE_SHAPE) else Modifier),
+            )
         },
         headlineContent = { Text(label, color = contentColor, fontWeight = weight) },
         supportingContent = when {

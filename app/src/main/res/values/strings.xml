@@ -158,11 +158,9 @@
     </plurals>
 
     <!-- Weather tab -->
-    <string name="weather_intro">Hourly values from the Open-Meteo weather model, for past hours as well. Top: sky colors as on the ring. Below the temperatures: cloud cover hanging from the top, precipitation rising from the bottom, colored as on the weather ring.</string>
     <string name="weather_no_forecast">No forecast loaded yet. It is downloaded after saving, as soon as a widget of this place shows the weather ring.</string>
-    <string name="weather_hourly_values">Hourly values</string>
     <string name="weather_legend_now">Now</string>
-    <string name="weather_column_time">Time</string>
+    <string name="weather_chart_hour">Choose hour</string>
     <string name="weather_column_air">Air</string>
     <string name="weather_column_apparent">Feels like</string>
     <string name="weather_column_clouds">Clouds</string>
@@ -181,10 +179,8 @@
     <string name="preview_reset">Reset</string>
 
     <!-- Times tab -->
-    <string name="times_intro">Solar day from solar midnight to solar midnight. The list switches over at solar midnight.</string>
     <string name="event_does_not_occur">does not occur on this day</string>
     <string name="date_time">%1$s, %2$s</string>
-    <string name="moon_title">Moon</string>
     <string name="moon_phase">Moon phase</string>
     <string name="moon_illuminated">%1$d%% illuminated</string>
     <string name="moon_no_events">No moonrise or moonset on this solar day</string>
