@@ -1,6 +1,7 @@
 package com.umfluten.lighttimeclouds.config
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,7 +10,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.HorizontalDivider
@@ -40,8 +40,8 @@ import com.umfluten.lighttimeclouds.data.WeatherRepository
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.weather.WeatherCondition
 import com.umfluten.lighttimeclouds.weather.WeatherForecast
-import com.umfluten.lighttimeclouds.widget.ClockFaceRenderer
 import com.umfluten.lighttimeclouds.widget.WeatherSummaryText
+import com.umfluten.lighttimeclouds.widget.formatTemperature
 import java.time.Duration
 import java.time.Instant
 import java.time.ZonedDateTime
@@ -193,8 +193,8 @@ private fun HourRow(row: HourRow, local: ZonedDateTime, formats: UiFormats, isCu
     val background = if (isCurrent) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f) else MaterialTheme.colorScheme.surface
     TableRow(Modifier.background(background).padding(vertical = 10.dp)) {
         Cell(formats.timeOfDay(local.hour * 60 + local.minute), style, color, align = TextAlign.Start, weight = TIME_WEIGHT)
-        Cell(row.temperatureC?.let(ClockFaceRenderer::formatTemperature) ?: "–", style, color)
-        Cell(row.apparentTemperatureC?.let(ClockFaceRenderer::formatTemperature) ?: "–", style, color)
+        Cell(row.temperatureC?.let(::formatTemperature) ?: "–", style, color)
+        Cell(row.apparentTemperatureC?.let(::formatTemperature) ?: "–", style, color)
         Cell(stringResource(R.string.percent, row.cloudCoverPercent.roundToInt()), style, color)
         Column(Modifier.weight(PRECIPITATION_WEIGHT), horizontalAlignment = Alignment.End) {
             Text(precipitationText(row.precipitation, formats), style = style, color = color)

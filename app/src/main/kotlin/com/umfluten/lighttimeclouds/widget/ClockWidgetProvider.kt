@@ -80,7 +80,7 @@ class ClockWidgetProvider : AppWidgetProvider() {
     companion object {
         /** Shows the place name above or below the clock per [WidgetSettings.labelPosition], in the dial's chrome color. */
         private fun bindPlaceLabel(context: Context, views: RemoteViews, settings: WidgetSettings) {
-            val color = ClockFaceRenderer.chromeColor(context, settings)
+            val color = chromeColor(context, settings)
             for ((viewId, position) in listOf(R.id.widget_label_above to LabelPosition.ABOVE, R.id.widget_label_below to LabelPosition.BELOW)) {
                 val visible = settings.labelPosition == position
                 views.setViewVisibility(viewId, if (visible) View.VISIBLE else View.GONE)
@@ -102,7 +102,7 @@ class ClockWidgetProvider : AppWidgetProvider() {
             } else {
                 null
             }
-            val color = ClockFaceRenderer.chromeColor(context, settings)
+            val color = chromeColor(context, settings)
             for ((viewId, position) in listOf(
                 R.id.widget_summary_left to SummaryPosition.LEFT,
                 R.id.widget_summary_right to SummaryPosition.RIGHT,

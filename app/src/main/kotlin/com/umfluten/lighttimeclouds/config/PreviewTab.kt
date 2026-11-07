@@ -47,14 +47,15 @@ import com.umfluten.lighttimeclouds.weather.WeatherForecast
 import com.umfluten.lighttimeclouds.widget.ClockFaceRenderer
 import com.umfluten.lighttimeclouds.widget.ClockWidgetProvider
 import com.umfluten.lighttimeclouds.widget.WeatherSummaryText
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.conflate
-import kotlinx.coroutines.withContext
+import com.umfluten.lighttimeclouds.widget.chromeColor
 import java.time.Instant
 import java.time.LocalDate
 import java.time.Year
 import java.time.ZonedDateTime
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.withContext
 
 /** Everything one preview frame is rendered from; equal frames are not rendered twice. */
 private data class PreviewFrame(
@@ -153,7 +154,7 @@ internal fun PreviewTab(settings: WidgetSettings, padding: PaddingValues) {
                     bitmap?.let { Image(it, contentDescription = stringResource(R.string.widget_content_description)) }
                 }
             }
-            val summaryColor = Color(ClockFaceRenderer.chromeColor(context, settings))
+            val summaryColor = Color(chromeColor(context, settings))
             when {
                 summary == null -> clock()
                 settings.summaryPosition == SummaryPosition.BELOW -> Column(horizontalAlignment = Alignment.CenterHorizontally) {

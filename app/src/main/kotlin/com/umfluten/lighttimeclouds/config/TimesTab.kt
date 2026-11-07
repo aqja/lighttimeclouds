@@ -34,7 +34,8 @@ import com.umfluten.lighttimeclouds.astro.SolarDay
 import com.umfluten.lighttimeclouds.astro.SolarEventType
 import com.umfluten.lighttimeclouds.astro.SunMoonCalculator
 import com.umfluten.lighttimeclouds.data.WidgetSettings
-import com.umfluten.lighttimeclouds.widget.ClockFaceRenderer
+import com.umfluten.lighttimeclouds.widget.MARK_COLOR
+import com.umfluten.lighttimeclouds.widget.ringColorsUpward
 import java.time.Instant
 import java.time.ZonedDateTime
 
@@ -81,7 +82,7 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
             // horizon at the bottom, where twilight shows its colors.
             val skySlice = event.instant?.let { instant ->
                 val altitude = SunMoonCalculator.sunAltitudeDegrees(instant.plusSeconds(60), place.latitude, place.longitude)
-                val colors = ClockFaceRenderer.ringColorsUpward(altitude, settings, SKY_SLICE_TOP_DEG).map(::Color).reversed()
+                val colors = ringColorsUpward(altitude, settings, SKY_SLICE_TOP_DEG).map(::Color).reversed()
                 colors.singleOrNull()?.let(::SolidColor) ?: Brush.verticalGradient(colors)
             }
             EventRow(
@@ -133,7 +134,7 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
                 formats = formats,
                 isNext = index == nextMoonIndex,
                 showDate = event.instant.atZone(now.zone).toLocalDate() != firstDate,
-                marker = SolidColor(Color(ClockFaceRenderer.MARK_COLOR)),
+                marker = SolidColor(Color(MARK_COLOR)),
                 markerShape = CircleShape,
                 markerSize = MOON_DOT_SIZE,
             )

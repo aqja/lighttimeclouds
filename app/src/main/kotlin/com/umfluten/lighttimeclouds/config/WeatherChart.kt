@@ -30,7 +30,10 @@ import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.astro.SunMoonCalculator
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.weather.WeatherCondition
-import com.umfluten.lighttimeclouds.widget.ClockFaceRenderer
+import com.umfluten.lighttimeclouds.widget.cloudColor
+import com.umfluten.lighttimeclouds.widget.formatTemperature
+import com.umfluten.lighttimeclouds.widget.precipitationColor
+import com.umfluten.lighttimeclouds.widget.ringColor
 import java.time.Duration
 import java.time.Instant
 import java.time.ZonedDateTime
@@ -89,7 +92,7 @@ internal fun WeatherChart(rows: List<HourRow>, settings: WidgetSettings, now: Zo
             val next = t.plus(SKY_SAMPLE)
             val altitude = SunMoonCalculator.sunAltitudeDegrees(t.plus(SKY_SAMPLE.dividedBy(2)), place.latitude, place.longitude)
             drawRect(
-                Color(ClockFaceRenderer.ringColor(altitude, settings)),
+                Color(ringColor(altitude, settings)),
                 topLeft = Offset(x(t), skyTop),
                 size = Size(x(next) - x(t) + 0.5f, skyBottom - skyTop),
             )
@@ -101,7 +104,7 @@ internal fun WeatherChart(rows: List<HourRow>, settings: WidgetSettings, now: Zo
         while (grid <= tMax + 1e-6) {
             val gy = y(grid)
             drawLine(gridColor, Offset(left, gy), Offset(size.width, gy), strokeWidth = 1f)
-            val label = measurer.measure(ClockFaceRenderer.formatTemperature(grid), labelStyle)
+            val label = measurer.measure(formatTemperature(grid), labelStyle)
             drawText(label, topLeft = Offset(left - label.size.width - 4.dp.toPx(), gy - label.size.height / 2f))
             grid += tStep
         }
@@ -113,7 +116,7 @@ internal fun WeatherChart(rows: List<HourRow>, settings: WidgetSettings, now: Zo
             val x0 = x(row.time).roundToInt().toFloat()
             val x1 = x(row.time.plus(Duration.ofHours(1))).roundToInt().toFloat()
             drawRect(
-                Color(ClockFaceRenderer.cloudColor(row.precipitation, dark)),
+                Color(cloudColor(row.precipitation, dark)),
                 topLeft = Offset(x0, weatherTop),
                 size = Size(x1 - x0, panelHeight * 0.5f),
             )
@@ -123,7 +126,7 @@ internal fun WeatherChart(rows: List<HourRow>, settings: WidgetSettings, now: Zo
                 val fraction = maxOf(condition.precipitationMm / maxPrecipitation, 0.04).coerceAtMost(1.0).toFloat()
                 val barHeight = panelHeight * fraction
                 drawRect(
-                    Color(ClockFaceRenderer.precipitationColor(condition)),
+                    Color(precipitationColor(condition)),
                     topLeft = Offset(x0, weatherBottom - barHeight),
                     size = Size(x1 - x0, barHeight),
                 )
@@ -168,10 +171,10 @@ internal fun WeatherChart(rows: List<HourRow>, settings: WidgetSettings, now: Zo
         LegendItem(stringResource(R.string.weather_column_air), labelStyle) { drawLegendLine(airColor, dashed = false) }
         LegendItem(stringResource(R.string.weather_column_apparent), labelStyle) { drawLegendLine(apparentColor, dashed = true) }
         LegendItem(stringResource(R.string.weather_column_clouds), labelStyle) {
-            drawRect(Color(ClockFaceRenderer.cloudColor(FULL_CLOUD, dark)))
+            drawRect(Color(cloudColor(FULL_CLOUD, dark)))
         }
         LegendItem(stringResource(R.string.weather_column_precipitation), labelStyle) {
-            drawRect(Color(ClockFaceRenderer.precipitationColor(TYPICAL_RAIN)))
+            drawRect(Color(precipitationColor(TYPICAL_RAIN)))
         }
         LegendItem(stringResource(R.string.weather_legend_now), labelStyle) { drawLegendLine(nowColor, dashed = false, vertical = true) }
     }

@@ -34,7 +34,7 @@ class MoonPhaseDiscTest {
         val r = 110.0
         val bitmap = createBitmap(size, size)
         val limb = Math.toRadians(brightLimbDeg)
-        ClockFaceRenderer.drawMoonPhase(Canvas(bitmap), c, c, r.toFloat(), fraction, limb, Color.WHITE, Color.BLACK)
+        drawMoonPhase(Canvas(bitmap), c, c, r.toFloat(), fraction, limb, Color.WHITE, Color.BLACK)
         val ux = -sin(limb)
         val uy = -cos(limb)
         val e = 2 * fraction - 1
@@ -76,12 +76,12 @@ class MoonPhaseDiscTest {
         fun assertAngle(expectedDeg: Double, actual: Double) =
             assertEquals(expectedDeg, Math.toDegrees(actual), 1e-9)
         // Limb toward the zenith, moon at 3 o'clock: the far edge is to the right with the horizon inside, to the left with it outside.
-        assertAngle(270.0, ClockFaceRenderer.brightLimbOnDial(0.0, 90.0, SkyHorizon.INNER))
-        assertAngle(90.0, ClockFaceRenderer.brightLimbOnDial(0.0, 90.0, SkyHorizon.OUTER))
+        assertAngle(270.0, brightLimbOnDial(0.0, 90.0, SkyHorizon.INNER))
+        assertAngle(90.0, brightLimbOnDial(0.0, 90.0, SkyHorizon.OUTER))
         // At the top with the horizon inside, the zenith is the top of the screen.
-        assertAngle(30.0, ClockFaceRenderer.brightLimbOnDial(Math.toRadians(30.0), 0.0, SkyHorizon.INNER))
+        assertAngle(30.0, brightLimbOnDial(Math.toRadians(30.0), 0.0, SkyHorizon.INNER))
         // At 6 o'clock the moon stands on its head, and what is on its left is to the right on the screen.
-        assertAngle(270.0, ClockFaceRenderer.brightLimbOnDial(Math.toRadians(90.0), 180.0, SkyHorizon.INNER))
+        assertAngle(270.0, brightLimbOnDial(Math.toRadians(90.0), 180.0, SkyHorizon.INNER))
     }
 
     @Test

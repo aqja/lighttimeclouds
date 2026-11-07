@@ -23,7 +23,7 @@ Almost all of the computation is in the `core` module (plain Kotlin/JVM, no Andr
 | Mapping elevation → ring | [`sky/SkyProjection.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyProjection.kt) |
 | Precomputed color tables | [`sky/SkyGradientTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyGradientTable.kt), [`sky/SunTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SunTable.kt), [`sky/SkyTableGenerator.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyTableGenerator.kt) |
 | Weather quantities and thresholds | [`weather/WeatherForecast.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/weather/WeatherForecast.kt), [`weather/WeatherOutlook.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/weather/WeatherOutlook.kt) |
-| Drawing on the dial | [`widget/ClockFaceRenderer.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/ClockFaceRenderer.kt) (module `app`) |
+| Drawing on the dial | [`widget/ClockFaceRenderer.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/ClockFaceRenderer.kt) and the files next to it (module `app`) |
 | Truncating the series, reference values | [`tools/astro_series.py`](../tools/astro_series.py), [`tools/reference_ephemeris.py`](../tools/reference_ephemeris.py) |
 
 ## Contents
@@ -846,7 +846,7 @@ every machine, instead of the platform's math functions, which may differ in the
 
 ## 12. Drawing on the dial
 
-Code: [`ClockFaceRenderer.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/ClockFaceRenderer.kt).
+Code: [`ClockFaceRenderer.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/ClockFaceRenderer.kt) with [`DayNightRing.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/DayNightRing.kt), [`SkyBodies.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/SkyBodies.kt), [`WeatherRing.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/WeatherRing.kt), [`TemperatureLabels.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/TemperatureLabels.kt) and [`MoonOnDial.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/MoonOnDial.kt).
 Little new is computed here; this section records how the quantities above reach the dial, and
 where the drawing deliberately departs from the physics.
 

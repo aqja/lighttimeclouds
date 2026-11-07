@@ -23,7 +23,7 @@ Die Rechnungen stehen fast vollständig im Modul `core` (reines Kotlin/JVM, ohne
 | Abbildung Höhenwinkel → Ring | [`sky/SkyProjection.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyProjection.kt) |
 | Vorberechnete Farbtabellen | [`sky/SkyGradientTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyGradientTable.kt), [`sky/SunTable.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SunTable.kt), [`sky/SkyTableGenerator.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/sky/SkyTableGenerator.kt) |
 | Wettergrößen und Schwellen | [`weather/WeatherForecast.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/weather/WeatherForecast.kt), [`weather/WeatherOutlook.kt`](../core/src/main/kotlin/com/umfluten/lighttimeclouds/weather/WeatherOutlook.kt) |
-| Darstellung im Zifferblatt | [`widget/ClockFaceRenderer.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/ClockFaceRenderer.kt) (Modul `app`) |
+| Darstellung im Zifferblatt | [`widget/ClockFaceRenderer.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/ClockFaceRenderer.kt) und die Dateien daneben (Modul `app`) |
 | Kürzung der Reihen, Referenzwerte | [`tools/astro_series.py`](../tools/astro_series.py), [`tools/reference_ephemeris.py`](../tools/reference_ephemeris.py) |
 
 ## Inhalt
@@ -862,7 +862,7 @@ letzten Bit abweichen können.
 
 ## 12. Darstellung im Zifferblatt
 
-Code: [`ClockFaceRenderer.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/ClockFaceRenderer.kt).
+Code: [`ClockFaceRenderer.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/ClockFaceRenderer.kt) mit [`DayNightRing.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/DayNightRing.kt), [`SkyBodies.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/SkyBodies.kt), [`WeatherRing.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/WeatherRing.kt), [`TemperatureLabels.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/TemperatureLabels.kt) und [`MoonOnDial.kt`](../app/src/main/kotlin/com/umfluten/lighttimeclouds/widget/MoonOnDial.kt).
 Hier wird nichts Neues gerechnet; der Abschnitt hält fest, wie die Größen von oben auf das
 Zifferblatt kommen und wo die Darstellung bewusst von der Physik abweicht.
 

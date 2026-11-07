@@ -19,9 +19,9 @@ class TemperatureLabelSpansTest {
     private fun at(day: Int, hour: Int, minute: Int) = ZonedDateTime.of(2026, 10, day, hour, minute, 0, 0, zone)
 
     private fun span(settings: WidgetSettings, now: ZonedDateTime, angle: Double) =
-        ClockFaceRenderer.temperatureLabelSpans(settings, now).single { it.angle == angle }
+        temperatureLabelSpans(settings, now).single { it.angle == angle }
 
-    private fun assertSpan(span: ClockFaceRenderer.LabelSpan, mid: ZonedDateTime, from: ZonedDateTime, to: ZonedDateTime) {
+    private fun assertSpan(span: LabelSpan, mid: ZonedDateTime, from: ZonedDateTime, to: ZonedDateTime) {
         assertEquals("mid", mid.toInstant(), span.mid)
         assertEquals("from", from.toInstant(), span.from)
         assertEquals("to", to.toInstant(), span.to)
