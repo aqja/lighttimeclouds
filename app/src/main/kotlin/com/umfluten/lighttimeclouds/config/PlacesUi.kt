@@ -41,6 +41,7 @@ import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.data.LabelPosition
 import com.umfluten.lighttimeclouds.data.Place
 import com.umfluten.lighttimeclouds.data.WidgetSettings
+import com.umfluten.lighttimeclouds.data.roundCoordinate
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -304,9 +305,9 @@ private fun selectableZones(now: Instant, include: ZoneId): List<ZoneId> =
 private val LATITUDE_RANGE = -90.0..90.0
 private val LONGITUDE_RANGE = -180.0..180.0
 
-/** Accepts both "." and "," (decimal comma keyboards); null if not a number within [range]. */
+/** Accepts both "." and "," (decimal comma keyboards) and rounds as a place keeps it; null if not a number within [range]. */
 private fun parseCoordinate(text: String, range: ClosedFloatingPointRange<Double>): Double? =
-    text.replace(',', '.').toDoubleOrNull()?.takeIf { it in range }
+    text.replace(',', '.').toDoubleOrNull()?.takeIf { it in range }?.let(::roundCoordinate)
 
 @Composable
 private fun CoordinateField(

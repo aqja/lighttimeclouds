@@ -76,8 +76,8 @@ class PlacesRepository(private val context: Context) {
             return Place(
                 id = id,
                 name = prefs[nameKey(id)].orEmpty(),
-                latitude = prefs[latKey(id)] ?: Place.DEFAULT.latitude,
-                longitude = prefs[lonKey(id)] ?: Place.DEFAULT.longitude,
+                latitude = prefs[latKey(id)]?.let(::roundCoordinate) ?: Place.DEFAULT.latitude,
+                longitude = prefs[lonKey(id)]?.let(::roundCoordinate) ?: Place.DEFAULT.longitude,
                 zone = zone,
             )
         }

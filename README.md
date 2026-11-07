@@ -17,7 +17,7 @@ A ring around an ordinary clock face shows the course of the day at the current 
 - Moon with phase, either on the hour hand (its path crosses the horizon circle at the actual times of moonrise and moonset) or as its own hand that trails the hour hand by the moon's distance from the sun; the distance from the center shows the moon's altitude, together with the moon's daily path, the compass points it passes and the horizon circle (can be hidden)
 - "Preview" tab in the app: the widget with the current settings, including unsaved ones; sliders for latitude, longitude, date in the course of the year and time of day change only the preview
 - "Times" tab in the app: all sun events of the solar day, moon phase, moonrise and moonset
-- Saved places with name, coordinates and time zone; every widget shows the local time of its place (world clock with several widgets). Manual entry only, no GPS, no location permission. Network access only for the optional weather ring
+- Saved places with name, coordinates and time zone; every widget shows the local time of its place (world clock with several widgets). Manual entry only, no GPS, no location permission. The app keeps coordinates to at most three decimals, about 100 m. Network access only for the optional weather ring
 - Tapping opens either the system clock app or the app itself
 - Separate launcher icon for the settings, independent of the widget
 - Freely resizable, square widget (2×2 by default); several instances with their own settings

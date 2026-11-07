@@ -2,6 +2,7 @@ package com.umfluten.lighttimeclouds.data
 
 import java.time.ZoneId
 import java.util.UUID
+import kotlin.math.roundToLong
 
 /**
  * A saved location that widgets refer to by [id]. [zone] is the time zone the clock shows for this
@@ -19,8 +20,8 @@ data class Place(
         val DEFAULT = Place(
             id = "default",
             name = "Berlin",
-            latitude = 52.5208,
-            longitude = 13.4094,
+            latitude = 52.521,
+            longitude = 13.409,
             zone = ZoneId.of("Europe/Berlin"),
         )
 
@@ -33,3 +34,9 @@ data class Place(
         ) = Place(UUID.randomUUID().toString(), name, latitude, longitude, zone)
     }
 }
+
+/**
+ * [degrees] with three decimals, about 100 m, the most any place keeps: neither the clock nor the
+ * forecast models get better from more, it would only say more about where someone is.
+ */
+fun roundCoordinate(degrees: Double): Double = (degrees * 1000).roundToLong() / 1000.0

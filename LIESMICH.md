@@ -17,7 +17,7 @@ Ein Ring um ein gewöhnliches Zifferblatt zeigt den Tagesverlauf von Nacht über
 - Mond mit Phase, wahlweise am Stundenzeiger (Bahn schneidet den Horizontkreis zu den echten Auf- und Untergangszeiten) oder als eigener Zeiger, der dem Stundenzeiger um den Abstand des Mondes zur Sonne nachläuft; Abstand zur Mitte zeigt die Mondhöhe, dazu Tagesbahn des Mondes mit den Himmelsrichtungen, die er durchläuft, und Horizontkreis (ausblendbar)
 - Tab „Vorschau“ in der App: das Widget mit den aktuellen, auch noch nicht gespeicherten Einstellungen; Schieberegler für Breiten- und Längengrad, Datum im Jahresverlauf und Uhrzeit verändern nur die Vorschau
 - Tab „Zeiten“ in der App: alle Sonnenereignisse des Sonnentags, Mondphase, Mondauf- und -untergang
-- Gespeicherte Orte mit Name, Koordinaten und Zeitzone; jedes Widget zeigt die Ortszeit (Weltuhr mit mehreren Widgets). Nur manuelle Eingabe, kein GPS, keine Standort-Berechtigung. Netzwerkzugriff nur für den optionalen Wetter-Ring
+- Gespeicherte Orte mit Name, Koordinaten und Zeitzone; jedes Widget zeigt die Ortszeit (Weltuhr mit mehreren Widgets). Nur manuelle Eingabe, kein GPS, keine Standort-Berechtigung. Koordinaten behält die App mit höchstens drei Nachkommastellen, also auf etwa 100 m genau. Netzwerkzugriff nur für den optionalen Wetter-Ring
 - Antippen öffnet wahlweise die System-Uhr-App oder die App selbst
 - Eigenes Launcher-Icon für die Konfiguration, unabhängig vom Widget
 - Frei skalierbares, quadratisches Widget (Standard 2×2), mehrere Instanzen mit eigenen Einstellungen möglich

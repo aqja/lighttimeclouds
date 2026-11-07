@@ -20,7 +20,7 @@ class UiFormatsTest {
         val formats = UiFormats(Locale.GERMAN, is24Hour = true)
         assertEquals("19:05", formats.timeOfDay(19 * 60 + 5))
         assertEquals("Sa., 17. Okt.", formats.date(evening))
-        assertEquals("52,5208°, 13,4094°", formats.coordinates(52.5208, 13.4094))
+        assertEquals("52,521°, 13,409°", formats.coordinates(52.521, 13.409))
     }
 
     @Test
@@ -28,7 +28,7 @@ class UiFormatsTest {
         val formats = UiFormats(Locale.US, is24Hour = false)
         assertEquals("7:05 PM", formats.timeOfDay(19 * 60 + 5))
         assertEquals("Sat, Oct 17", formats.date(evening))
-        assertEquals("52.5208°, 13.4094°", formats.coordinates(52.5208, 13.4094))
+        assertEquals("52.521°, 13.409°", formats.coordinates(52.521, 13.409))
     }
 
     @Test

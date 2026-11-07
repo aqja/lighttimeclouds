@@ -43,6 +43,7 @@ import com.umfluten.lighttimeclouds.data.RingStyle
 import com.umfluten.lighttimeclouds.data.SummaryPosition
 import com.umfluten.lighttimeclouds.data.WeatherRepository
 import com.umfluten.lighttimeclouds.data.WidgetSettings
+import com.umfluten.lighttimeclouds.data.roundCoordinate
 import com.umfluten.lighttimeclouds.weather.WeatherForecast
 import com.umfluten.lighttimeclouds.widget.ClockFaceRenderer
 import com.umfluten.lighttimeclouds.widget.ClockWidgetProvider
@@ -116,7 +117,7 @@ internal fun PreviewTab(settings: WidgetSettings, padding: PaddingValues) {
     val frame by rememberUpdatedState(
         PreviewFrame(
             settings.copy(
-                place = place.copy(latitude = latitude.toDouble(), longitude = longitude.toDouble()),
+                place = place.copy(latitude = roundCoordinate(latitude.toDouble()), longitude = roundCoordinate(longitude.toDouble())),
                 skyTopElevationDeg = skyTopElevation,
             ),
             now,
