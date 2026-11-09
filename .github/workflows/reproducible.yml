@@ -12,7 +12,7 @@
 #
 # The unsigned APKs are kept as artifacts, to compare with a locally signed one instead:
 #
-#   uvx apksigcopier@1.1.1 compare <signed.apk> --unsigned app-release-unsigned.apk
+#   PATH="<sdk>/build-tools/<version>:$PATH" uvx apksigcopier@1.1.1 compare <signed.apk> --unsigned app-release-unsigned.apk
 name: Reproducible build
 
 on:
@@ -69,9 +69,11 @@ jobs:
             locale: en_US.UTF-8
             umask: "077"
     steps:
+      # The APK records the commit it was built from, so a pull request builds its own head
+      # rather than GitHub's merge commit, which nobody can build locally to compare with.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.ref || github.ref }}
+          ref: ${{ inputs.ref || github.event.pull_request.head.sha || github.ref }}
           path: ${{ matrix.path }}
 
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
@@ -156,6 +158,9 @@ jobs:
         run: gh release download "$RELEASE" --repo "$GITHUB_REPOSITORY" --pattern 'lighttimeclouds-*.apk' --dir signed
 
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+
+      # apksigcopier verifies with apksigner, which the runner has, but not on the PATH.
+      - run: ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -n 1 >> "$GITHUB_PATH"
 
       # What F-Droid checks: the signed APK is the unsigned one plus its signature.
       - run: |
