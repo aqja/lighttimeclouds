@@ -4,11 +4,14 @@ import android.app.AlarmManager
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Paint
+import android.os.Build
 import android.os.Bundle
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.Size
+import android.util.SizeF
 import android.view.View
 import android.widget.RemoteViews
 import androidx.annotation.DimenRes
@@ -204,6 +207,38 @@ class ClockWidgetProvider : AppWidgetProvider() {
             return repo.load(appWidgetId)
         }
 
+        /**
+         * One set of views per size the launcher lays the widget out in ([sizesDp]), so that it
+         * switches between them by itself, e.g. on rotation, without asking for an update: the tap
+         * areas and the summary's limits have sizes fixed in pixels. All of them share the one
+         * bitmap, which is sent only once.
+         */
+        internal fun viewsPerLayout(sizesDp: List<SizeF>, viewsFor: (SizeF) -> RemoteViews): RemoteViews =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                RemoteViews(sizesDp.distinct().take(MAX_LAYOUTS).associateWith(viewsFor))
+            } else {
+                val (portrait, landscape) = sizesDp
+                RemoteViews(viewsFor(landscape), viewsFor(portrait))
+            }
+
+        /** Most sizes a widget's views may come in. */
+        private const val MAX_LAYOUTS = 16
+
+        /** The views of widget [appWidgetId] for when it is laid out [widgetSize] (px) large. */
+        internal fun viewsFor(
+            context: Context,
+            appWidgetId: Int,
+            settings: WidgetSettings,
+            bitmap: Bitmap,
+            summary: String?,
+            widgetSize: Size,
+        ): RemoteViews = RemoteViews(context.packageName, R.layout.widget_clock).also { views ->
+            views.setImageViewBitmap(R.id.widget_clock_image, bitmap)
+            bindPlaceLabel(context, views, settings)
+            bindSummary(context, views, settings, summary, widgetSize)
+            TapActionResolver.bind(context, views, appWidgetId, settings, shownClockSide(context, settings, summary, widgetSize))
+        }
+
         /** Renders and pushes one widget; a freshly placed, never-saved widget uses the template settings. */
         suspend fun updateWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
             val settings = effectiveSettings(context, appWidgetId)
@@ -213,13 +248,11 @@ class ClockWidgetProvider : AppWidgetProvider() {
             val nextAlarm = if (settings.showNextAlarm) nextAlarm(context) else null
             val bitmap = ClockFaceRenderer.render(context, sizePx, settings, weather, nextAlarm = nextAlarm)
 
-            val views = RemoteViews(context.packageName, R.layout.widget_clock)
-            views.setImageViewBitmap(R.id.widget_clock_image, bitmap)
-            bindPlaceLabel(context, views, settings)
-            val widgetSize = WidgetSizing.currentWidgetSizePx(context, appWidgetManager, appWidgetId)
             val summary = summaryText(context, settings, weather)
-            bindSummary(context, views, settings, summary, widgetSize)
-            TapActionResolver.bind(context, views, appWidgetId, settings, shownClockSide(context, settings, summary, widgetSize))
+            val sizesDp = WidgetSizing.reportedSizesDp(appWidgetManager.getAppWidgetOptions(appWidgetId))
+            val views = viewsPerLayout(sizesDp) { sizeDp ->
+                viewsFor(context, appWidgetId, settings, bitmap, summary, WidgetSizing.sizePx(context, sizeDp))
+            }
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }

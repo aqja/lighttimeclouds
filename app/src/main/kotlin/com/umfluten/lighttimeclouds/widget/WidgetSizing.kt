@@ -2,7 +2,6 @@ package com.umfluten.lighttimeclouds.widget
 
 import android.appwidget.AppWidgetManager
 import android.content.Context
-import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.util.Size
@@ -34,7 +33,8 @@ object WidgetSizing {
      * The sizes (dp) the launcher lays the widget out in. From Android 12 on it reports each of
      * them; before, only bounds, where the width in portrait is the minimum width and the height
      * the maximum height, and the other way round in landscape. The minimum height alone is thus
-     * the landscape height, far smaller than the portrait height on a phone.
+     * the landscape height, far smaller than the portrait height on a phone. Those two come in the
+     * order portrait, landscape.
      */
     internal fun reportedSizesDp(options: Bundle): List<SizeF> {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -49,20 +49,9 @@ object WidgetSizing {
         return listOf(SizeF(minWidth, maxHeight), SizeF(maxWidth, minHeight))
     }
 
-    /**
-     * Size of the whole widget as shown now: launchers report the width in portrait as the minimum
-     * and the height as the maximum, and the other way round in landscape.
-     */
-    fun currentWidgetSizePx(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int): Size {
-        val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
-        fun dp(key: String) = options.getInt(key, 0)
-        val portrait = context.resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE
-        val minWidth = dp(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH).takeIf { it > 0 } ?: DEFAULT_SIZE_DP.toInt()
-        val minHeight = dp(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT).takeIf { it > 0 } ?: DEFAULT_SIZE_DP.toInt()
-        val width = if (portrait) minWidth else dp(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH).coerceAtLeast(minWidth)
-        val height = if (portrait) dp(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT).coerceAtLeast(minHeight) else minHeight
-        return Size(dpToPx(context, width.toFloat()), dpToPx(context, height.toFloat()))
-    }
+    /** [sizeDp] in pixels. */
+    fun sizePx(context: Context, sizeDp: SizeF): Size =
+        Size(dpToPx(context, sizeDp.width), dpToPx(context, sizeDp.height))
 
     /** The widget's declared default size (dp), for when the launcher reports none. */
     private const val DEFAULT_SIZE_DP = 110f

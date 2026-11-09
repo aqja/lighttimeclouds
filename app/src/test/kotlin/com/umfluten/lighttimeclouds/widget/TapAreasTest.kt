@@ -1,5 +1,8 @@
 package com.umfluten.lighttimeclouds.widget
 
+import android.graphics.Bitmap
+import android.os.Parcel
+import android.util.SizeF
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.RemoteViews
@@ -68,6 +71,40 @@ class TapAreasTest {
 
         remoteViews(TapAction.OWN_APP).reapply(context, shown)
         assertEquals(View.GONE, area.visibility)
+    }
+
+    /** A full-width widget on a phone, in portrait and in landscape. */
+    private val portrait = SizeF(379f, 360f)
+    private val landscape = SizeF(670f, 207f)
+
+    private fun viewsFor(bitmap: Bitmap, sizeDp: SizeF): RemoteViews {
+        val context = RuntimeEnvironment.getApplication()
+        val settings = WidgetSettings(widgetId = 1, tapAction = TapAction.SPLIT)
+        return ClockWidgetProvider.viewsFor(context, 1, settings, bitmap, null, WidgetSizing.sizePx(context, sizeDp))
+    }
+
+    @Test
+    fun `each orientation gets areas for the clock as large as it is shown there`() {
+        val context = RuntimeEnvironment.getApplication()
+        val bitmap = Bitmap.createBitmap(64, 64, Bitmap.Config.ARGB_8888)
+        fun squareWidth(sizeDp: SizeF) = viewsFor(bitmap, sizeDp).apply(context, FrameLayout(context))
+            .findViewById<View>(R.id.widget_tap_area_square).layoutParams.width
+        val ratio = squareWidth(landscape).toFloat() / squareWidth(portrait)
+        assertEquals(207f / 360f, ratio, 0.01f)
+    }
+
+    @Test
+    fun `the views for both orientations send the clock bitmap only once`() {
+        val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+        fun parcelSize(views: RemoteViews) = Parcel.obtain().run {
+            views.writeToParcel(this, 0)
+            dataSize().also { recycle() }
+        }
+        val one = parcelSize(viewsFor(bitmap, portrait))
+        val both = parcelSize(ClockWidgetProvider.viewsPerLayout(listOf(portrait, landscape)) { viewsFor(bitmap, it) })
+        val pixels = 200 * 200 * 4
+        assertTrue("the bitmap's pixels are in the parcel: $one bytes", one > pixels)
+        assertTrue("one layout $one bytes, both $both bytes", both < one + pixels / 2)
     }
 
     @Test
