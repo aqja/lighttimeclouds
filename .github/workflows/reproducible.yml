@@ -32,10 +32,10 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: Commit, branch or tag to build (default: the one the run starts from)
+        description: "Commit, branch or tag to build (default: the one the run starts from)"
         required: false
       release:
-        description: Tag of a release or draft release whose signed APK to compare with (optional)
+        description: "Tag of a release or draft release whose signed APK to compare with (optional)"
         required: false
 
 permissions:
