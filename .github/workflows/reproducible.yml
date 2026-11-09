@@ -1,0 +1,164 @@
+# Checks that the release APK builds byte for byte the same everywhere, as F-Droid needs: it
+# rebuilds the app from the tag and publishes it with the signature of the APK attached to the
+# GitHub release only if its own unsigned build matches that one.
+#
+# "build" builds the unsigned release APK twice, in deliberately different environments, and
+# "compare" requires both to be identical. "signed" also compares with a signed APK, as F-Droid
+# does: on every published release, and when started by hand with a release or a draft release
+# that holds one. A draft creates no tag and is not public, so this works before the first tag:
+#
+#   gh release create v0.1.0-check --draft --target <commit> lighttimeclouds-0.1.0.apk
+#   gh workflow run reproducible.yml -f ref=<commit> -f release=v0.1.0-check
+#
+# The unsigned APKs are kept as artifacts, to compare with a locally signed one instead:
+#
+#   uvx apksigcopier@1.1.1 compare <signed.apk> --unsigned app-release-unsigned.apk
+name: Reproducible build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - .github/workflows/reproducible.yml
+      - "**.gradle.kts"
+      - gradle.properties
+      - gradle/**
+  release:
+    types: [published]
+  # New runner images can change what the build produces.
+  schedule:
+    - cron: "23 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit, branch or tag to build (default: the one the run starts from)
+        required: false
+      release:
+        description: Tag of a release or draft release whose signed APK to compare with (optional)
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.ref }}-${{ inputs.release }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          # As close to F-Droid's build server as a runner gets.
+          - name: like F-Droid
+            artifact: unsigned-fdroid
+            java: 21
+            path: a
+            timezone: UTC
+            locale: C.UTF-8
+            umask: "022"
+          - name: elsewhere
+            artifact: unsigned-elsewhere
+            java: 25
+            path: somewhere/much/deeper/b
+            timezone: Pacific/Chatham
+            locale: en_US.UTF-8
+            umask: "077"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          path: ${{ matrix.path }}
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+
+      # No cache, so that nothing built before can hide a difference.
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-disabled: true
+          cache-provider: basic
+
+      # Without keystore.properties the release APK stays unsigned, as F-Droid builds it.
+      - name: Build the unsigned release APK
+        working-directory: ${{ matrix.path }}
+        env:
+          TZ: ${{ matrix.timezone }}
+          LANG: ${{ matrix.locale }}
+          LC_ALL: ${{ matrix.locale }}
+        run: |
+          umask ${{ matrix.umask }}
+          ./gradlew --no-daemon :app:assembleRelease
+          sha256sum app/build/outputs/apk/release/app-release-unsigned.apk
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.path }}/app/build/outputs/apk/release/app-release-unsigned.apk
+          if-no-files-found: error
+          retention-days: 30
+
+  compare:
+    name: Both builds identical
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: unsigned-*
+
+      - run: |
+          sha256sum unsigned-*/app-release-unsigned.apk
+          cmp unsigned-fdroid/app-release-unsigned.apk unsigned-elsewhere/app-release-unsigned.apk
+
+      - name: Show what differs
+        if: failure()
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends diffoscope-minimal
+          diffoscope --text diffoscope.txt --max-report-size 2000000 \
+            unsigned-fdroid/app-release-unsigned.apk unsigned-elsewhere/app-release-unsigned.apk || true
+          { echo '```'; head -n 200 diffoscope.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: diffoscope
+          path: diffoscope.txt
+          retention-days: 14
+
+  signed:
+    name: Matches the signed APK
+    needs: build
+    if: github.event_name == 'release' || inputs.release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      # Draft releases are visible only with write access. This job runs no code from the repo.
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: unsigned-fdroid
+          path: unsigned
+
+      - name: Download the signed APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE: ${{ github.event.release.tag_name || inputs.release }}
+        run: gh release download "$RELEASE" --repo "$GITHUB_REPOSITORY" --pattern 'lighttimeclouds-*.apk' --dir signed
+
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+
+      # What F-Droid checks: the signed APK is the unsigned one plus its signature.
+      - run: |
+          ls signed
+          uvx apksigcopier@1.1.1 compare signed/lighttimeclouds-*.apk --unsigned unsigned/app-release-unsigned.apk
+          echo "The signed APK matches the unsigned build."
