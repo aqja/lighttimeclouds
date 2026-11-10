@@ -38,7 +38,10 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.findByName("release")
-            isMinifyEnabled = false
+            // R8 drops unused code from Compose and the other libraries, then unused resources.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 
@@ -61,6 +64,9 @@ android {
     androidResources {
         // Lists the translations (values-xx) for the per-app language setting from Android 13 on.
         generateLocaleConfig = true
+        // Only the languages the app itself is translated into; the libraries' other translations
+        // would only make a few system texts (e.g. for accessibility) foreign in an English app.
+        localeFilters += listOf("en", "de")
     }
 
     testOptions {
