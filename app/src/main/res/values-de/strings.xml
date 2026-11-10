@@ -128,6 +128,8 @@
     <string name="place_longitude">Längengrad</string>
     <string name="place_time_zone">Zeitzone</string>
     <string name="place_invalid_value">Ungültiger Wert</string>
+    <string name="share_target_label">Als Ort hinzufügen</string>
+    <string name="share_no_coordinates">Im geteilten Inhalt sind keine Koordinaten.</string>
     <string name="zone_search">Suchen</string>
 
     <!-- Weather summary -->
