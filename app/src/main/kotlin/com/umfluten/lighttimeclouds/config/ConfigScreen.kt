@@ -62,6 +62,7 @@ import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.data.ColorMode
 import com.umfluten.lighttimeclouds.data.DisplayMode
 import com.umfluten.lighttimeclouds.data.MoonStyle
+import com.umfluten.lighttimeclouds.data.Place
 import com.umfluten.lighttimeclouds.data.SkyHorizon
 import com.umfluten.lighttimeclouds.data.SummaryPosition
 import com.umfluten.lighttimeclouds.data.SwitchStrategyType
@@ -79,14 +80,15 @@ import kotlin.math.roundToInt
 /**
  * Entry point of the config UI: edits [initialWidgetId] directly, or - when opened from the
  * launcher icon - the template (no widget placed), the only widget, or one picked from a list.
- * With [startOnSettings] the editor opens on its settings instead of the first tab.
+ * With [startOnSettings] the editor opens on its settings instead of the first tab. A
+ * [sharedPlace] from another app opens right away as a new place, once the widget is chosen.
  */
 @Composable
-fun ConfigRoot(initialWidgetId: Int, startOnSettings: Boolean, onFinishedWithResult: (Int) -> Unit) {
+fun ConfigRoot(initialWidgetId: Int, startOnSettings: Boolean, sharedPlace: Place?, onFinishedWithResult: (Int) -> Unit) {
     val context = LocalContext.current
     ConfigTheme {
         if (initialWidgetId != WidgetIds.NO_WIDGET_ID) {
-            WidgetEditorScreen(widgetId = initialWidgetId, startOnSettings, onDone = { onFinishedWithResult(initialWidgetId) })
+            WidgetEditorScreen(widgetId = initialWidgetId, startOnSettings, sharedPlace, onDone = { onFinishedWithResult(initialWidgetId) })
         } else {
             var chosenWidgetId by remember { mutableStateOf<Int?>(null) }
             val activeIds = remember { WidgetIds.activeWidgetIds(context).toList() }
@@ -96,7 +98,7 @@ fun ConfigRoot(initialWidgetId: Int, startOnSettings: Boolean, onFinishedWithRes
                 else -> null
             }
             if (editId != null) {
-                WidgetEditorScreen(widgetId = editId, startOnSettings = false, onDone = { onFinishedWithResult(editId) })
+                WidgetEditorScreen(widgetId = editId, startOnSettings, sharedPlace, onDone = { onFinishedWithResult(editId) })
             } else {
                 WidgetPickerScreen(widgetIds = activeIds, onPicked = { chosenWidgetId = it })
             }
@@ -134,7 +136,7 @@ private fun WidgetPickerScreen(widgetIds: List<Int>, onPicked: (Int) -> Unit) {
 }
 
 @Composable
-private fun WidgetEditorScreen(widgetId: Int, startOnSettings: Boolean, onDone: () -> Unit) {
+private fun WidgetEditorScreen(widgetId: Int, startOnSettings: Boolean, sharedPlace: Place?, onDone: () -> Unit) {
     val application = LocalContext.current.applicationContext as Application
     val viewModel: ConfigViewModel = viewModel(factory = ConfigViewModel.Factory(application, widgetId))
     val loaded by viewModel.settings.collectAsState()
@@ -229,7 +231,7 @@ private fun WidgetEditorScreen(widgetId: Int, startOnSettings: Boolean, onDone: 
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    SettingsContent(widgetId, settings, viewModel)
+                    SettingsContent(widgetId, settings, viewModel, sharedPlace)
                 }
             }
         }
@@ -237,7 +239,7 @@ private fun WidgetEditorScreen(widgetId: Int, startOnSettings: Boolean, onDone: 
 }
 
 @Composable
-private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: ConfigViewModel) {
+private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: ConfigViewModel, sharedPlace: Place?) {
     if (widgetId == WidgetSettings.DEFAULT_WIDGET_ID) {
         Text(
             stringResource(R.string.template_hint),
@@ -246,7 +248,7 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
         )
     }
 
-    LocationSection(settings, viewModel)
+    LocationSection(settings, viewModel, sharedPlace)
 
     Section(stringResource(R.string.section_dial)) {
         SegmentedChoice(

@@ -77,3 +77,10 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE.
 ```
+
+## Time Zone Database
+
+`core/src/main/resources/com/umfluten/lighttimeclouds/geo/zone.tab` is the unchanged file of the same
+name from the [IANA Time Zone Database](https://www.iana.org/time-zones) (release 2026f). It lists the
+principal location of each time zone, from which the app suggests a time zone for a shared place. The
+file is in the public domain, as stated in its header.
