@@ -1,1 +1,1 @@
-First release: analog sun and moon clock widget with sky ring, moon, optional weather ring, temperatures and next-alarm mark.
+First release: analog sun and moon clock widget with sky ring, moon, optional weather ring, temperatures and next-alarm mark. Places can be shared from map apps such as Organic Maps and OsmAnd.
