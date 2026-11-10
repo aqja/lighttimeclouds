@@ -35,13 +35,15 @@
             </intent-filter>
         </activity>
 
-        <!-- Takes a place from a map app's "Share" or "Open with", under its own name in the chooser.
-             No http links and no BROWSABLE, so the app doesn't offer itself for every web link. -->
-        <activity-alias
-            android:name=".config.AddPlaceFromMap"
+        <!-- Takes a place from a map app's "Share" or "Open with": just the new-place dialog over
+             that app. No http links and no BROWSABLE, so the app doesn't offer itself for every
+             web link. -->
+        <activity
+            android:name=".config.AddPlaceActivity"
+            android:excludeFromRecents="true"
             android:exported="true"
             android:label="@string/share_target_label"
-            android:targetActivity=".config.ConfigActivity">
+            android:theme="@style/Theme.LightTimeClouds.Translucent">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -52,7 +54,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
-        </activity-alias>
+        </activity>
 
         <receiver
             android:name=".widget.ClockWidgetProvider"

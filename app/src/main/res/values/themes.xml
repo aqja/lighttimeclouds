@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.LightTimeClouds" parent="android:Theme.DeviceDefault.Light.NoActionBar" />
+    <!-- A window that only carries a dialog, so the app it was opened from stays in view. -->
+    <style name="Theme.LightTimeClouds.Translucent">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
 </resources>

@@ -31,7 +31,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,16 +51,14 @@ import java.time.ZoneOffset
  * saved places, from which places can also be created, edited or deleted. Places are only ever
  * deleted from that list on purpose, never as a side effect of removing a widget. Choosing a place
  * is part of the widget settings (saved with "Save"); saving a place's details applies to all
- * widgets using it right away. A [sharedPlace] from another app opens in the editor as a new place
- * once, so that saving it is still the user's choice.
+ * widgets using it right away.
  */
 @Composable
-internal fun LocationSection(settings: WidgetSettings, viewModel: ConfigViewModel, sharedPlace: Place? = null) {
+internal fun LocationSection(settings: WidgetSettings, viewModel: ConfigViewModel) {
     val places by viewModel.places.collectAsState()
     val placesInUse by viewModel.placesInUse.collectAsState()
     var showPicker by remember { mutableStateOf(false) }
-    var sharedPending by rememberSaveable { mutableStateOf(sharedPlace != null) }
-    var editing by remember { mutableStateOf(sharedPlace.takeIf { sharedPending }) }
+    var editing by remember { mutableStateOf<Place?>(null) }
     var deleting by remember { mutableStateOf<Place?>(null) }
     // A place in use by a saved widget, the template, or this (unsaved) selection must stay, as must the last one.
     fun isInUse(place: Place) = place.id in placesInUse || place.id == settings.place.id
@@ -125,13 +122,9 @@ internal fun LocationSection(settings: WidgetSettings, viewModel: ConfigViewMode
             onSave = {
                 viewModel.savePlace(it)
                 editing = null
-                sharedPending = false
                 showPicker = false
             },
-            onDismiss = {
-                editing = null
-                sharedPending = false
-            },
+            onDismiss = { editing = null },
         )
     }
 }
@@ -186,7 +179,7 @@ private fun PlacePickerDialog(
 }
 
 @Composable
-private fun PlaceEditorDialog(
+internal fun PlaceEditorDialog(
     place: Place,
     isNew: Boolean,
     onSave: (Place) -> Unit,
