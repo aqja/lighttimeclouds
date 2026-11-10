@@ -131,6 +131,7 @@
     <string name="place_invalid_value">Invalid value</string>
     <string name="share_target_label">Add as place</string>
     <string name="share_no_coordinates">No coordinates found in the shared content.</string>
+    <string name="share_place_added">“%1$s” added to the places.</string>
     <string name="zone_search">Search</string>
 
     <!-- Weather summary -->
