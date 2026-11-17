@@ -1,0 +1,105 @@
+package com.umfluten.lighttimeclouds.widget
+
+import android.content.res.Resources
+import com.umfluten.lighttimeclouds.R
+import com.umfluten.lighttimeclouds.data.Place
+import com.umfluten.lighttimeclouds.weather.DayPeriod
+import com.umfluten.lighttimeclouds.weather.HourlyWeather
+import com.umfluten.lighttimeclouds.weather.PrecipitationIntensity
+import com.umfluten.lighttimeclouds.weather.WeatherForecast
+import org.junit.Assert.assertEquals
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
+import java.time.Duration
+import java.time.ZonedDateTime
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [36])
+class WeatherSummaryTextTest {
+
+    private val resources: Resources get() = RuntimeEnvironment.getApplication().resources
+    private val zone = Place.DEFAULT.zone
+    private val now = ZonedDateTime.of(2026, 10, 17, 10, 30, 0, 0, zone)
+
+    /** Ten degrees all day, with [mm] of rain in each hour starting at the local [rainHours]. */
+    private fun forecast(rainHours: Set<Int> = emptySet(), mm: Double = 2.0): WeatherForecast {
+        val start = now.minusDays(1).withMinute(0)
+        val hours = (0L..48L).map { i ->
+            val time = start.plusHours(i)
+            val rain = time.minusHours(1).hour in rainHours && time.isAfter(now)
+            HourlyWeather(time.toInstant(), 50.0, if (rain) mm else 0.0, 0.0, if (rain) 90.0 else 0.0, 10.0, 10.0)
+        }
+        return WeatherForecast(52.52, 13.41, now.toInstant().minus(Duration.ofHours(1)), hours)
+    }
+
+    @Test
+    @Config(qualifiers = "de")
+    fun `german sentences`() {
+        assertEquals(
+            "Etwa so warm wie gestern um diese Zeit. Bis in die Nacht trocken.",
+            WeatherSummaryText.of(resources, forecast(), now),
+        )
+        assertEquals(
+            "Etwa so warm wie gestern um diese Zeit. Ab heute Abend leichter Regen wahrscheinlich.",
+            WeatherSummaryText.of(resources, forecast(rainHours = setOf(19, 20, 21, 22)), now),
+        )
+        assertEquals(
+            "Etwa so warm wie gestern um diese Zeit. Der leichte Regen hört heute gegen Mittag auf.",
+            WeatherSummaryText.of(resources, forecast(rainHours = setOf(10, 11, 12)), now),
+        )
+    }
+
+    @Test
+    fun `english sentences`() {
+        assertEquals(
+            "About as warm as this time yesterday. Light rain likely this afternoon.",
+            WeatherSummaryText.of(resources, forecast(rainHours = setOf(15, 16)), now),
+        )
+        assertEquals(
+            "About as warm as this time yesterday. Heavy rain likely soon.",
+            WeatherSummaryText.of(resources, forecast(rainHours = setOf(11), mm = 12.0), now),
+        )
+        assertEquals(
+            "About as warm as this time yesterday. The rain goes on for many hours.",
+            WeatherSummaryText.of(resources, forecast(rainHours = (0..23).toSet(), mm = 4.0), now),
+        )
+    }
+
+    @Test
+    @Config(qualifiers = "de")
+    fun `german snow`() {
+        val f = forecast().let { f ->
+            f.copy(hours = f.hours.map { h ->
+                val hour = h.time.atZone(zone).minusHours(1).hour
+                if (h.time.isAfter(now.toInstant()) && hour in 15..16) h.copy(precipitationMm = 1.5, snowfallCm = 1.0, precipitationProbabilityPercent = 50.0, temperatureC = -1.0) else h
+            })
+        }
+        assertEquals("Heute Nachmittag leichter Schneefall wahrscheinlich.", WeatherSummaryText.of(resources, f, now)!!.substringAfter(". "))
+    }
+
+    @Test
+    fun `no text without a forecast`() {
+        assertEquals(null, WeatherSummaryText.of(resources, null, now))
+    }
+
+    @Test
+    @Config(qualifiers = "de")
+    fun `every part of the day has a german phrase`() = assertPhraseCounts()
+
+    @Test
+    fun `every part of the day has an english phrase`() = assertPhraseCounts()
+
+    private fun assertPhraseCounts() {
+        listOf(
+            R.array.summary_time_later,
+            R.array.summary_time_at_today, R.array.summary_time_at_tomorrow,
+            R.array.summary_time_from_today, R.array.summary_time_from_tomorrow,
+            R.array.summary_time_until_today, R.array.summary_time_until_tomorrow,
+        ).forEach { assertEquals(DayPeriod.entries.size, resources.getStringArray(it).size) }
+        listOf(R.array.summary_rain, R.array.summary_snow, R.array.summary_rain_definite, R.array.summary_snow_definite)
+            .forEach { assertEquals(PrecipitationIntensity.entries.size, resources.getStringArray(it).size) }
+    }
+}

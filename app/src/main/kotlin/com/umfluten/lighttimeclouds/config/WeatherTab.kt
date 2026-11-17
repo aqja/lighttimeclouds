@@ -52,7 +52,7 @@ internal fun WeatherTab(settings: WidgetSettings, padding: PaddingValues) {
     }
     val rows = remember(forecast) { forecast?.let(::hourRows).orEmpty() }
     val resources = LocalResources.current
-    val summary = remember(resources, forecast, now) { WeatherSummaryText.of(resources, forecast, now.toInstant()) }
+    val summary = remember(resources, forecast, now) { WeatherSummaryText.of(resources, forecast, now) }
     val currentIndex = rows.indexOfFirst { !now.toInstant().isBefore(it.time) && now.toInstant().isBefore(it.time.plus(HOUR)) }
     // Kept by its time, so the choice survives a new forecast as long as the hour is still in it.
     var chosenHour by rememberSaveable(place) { mutableStateOf<Long?>(null) }

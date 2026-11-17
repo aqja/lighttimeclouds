@@ -145,22 +145,92 @@
     <string name="summary_much_colder">Viel kälter als gestern um diese Zeit, %1$d° weniger.</string>
     <string name="summary_feels_colder">Fühlt sich %1$d° kälter an, als das Thermometer sagt.</string>
     <string name="summary_feels_warmer">Fühlt sich %1$d° wärmer an, als das Thermometer sagt.</string>
-    <plurals name="summary_snow">
-        <item quantity="one">Schnee in der nächsten Stunde erwartet.</item>
-        <item quantity="other">Schnee in den nächsten %1$d Stunden erwartet.</item>
-    </plurals>
-    <plurals name="summary_rain">
-        <item quantity="one">Regen in der nächsten Stunde wahrscheinlich.</item>
-        <item quantity="other">Regen in den nächsten %1$d Stunden wahrscheinlich.</item>
-    </plurals>
-    <plurals name="summary_chance">
-        <item quantity="one">Regen in der nächsten Stunde möglich.</item>
-        <item quantity="other">Regen in den nächsten %1$d Stunden möglich.</item>
-    </plurals>
-    <plurals name="summary_dry">
-        <item quantity="one">Kein Regen in der nächsten Stunde erwartet.</item>
-        <item quantity="other">Kein Regen in den nächsten %1$d Stunden erwartet.</item>
-    </plurals>
+    <string name="summary_likely">%1$s %2$s wahrscheinlich.</string>
+    <string name="summary_possible">%1$s %2$s möglich.</string>
+    <string name="summary_stops">%1$s hört %2$s auf.</string>
+    <string name="summary_lasts">%1$s hält noch viele Stunden an.</string>
+    <string-array name="summary_rain">
+        <item>etwas Regen</item>
+        <item>leichter Regen</item>
+        <item>Regen</item>
+        <item>kräftiger Regen</item>
+    </string-array>
+    <string-array name="summary_snow">
+        <item>etwas Schnee</item>
+        <item>leichter Schneefall</item>
+        <item>Schneefall</item>
+        <item>kräftiger Schneefall</item>
+    </string-array>
+    <string-array name="summary_rain_definite">
+        <item>der Regen</item>
+        <item>der leichte Regen</item>
+        <item>der Regen</item>
+        <item>der kräftige Regen</item>
+    </string-array>
+    <string-array name="summary_snow_definite">
+        <item>der Schnee</item>
+        <item>der leichte Schneefall</item>
+        <item>der Schneefall</item>
+        <item>der kräftige Schneefall</item>
+    </string-array>
+    <string name="summary_dry">%1$s trocken.</string>
+    <string name="summary_time_soon">bald</string>
+    <string-array name="summary_time_later">
+        <item>im Lauf des Morgens</item>
+        <item>im Lauf des Vormittags</item>
+        <item>über Mittag</item>
+        <item>im Lauf des Nachmittags</item>
+        <item>im Lauf des Abends</item>
+        <item>im Lauf der Nacht</item>
+    </string-array>
+    <string-array name="summary_time_at_today">
+        <item>heute früh</item>
+        <item>heute Vormittag</item>
+        <item>heute gegen Mittag</item>
+        <item>heute Nachmittag</item>
+        <item>heute Abend</item>
+        <item>heute Nacht</item>
+    </string-array>
+    <string-array name="summary_time_at_tomorrow">
+        <item>morgen früh</item>
+        <item>morgen Vormittag</item>
+        <item>morgen gegen Mittag</item>
+        <item>morgen Nachmittag</item>
+        <item>morgen Abend</item>
+        <item>morgen Nacht</item>
+    </string-array>
+    <string-array name="summary_time_from_today">
+        <item>ab heute früh</item>
+        <item>ab heute Vormittag</item>
+        <item>ab heute Mittag</item>
+        <item>ab heute Nachmittag</item>
+        <item>ab heute Abend</item>
+        <item>ab heute Nacht</item>
+    </string-array>
+    <string-array name="summary_time_from_tomorrow">
+        <item>ab morgen früh</item>
+        <item>ab morgen Vormittag</item>
+        <item>ab morgen Mittag</item>
+        <item>ab morgen Nachmittag</item>
+        <item>ab morgen Abend</item>
+        <item>ab morgen Nacht</item>
+    </string-array>
+    <string-array name="summary_time_until_today">
+        <item>bis in den frühen Morgen</item>
+        <item>bis in den Vormittag</item>
+        <item>bis Mittag</item>
+        <item>bis in den Nachmittag</item>
+        <item>bis in den Abend</item>
+        <item>bis in die Nacht</item>
+    </string-array>
+    <string-array name="summary_time_until_tomorrow">
+        <item>bis morgen früh</item>
+        <item>bis morgen Vormittag</item>
+        <item>bis morgen Mittag</item>
+        <item>bis morgen Nachmittag</item>
+        <item>bis morgen Abend</item>
+        <item>bis morgen Nacht</item>
+    </string-array>
 
     <!-- Weather tab -->
     <string name="weather_no_forecast">Noch keine Vorhersage geladen. Sie wird nach dem Speichern heruntergeladen, sobald ein Widget dieses Orts den Wetterring zeigt.</string>
