@@ -109,7 +109,7 @@ internal fun PreviewTab(settings: WidgetSettings, padding: PaddingValues) {
         if (settings.showNextAlarm) ClockWidgetProvider.nextAlarm(context) else null
     }
     val summary = if (settings.showWeather && settings.summaryPosition != SummaryPosition.NONE) {
-        WeatherSummaryText.of(LocalResources.current, weather, now.toInstant())
+        WeatherSummaryText.of(LocalResources.current, weather, now)
     } else {
         null
     }

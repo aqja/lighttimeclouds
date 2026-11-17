@@ -146,22 +146,75 @@
     <string name="summary_much_colder">Much colder than this time yesterday, down %1$d°.</string>
     <string name="summary_feels_colder">Feels %1$d° colder than the thermometer says.</string>
     <string name="summary_feels_warmer">Feels %1$d° warmer than the thermometer says.</string>
-    <plurals name="summary_snow">
-        <item quantity="one">Snow expected within the next hour.</item>
-        <item quantity="other">Snow expected in the next %1$d hours.</item>
-    </plurals>
-    <plurals name="summary_rain">
-        <item quantity="one">Rain likely within the next hour.</item>
-        <item quantity="other">Rain likely in the next %1$d hours.</item>
-    </plurals>
-    <plurals name="summary_chance">
-        <item quantity="one">A chance of rain within the next hour.</item>
-        <item quantity="other">A chance of rain in the next %1$d hours.</item>
-    </plurals>
-    <plurals name="summary_dry">
-        <item quantity="one">No rain expected within the next hour.</item>
-        <item quantity="other">No rain expected in the next %1$d hours.</item>
-    </plurals>
+    <string name="summary_rain_likely">Rain likely %1$s.</string>
+    <string name="summary_rain_possible">Rain possible %1$s.</string>
+    <string name="summary_snow_likely">Snow likely %1$s.</string>
+    <string name="summary_snow_possible">Snow possible %1$s.</string>
+    <string name="summary_rain_stops">The rain stops %1$s.</string>
+    <string name="summary_snow_stops">The snow stops %1$s.</string>
+    <string name="summary_rain_lasts">Rain for many hours to come.</string>
+    <string name="summary_snow_lasts">Snow for many hours to come.</string>
+    <string name="summary_dry">Dry %1$s.</string>
+    <!-- Parts of the day in the weather summary, each in the order: early morning (5–9), morning
+         (9–12), midday (12–14), afternoon (14–18), evening (18–22), night (22–5). Times are kept
+         vague on purpose, an hourly forecast is not accurate to the hour. -->
+    <string name="summary_time_soon">soon</string>
+    <string-array name="summary_time_later">
+        <item>later this morning</item>
+        <item>later this morning</item>
+        <item>over midday</item>
+        <item>later this afternoon</item>
+        <item>later this evening</item>
+        <item>later tonight</item>
+    </string-array>
+    <string-array name="summary_time_at_today">
+        <item>early this morning</item>
+        <item>this morning</item>
+        <item>around midday</item>
+        <item>this afternoon</item>
+        <item>this evening</item>
+        <item>tonight</item>
+    </string-array>
+    <string-array name="summary_time_at_tomorrow">
+        <item>early tomorrow morning</item>
+        <item>tomorrow morning</item>
+        <item>tomorrow around midday</item>
+        <item>tomorrow afternoon</item>
+        <item>tomorrow evening</item>
+        <item>tomorrow night</item>
+    </string-array>
+    <string-array name="summary_time_from_today">
+        <item>from early this morning</item>
+        <item>from this morning</item>
+        <item>from midday</item>
+        <item>from this afternoon</item>
+        <item>from this evening</item>
+        <item>from tonight</item>
+    </string-array>
+    <string-array name="summary_time_from_tomorrow">
+        <item>from early tomorrow morning</item>
+        <item>from tomorrow morning</item>
+        <item>from midday tomorrow</item>
+        <item>from tomorrow afternoon</item>
+        <item>from tomorrow evening</item>
+        <item>from tomorrow night</item>
+    </string-array>
+    <string-array name="summary_time_until_today">
+        <item>into the early morning</item>
+        <item>into the morning</item>
+        <item>until midday</item>
+        <item>into the afternoon</item>
+        <item>into the evening</item>
+        <item>into the night</item>
+    </string-array>
+    <string-array name="summary_time_until_tomorrow">
+        <item>until early tomorrow morning</item>
+        <item>until tomorrow morning</item>
+        <item>until midday tomorrow</item>
+        <item>until tomorrow afternoon</item>
+        <item>until tomorrow evening</item>
+        <item>until tomorrow night</item>
+    </string-array>
 
     <!-- Weather tab -->
     <string name="weather_no_forecast">No forecast loaded yet. It is downloaded after saving, as soon as a widget of this place shows the weather ring.</string>

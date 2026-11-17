@@ -26,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.ZonedDateTime
 
 class ClockWidgetProvider : AppWidgetProvider() {
 
@@ -86,7 +87,7 @@ class ClockWidgetProvider : AppWidgetProvider() {
         /** The weather summary to show (only with the weather ring), null while the forecast does not cover the current time. */
         private fun summaryText(context: Context, settings: WidgetSettings, weather: WeatherForecast?): String? =
             if (settings.showWeather && settings.summaryPosition != SummaryPosition.NONE) {
-                WeatherSummaryText.of(context.resources, weather, Instant.now())
+                WeatherSummaryText.of(context.resources, weather, ZonedDateTime.now(settings.place.zone))
             } else {
                 null
             }
