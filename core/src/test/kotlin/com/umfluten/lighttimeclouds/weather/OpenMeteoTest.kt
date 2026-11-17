@@ -16,14 +16,16 @@ class OpenMeteoTest {
         {"latitude":52.52,"longitude":13.419998,"generationtime_ms":0.33,"utc_offset_seconds":0,
          "timezone":"GMT","timezone_abbreviation":"GMT","elevation":38.0,
          "hourly_units":{"time":"unixtime","cloud_cover":"%","precipitation":"mm","snowfall":"cm",
-                         "precipitation_probability":"%","temperature_2m":"°C","apparent_temperature":"°C"},
+                         "precipitation_probability":"%","temperature_2m":"°C","apparent_temperature":"°C",
+                         "wind_gusts_10m":"km/h"},
          "hourly":{"time":[1792116000,1792119600,1792123200,1792126800],
                    "cloud_cover":[100,85,null,12],
                    "precipitation":[0.4,2.2,0.0,0.0],
                    "snowfall":[0.0,0.0,0.0,0.0],
                    "precipitation_probability":[95,98,100,null],
                    "temperature_2m":[11.5,11.0,10.6,10.6],
-                   "apparent_temperature":[9.4,8.8,9.0,8.4]}}
+                   "apparent_temperature":[9.4,8.8,9.0,8.4],
+                   "wind_gusts_10m":[38.2,64.4,null,20.5]}}
     """.trimIndent()
 
     @Test
@@ -37,6 +39,7 @@ class OpenMeteoTest {
         assertEquals(2.2, f.hours[1].precipitationMm, 1e-9)
         assertEquals(98.0, f.hours[1].precipitationProbabilityPercent!!, 1e-9)
         assertEquals(8.8, f.hours[1].apparentTemperatureC!!, 1e-9)
+        assertEquals(64.4, f.hours[1].windGustsKmh!!, 1e-9)
         assertNull(f.hours[2].precipitationProbabilityPercent)
     }
 
@@ -49,6 +52,7 @@ class OpenMeteoTest {
         val oldCache = """{"latitude":0.0,"longitude":0.0,"fetched_at":1792116000,
             "hours":[{"time":1792116000,"cloud_cover":50.0,"precipitation":0.0,"snowfall":0.0}]}"""
         assertNull(OpenMeteo.decodeCache(oldCache)!!.hours.single().precipitationProbabilityPercent)
+        assertNull(OpenMeteo.decodeCache(oldCache)!!.hours.single().windGustsKmh)
     }
 
     @Test
@@ -72,7 +76,7 @@ class OpenMeteoTest {
     fun `url requests the needed variables with rounded coordinates and a locale-independent decimal point`() {
         val url = OpenMeteo.forecastUrl(52.5208, -13.4094)
         assertTrue(url, url.contains("latitude=52.521&longitude=-13.409&"))
-        assertTrue(url, url.contains("hourly=cloud_cover,precipitation,snowfall,precipitation_probability,temperature_2m,apparent_temperature"))
+        assertTrue(url, url.contains("hourly=cloud_cover,precipitation,snowfall,precipitation_probability,temperature_2m,apparent_temperature,wind_gusts_10m"))
         assertTrue(url, url.contains("timeformat=unixtime"))
     }
 }

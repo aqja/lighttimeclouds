@@ -25,7 +25,7 @@ A ring around an ordinary clock face shows the course of the day at the current 
 - Light, dark and automatic color modes (following the system dark mode); numerals and hands in Material You accent colors
 - Optional weather ring around the day/night ring (default) or just inside it: cloud cover in gray (transparent when the sky is clear), precipitation on top in blue (snow in violet): the darker, the more; the more opaque, the more likely. Past hours are dimmed. Forecast from Open-Meteo, loaded in the background about every two hours (not when the battery is low) and only if a widget uses the ring; for this, the place's coordinates are sent to open-meteo.com
 - Air (default) or apparent temperature (mean per section) as a scale around the outermost ring (default) or between the hour numerals, or none
-- "Weather summary" in the "Weather" tab and optionally left of, right of or below the clock: comparison with yesterday at the same time, an apparent temperature that differs noticeably, and rain or snow in the next 3 or 6 hours, by fixed rules from the forecast
+- "Weather summary" in the "Weather" tab and optionally left of, right of or below the clock: warnings (heavy rain, glaze ice, storm gusts), rain and snow with their strength, wind, clouds, the temperature compared with yesterday and over the next 12 hours, and in the evening an outlook on tomorrow. Times are parts of the day ("this afternoon") rather than clock times, as an hourly forecast is not accurate to the hour. Fixed rules pick the two or three most notable sentences
 
 ## Project structure
 

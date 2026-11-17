@@ -137,7 +137,7 @@
     <string name="summary_position_label">Wetter in Worten</string>
     <string name="summary_position_left">Links</string>
     <string name="summary_position_right">Rechts</string>
-    <string name="summary_position_hint">Ein paar Worte zum Wetter: im Vergleich zu gestern, wie es sich anfühlt und ob Regen oder Schnee kommt. Links oder rechts der Uhr braucht ein Widget, das breiter als hoch ist.</string>
+    <string name="summary_position_hint">Ein paar Worte zum Wetter: Warnungen, Regen und Schnee, Wind, Wolken, die Temperatur im Vergleich zu gestern und in den nächsten Stunden, abends auch morgen. Links oder rechts der Uhr braucht ein Widget, das breiter als hoch ist.</string>
     <string name="summary_much_warmer">Viel wärmer als gestern um diese Zeit, %1$d° mehr.</string>
     <string name="summary_warmer">Etwas wärmer als gestern um diese Zeit.</string>
     <string name="summary_similar">Etwa so warm wie gestern um diese Zeit.</string>
@@ -229,6 +229,13 @@
         <item>der kräftige Schneefall</item>
     </string-array>
     <string name="summary_dry">%1$s trocken.</string>
+    <string-array name="summary_gusts">
+        <item>Windböen</item>
+        <item>Sturmböen</item>
+        <item>schwere Sturmböen</item>
+        <item>orkanartige Böen</item>
+        <item>Orkanböen</item>
+    </string-array>
     <string name="summary_heavy_rain">%1$s Gefahr von Starkregen.</string>
     <string name="summary_heavy_rain_severe">%1$s Gefahr von heftigem Starkregen.</string>
     <string name="summary_heavy_rain_extreme">%1$s Gefahr von extrem heftigem Starkregen.</string>

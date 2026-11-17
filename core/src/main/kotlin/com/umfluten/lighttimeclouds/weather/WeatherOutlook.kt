@@ -84,6 +84,9 @@ sealed interface Remark {
 
     data class Warning(val warning: WeatherWarning) : Remark
 
+    /** The strongest gusts within the horizon, first reaching their [level] around [at]. */
+    data class Wind(val level: GustLevel, val at: TimeOfDay) : Remark
+
     data class Tomorrow(val outlook: TomorrowOutlook) : Remark
 }
 
@@ -159,10 +162,11 @@ data class WeatherOutlook(
     val warnings: List<WeatherWarning> = emptyList(),
     /** Only in the evening and at night. */
     val tomorrow: TomorrowOutlook? = null,
+    val wind: Remark.Wind? = null,
 ) {
     val isEmpty: Boolean
         get() = changeSinceYesterday == null && feelsLikeOffset == null && precipitation == null && clouds == null &&
-            temperatureCourse == null && warnings.isEmpty() && tomorrow == null
+            temperatureCourse == null && warnings.isEmpty() && tomorrow == null && wind == null
 
     /**
      * The remarks worth saying, in reading order: the [MAX_REMARKS] most notable ones, topped up
@@ -172,6 +176,7 @@ data class WeatherOutlook(
      */
     fun remarks(): List<Remark> {
         val all = warnings.map { Remark.Warning(it) } + listOfNotNull(
+            wind,
             changeSinceYesterday?.let { Remark.TemperatureChange(it) },
             feelsLikeOffset?.let { Remark.FeelsLike(it) },
             temperatureCourse?.let { Remark.Temperature(it) },
@@ -272,6 +277,12 @@ data class WeatherOutlook(
                 is WeatherWarning.FreezingRain -> 95
             }
             is Remark.Tomorrow -> 50
+            // Gusts from Beaufort 8 on are a warning, below only worth a mention.
+            is Remark.Wind -> when (remark.level) {
+                GustLevel.GUSTS -> 40
+                GustLevel.STORM -> 75
+                else -> 100 + remark.level.ordinal
+            }
             is Remark.Clouds -> when (remark.clouds) {
                 is CloudOutlook.Clearing -> 45
                 is CloudOutlook.CloudingOver -> 35
@@ -312,6 +323,7 @@ data class WeatherOutlook(
                 temperatureCourse = if (horizon != null && airNow != null) temperatureCourse(horizon, airNow) else null,
                 warnings = horizon?.let(::warnings).orEmpty(),
                 tomorrow = tomorrowOutlook(forecast, now, zone),
+                wind = horizon?.let(::wind),
             )
         }
 
@@ -320,6 +332,13 @@ data class WeatherOutlook(
                 (precipitationMm >= WeatherCondition.MIN_PRECIPITATION_MM && (precipitationProbabilityPercent ?: 100.0) >= LIKELY_PROBABILITY)
 
         private fun WeatherCondition.isPossible(probability: Double): Boolean = (precipitationProbabilityPercent ?: 0.0) >= probability
+
+        /** The strongest gusts within the horizon, if at least [GustLevel.GUSTS]. */
+        private fun wind(h: Horizon): Remark.Wind? {
+            fun level(c: WeatherCondition) = c.windGustsKmh?.let { kmh -> GustLevel.entries.lastOrNull { kmh >= it.minKmh } }
+            val level = h.conditions.mapNotNull(::level).maxOrNull() ?: return null
+            return Remark.Wind(level, h.atHour(h.conditions.indexOfFirst { level(it) == level }))
+        }
 
         /** Heavy rain at its strongest level, and rain at or below freezing, each the first time within the horizon. */
         private fun warnings(h: Horizon): List<WeatherWarning> {

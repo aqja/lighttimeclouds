@@ -56,6 +56,11 @@ object WeatherSummaryText {
             is WeatherWarning.FreezingRain -> resources.getString(R.string.summary_freezing_rain, time(resources, w.at, Phrase.AT))
         }
         is Remark.Tomorrow -> tomorrowSentence(resources, remark.outlook)
+        is Remark.Wind -> resources.getString(
+            R.string.summary_possible,
+            time(resources, remark.at, Phrase.AT),
+            resources.getStringArray(R.array.summary_gusts)[remark.level.ordinal],
+        )
         is Remark.Clouds -> when (val c = remark.clouds) {
             is CloudOutlook.Clearing -> resources.getString(R.string.summary_clearing, time(resources, c.start, Phrase.AT))
             is CloudOutlook.CloudingOver -> resources.getString(R.string.summary_clouding_over, time(resources, c.start, Phrase.AT))

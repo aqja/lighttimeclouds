@@ -138,7 +138,7 @@
     <string name="summary_position_label">Weather summary</string>
     <string name="summary_position_left">Left</string>
     <string name="summary_position_right">Right</string>
-    <string name="summary_position_hint">A few words on the weather: compared with yesterday, how it feels, and whether rain or snow is coming. Left or right of the clock needs a widget wider than it is tall.</string>
+    <string name="summary_position_hint">A few words on the weather: warnings, rain and snow, wind, clouds, the temperature compared with yesterday and in the coming hours, and in the evening tomorrow. Left or right of the clock needs a widget wider than it is tall.</string>
     <string name="summary_much_warmer">Much warmer than this time yesterday, up %1$d°.</string>
     <string name="summary_warmer">A bit warmer than this time yesterday.</string>
     <string name="summary_similar">About as warm as this time yesterday.</string>
@@ -236,6 +236,14 @@
         <item>the heavy snow</item>
     </string-array>
     <string name="summary_dry">Dry %1$s.</string>
+    <!-- The strongest gusts, used with summary_possible, by the DWD's levels: from 50, 62, 89, 103 and 118 km/h. -->
+    <string-array name="summary_gusts">
+        <item>strong gusts</item>
+        <item>gale-force gusts</item>
+        <item>severe gale gusts</item>
+        <item>violent storm gusts</item>
+        <item>hurricane-force gusts</item>
+    </string-array>
     <!-- Heavy rain by the DWD's warning levels: from 15, 25 and 40 mm within one hour. -->
     <string name="summary_heavy_rain">Risk of heavy downpours %1$s.</string>
     <string name="summary_heavy_rain_severe">Risk of very heavy downpours %1$s.</string>
