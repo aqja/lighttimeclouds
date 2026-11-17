@@ -10,29 +10,58 @@ import kotlin.math.roundToInt
 /** What falls. */
 enum class PrecipitationKind { RAIN, SNOW }
 
+/**
+ * How a spell falls: [SHOWERS] with breaks (or more spells after it), [STEADY] for at least
+ * [WeatherOutlook.STEADY_HOURS] hours without one. The models do not tell showers from steady
+ * rain themselves, so this only reads the hourly course.
+ */
+enum class SpellCharacter { NORMAL, SHOWERS, STEADY }
+
+/** Fresh snow a spell leaves, from [minCm] of snowfall on. */
+enum class FreshSnow(val minCm: Double) { LITTLE(0.5), SOME(2.0), LOTS(10.0) }
+
 /** The precipitation of the coming [WeatherOutlook.HORIZON_HOURS] hours, as a sentence can tell it. */
 sealed interface PrecipitationOutlook {
     /** Nothing falls up to [until], the end of the horizon. */
     data class Dry(val until: TimeOfDay) : PrecipitationOutlook
 
     /**
-     * [kind] is falling now, at most as strong as [intensity], and stops around [end]; null if it
-     * lasts beyond the horizon.
+     * A spell of [kind], at most as strong as [intensity], falling as [character], with
+     * [snowfallCm] of snow in total (within the horizon).
      */
-    data class Ongoing(val kind: PrecipitationKind, val intensity: PrecipitationIntensity, val end: TimeOfDay?) : PrecipitationOutlook
+    sealed interface Spell : PrecipitationOutlook {
+        val kind: PrecipitationKind
+        val intensity: PrecipitationIntensity
+        val character: SpellCharacter
+        val snowfallCm: Double
+        val likely: Boolean
+    }
+
+    /** A spell falling now that stops around [end]; null if it lasts beyond the horizon. */
+    data class Ongoing(
+        override val kind: PrecipitationKind,
+        override val intensity: PrecipitationIntensity,
+        val end: TimeOfDay?,
+        override val character: SpellCharacter = SpellCharacter.NORMAL,
+        override val snowfallCm: Double = 0.0,
+    ) : Spell {
+        override val likely: Boolean get() = true
+    }
 
     /**
-     * [kind] starts around [start], [likely] or only possible, at most as strong as [intensity].
-     * [continues] if it goes on into a later part of the day (or beyond the horizon), so "from the
-     * afternoon" rather than "in the afternoon".
+     * A spell starting around [start], [likely] or only possible. [continues] if it goes on into
+     * a later part of the day (or beyond the horizon), so "from the afternoon" rather than "in
+     * the afternoon".
      */
     data class Coming(
-        val kind: PrecipitationKind,
-        val intensity: PrecipitationIntensity,
-        val likely: Boolean,
+        override val kind: PrecipitationKind,
+        override val intensity: PrecipitationIntensity,
+        override val likely: Boolean,
         val start: TimeOfDay,
         val continues: Boolean,
-    ) : PrecipitationOutlook
+        override val character: SpellCharacter = SpellCharacter.NORMAL,
+        override val snowfallCm: Double = 0.0,
+    ) : Spell
 }
 
 /** One thing worth saying about the weather; [WeatherOutlook.remarks] picks the ones to say. */
@@ -44,6 +73,9 @@ sealed interface Remark {
     data class FeelsLike(val offset: Int) : Remark
 
     data class Precipitation(val outlook: PrecipitationOutlook) : Remark
+
+    /** The fresh snow the coming or falling snow leaves. */
+    data class Snow(val amount: FreshSnow) : Remark
 }
 
 /**
@@ -71,11 +103,19 @@ data class WeatherOutlook(
             changeSinceYesterday?.let { Remark.TemperatureChange(it) },
             feelsLikeOffset?.let { Remark.FeelsLike(it) },
             precipitation?.let { Remark.Precipitation(it) },
+            freshSnow()?.let { Remark.Snow(it) },
         )
         val notable = all.filter { weight(it) > 0 }.sortedByDescending(::weight).take(MAX_REMARKS)
         val filler = all.filter { weight(it) == 0 }.take((MIN_REMARKS - notable.size).coerceAtLeast(0))
         val chosen = (notable + filler).toSet()
         return all.filter { it in chosen }
+    }
+
+    /** The fresh snow worth a mention: only from snow that is likely, and only from [FreshSnow.LITTLE] on. */
+    private fun freshSnow(): FreshSnow? {
+        val spell = precipitation as? PrecipitationOutlook.Spell ?: return null
+        if (spell.kind != PrecipitationKind.SNOW || !spell.likely) return null
+        return FreshSnow.entries.lastOrNull { spell.snowfallCm >= it.minCm }
     }
 
     companion object {
@@ -102,6 +142,9 @@ data class WeatherOutlook(
         /** How far ahead the precipitation is looked at. */
         const val HORIZON_HOURS = 12
 
+        /** A spell without breaks of at least this many hours is steady rain or snow. */
+        const val STEADY_HOURS = 6
+
         const val MAX_REMARKS = 3
         const val MIN_REMARKS = 2
 
@@ -113,6 +156,12 @@ data class WeatherOutlook(
                 else -> 0
             }
             is Remark.FeelsLike -> 50
+            // Below any snow spell, so the amount is only said together with the snow.
+            is Remark.Snow -> when (remark.amount) {
+                FreshSnow.LITTLE -> 30
+                FreshSnow.SOME -> 50
+                FreshSnow.LOTS -> 60
+            }
             is Remark.Precipitation -> when (val p = remark.outlook) {
                 is PrecipitationOutlook.Dry -> 0
                 is PrecipitationOutlook.Ongoing -> 90
@@ -163,13 +212,24 @@ data class WeatherOutlook(
             val kind = if (wetHours.count { conditions[it].isSnow } * 2 >= wetHours.size) PrecipitationKind.SNOW else PrecipitationKind.RAIN
             // The strongest hour, in the same classes the ring draws its dots in.
             val intensity = wetHours.maxOf { conditions[it].precipitationIntensity ?: PrecipitationIntensity.SLIGHT }
+            val spellHours = (end ?: HORIZON_HOURS) - start
+            val moreLater = end != null && (end until HORIZON_HOURS).any(::wet)
+            val character = when {
+                wetHours.size < spellHours || moreLater -> SpellCharacter.SHOWERS
+                wetHours.size >= STEADY_HOURS -> SpellCharacter.STEADY
+                else -> SpellCharacter.NORMAL
+            }
+            val snowfallCm = wetHours.sumOf { conditions[it].snowfallCm }
             // The last moment it falls, so rain until 18:00 ends in the afternoon, not the evening.
             val lastWet = end?.let { at(hourStart(it).minusMillis(1)) }
             return when {
-                start == 0 && likely(0) -> PrecipitationOutlook.Ongoing(kind, intensity, lastWet)
+                start == 0 && likely(0) -> PrecipitationOutlook.Ongoing(kind, intensity, lastWet, character, snowfallCm)
                 else -> {
                     val startTime = at(hourStart(start).coerceAtLeast(now))
-                    PrecipitationOutlook.Coming(kind, intensity, wetHours.any(::likely), startTime, continues = lastWet != startTime)
+                    PrecipitationOutlook.Coming(
+                        kind, intensity, wetHours.any(::likely), startTime, continues = lastWet != startTime,
+                        character = character, snowfallCm = snowfallCm,
+                    )
                 }
             }
         }

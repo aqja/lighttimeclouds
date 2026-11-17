@@ -152,6 +152,15 @@
     <!-- %1$s: what is falling, from summary_rain_definite/summary_snow_definite (e.g. "the light rain"), %2$s: when. -->
     <string name="summary_stops">%1$s stops %2$s.</string>
     <string name="summary_lasts">%1$s goes on for many hours.</string>
+    <!-- The same for plural nouns: the showers. -->
+    <string name="summary_stops_plural">%1$s stop %2$s.</string>
+    <string name="summary_lasts_plural">%1$s go on for many hours.</string>
+    <!-- Fresh snow a spell leaves: from 0.5 cm, from 2 cm, from 10 cm. -->
+    <string-array name="summary_fresh_snow">
+        <item>A little fresh snow.</item>
+        <item>A few centimeters of fresh snow.</item>
+        <item>Lots of fresh snow.</item>
+    </string-array>
     <!-- What falls, by its strongest hour, each in the order: below 0.5 mm per hour, up to 2.5, up to 10, above. -->
     <string-array name="summary_rain">
         <item>a little rain</item>
@@ -164,6 +173,55 @@
         <item>light snow</item>
         <item>snow</item>
         <item>heavy snow</item>
+    </string-array>
+    <!-- Showers: with breaks or several spells. Steady: at least six hours without a break. -->
+    <string-array name="summary_rain_showers">
+        <item>a few showers</item>
+        <item>light showers</item>
+        <item>showers</item>
+        <item>heavy showers</item>
+    </string-array>
+    <string-array name="summary_rain_showers_definite">
+        <item>the showers</item>
+        <item>the light showers</item>
+        <item>the showers</item>
+        <item>the heavy showers</item>
+    </string-array>
+    <string-array name="summary_rain_steady">
+        <item>light steady rain</item>
+        <item>light steady rain</item>
+        <item>steady rain</item>
+        <item>heavy steady rain</item>
+    </string-array>
+    <string-array name="summary_rain_steady_definite">
+        <item>the light steady rain</item>
+        <item>the light steady rain</item>
+        <item>the steady rain</item>
+        <item>the heavy steady rain</item>
+    </string-array>
+    <string-array name="summary_snow_showers">
+        <item>a few snow showers</item>
+        <item>light snow showers</item>
+        <item>snow showers</item>
+        <item>heavy snow showers</item>
+    </string-array>
+    <string-array name="summary_snow_showers_definite">
+        <item>the snow showers</item>
+        <item>the light snow showers</item>
+        <item>the snow showers</item>
+        <item>the heavy snow showers</item>
+    </string-array>
+    <string-array name="summary_snow_steady">
+        <item>light steady snow</item>
+        <item>light steady snow</item>
+        <item>steady snow</item>
+        <item>heavy steady snow</item>
+    </string-array>
+    <string-array name="summary_snow_steady_definite">
+        <item>the light steady snow</item>
+        <item>the light steady snow</item>
+        <item>the steady snow</item>
+        <item>the heavy steady snow</item>
     </string-array>
     <string-array name="summary_rain_definite">
         <item>the rain</item>

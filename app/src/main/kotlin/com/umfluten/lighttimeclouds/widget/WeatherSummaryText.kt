@@ -3,10 +3,10 @@ package com.umfluten.lighttimeclouds.widget
 import android.content.res.Resources
 import androidx.annotation.ArrayRes
 import com.umfluten.lighttimeclouds.R
-import com.umfluten.lighttimeclouds.weather.PrecipitationIntensity
 import com.umfluten.lighttimeclouds.weather.PrecipitationKind
 import com.umfluten.lighttimeclouds.weather.PrecipitationOutlook
 import com.umfluten.lighttimeclouds.weather.Remark
+import com.umfluten.lighttimeclouds.weather.SpellCharacter
 import com.umfluten.lighttimeclouds.weather.TimeOfDay
 import com.umfluten.lighttimeclouds.weather.WeatherForecast
 import com.umfluten.lighttimeclouds.weather.WeatherOutlook
@@ -37,6 +37,7 @@ object WeatherSummaryText {
             abs(remark.offset),
         )
         is Remark.Precipitation -> precipitationSentence(resources, remark.outlook)
+        is Remark.Snow -> resources.getStringArray(R.array.summary_fresh_snow)[remark.amount.ordinal]
     }
 
     private fun temperatureSentence(resources: Resources, change: Int): String = when {
@@ -50,27 +51,39 @@ object WeatherSummaryText {
     private fun precipitationSentence(resources: Resources, outlook: PrecipitationOutlook): String = when (outlook) {
         is PrecipitationOutlook.Dry -> resources.getString(R.string.summary_dry, time(resources, outlook.until, Phrase.UNTIL))
         is PrecipitationOutlook.Ongoing -> {
-            val what = what(resources, outlook.kind, outlook.intensity, definite = true)
+            val what = what(resources, outlook, definite = true)
+            val plural = outlook.character == SpellCharacter.SHOWERS
             when (val end = outlook.end) {
-                null -> resources.getString(R.string.summary_lasts, what)
-                else -> resources.getString(R.string.summary_stops, what, time(resources, end, Phrase.AT))
+                null -> resources.getString(if (plural) R.string.summary_lasts_plural else R.string.summary_lasts, what)
+                else -> resources.getString(
+                    if (plural) R.string.summary_stops_plural else R.string.summary_stops,
+                    what,
+                    time(resources, end, Phrase.AT),
+                )
             }
         }
         is PrecipitationOutlook.Coming -> resources.getString(
             if (outlook.likely) R.string.summary_likely else R.string.summary_possible,
             time(resources, outlook.start, if (outlook.continues) Phrase.FROM else Phrase.AT),
-            what(resources, outlook.kind, outlook.intensity, definite = false),
+            what(resources, outlook, definite = false),
         )
     }
 
-    /** "light rain", or with [definite] "the light rain". */
-    private fun what(resources: Resources, kind: PrecipitationKind, intensity: PrecipitationIntensity, definite: Boolean): String {
-        val array = when (kind) {
-            PrecipitationKind.RAIN -> if (definite) R.array.summary_rain_definite else R.array.summary_rain
-            PrecipitationKind.SNOW -> if (definite) R.array.summary_snow_definite else R.array.summary_snow
-        }
-        return resources.getStringArray(array)[intensity.ordinal]
+    /** "light showers", or with [definite] "the light showers". */
+    private fun what(resources: Resources, spell: PrecipitationOutlook.Spell, definite: Boolean): String {
+        val arrays = NOUNS.getValue(spell.kind to spell.character)
+        return resources.getStringArray(if (definite) arrays.second else arrays.first)[spell.intensity.ordinal]
     }
+
+    /** Per kind and character the noun arrays without and with the definite article, each by intensity. */
+    private val NOUNS = mapOf(
+        (PrecipitationKind.RAIN to SpellCharacter.NORMAL) to (R.array.summary_rain to R.array.summary_rain_definite),
+        (PrecipitationKind.RAIN to SpellCharacter.SHOWERS) to (R.array.summary_rain_showers to R.array.summary_rain_showers_definite),
+        (PrecipitationKind.RAIN to SpellCharacter.STEADY) to (R.array.summary_rain_steady to R.array.summary_rain_steady_definite),
+        (PrecipitationKind.SNOW to SpellCharacter.NORMAL) to (R.array.summary_snow to R.array.summary_snow_definite),
+        (PrecipitationKind.SNOW to SpellCharacter.SHOWERS) to (R.array.summary_snow_showers to R.array.summary_snow_showers_definite),
+        (PrecipitationKind.SNOW to SpellCharacter.STEADY) to (R.array.summary_snow_steady to R.array.summary_snow_steady_definite),
+    )
 
     /** How a part of the day is joined to the sentence: "this afternoon", "from this afternoon", "into the afternoon". */
     private enum class Phrase(@param:ArrayRes val today: Int, @param:ArrayRes val tomorrow: Int) {

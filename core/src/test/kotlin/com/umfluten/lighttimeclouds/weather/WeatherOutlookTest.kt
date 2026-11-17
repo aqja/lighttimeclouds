@@ -72,14 +72,14 @@ class WeatherOutlookTest {
     @Test
     fun `a single dry hour does not end the rain`() {
         assertEquals(
-            PrecipitationOutlook.Ongoing(RAIN, LIGHT, today(DayPeriod.AFTERNOON)),
+            PrecipitationOutlook.Ongoing(RAIN, LIGHT, today(DayPeriod.AFTERNOON), SpellCharacter.SHOWERS),
             precipitation(0 to rain, 1 to rain, 3 to rain, 4 to rain),
         )
     }
 
     @Test
     fun `rain that lasts beyond the horizon has no end`() {
-        assertEquals(PrecipitationOutlook.Ongoing(RAIN, LIGHT, null), precipitation(*(0..11).map { it to rain }.toTypedArray()))
+        assertEquals(PrecipitationOutlook.Ongoing(RAIN, LIGHT, null, SpellCharacter.STEADY), precipitation(*(0..11).map { it to rain }.toTypedArray()))
     }
 
     @Test
@@ -109,7 +109,7 @@ class WeatherOutlookTest {
     @Test
     fun `snow that is only possible is not called likely`() {
         assertEquals(
-            PrecipitationOutlook.Coming(SNOW, SLIGHT, likely = false, start = today(DayPeriod.AFTERNOON), continues = false),
+            PrecipitationOutlook.Coming(SNOW, SLIGHT, likely = false, start = today(DayPeriod.AFTERNOON), continues = false, snowfallCm = 0.3),
             precipitation(4 to Wet(0.2, 45.0, snowCm = 0.3)),
         )
     }
@@ -140,8 +140,41 @@ class WeatherOutlookTest {
     @Test
     fun `snow when most of the spell is snow`() {
         val snow = Wet(2.0, 90.0, snowCm = 2.0)
-        assertEquals(PrecipitationOutlook.Ongoing(SNOW, LIGHT, today(DayPeriod.MIDDAY)), precipitation(0 to rain, 1 to snow, 2 to snow))
-        assertEquals(PrecipitationOutlook.Ongoing(RAIN, LIGHT, today(DayPeriod.MIDDAY)), precipitation(0 to rain, 1 to rain, 2 to snow))
+        assertEquals(PrecipitationOutlook.Ongoing(SNOW, LIGHT, today(DayPeriod.MIDDAY), snowfallCm = 4.0), precipitation(0 to rain, 1 to snow, 2 to snow))
+        assertEquals(PrecipitationOutlook.Ongoing(RAIN, LIGHT, today(DayPeriod.MIDDAY), snowfallCm = 2.0), precipitation(0 to rain, 1 to rain, 2 to snow))
+    }
+
+    @Test
+    fun `six hours without a break are steady rain`() {
+        val o = precipitation(*(3..8).map { it to rain }.toTypedArray())
+        assertEquals(SpellCharacter.STEADY, (o as PrecipitationOutlook.Spell).character)
+        val shorter = precipitation(*(3..7).map { it to rain }.toTypedArray())
+        assertEquals(SpellCharacter.NORMAL, (shorter as PrecipitationOutlook.Spell).character)
+    }
+
+    @Test
+    fun `another spell later makes showers`() {
+        val o = precipitation(2 to rain, 6 to rain)
+        assertEquals(SpellCharacter.SHOWERS, (o as PrecipitationOutlook.Spell).character)
+    }
+
+    @Test
+    fun `fresh snow is said with likely snow only`() {
+        fun snow(cm: Double, likely: Boolean = true) =
+            PrecipitationOutlook.Coming(SNOW, LIGHT, likely, today(DayPeriod.EVENING), continues = true, snowfallCm = cm)
+        assertEquals(
+            listOf(Remark.TemperatureChange(-3), Remark.Precipitation(snow(4.0)), Remark.Snow(FreshSnow.SOME)),
+            WeatherOutlook(-3, null, snow(4.0)).remarks(),
+        )
+        assertEquals(
+            listOf(Remark.TemperatureChange(-3), Remark.Precipitation(snow(4.0, likely = false))),
+            WeatherOutlook(-3, null, snow(4.0, likely = false)).remarks(),
+        )
+        assertEquals(
+            listOf(Remark.TemperatureChange(0), Remark.Precipitation(snow(0.3))),
+            WeatherOutlook(0, null, snow(0.3)).remarks(),
+        )
+        assertEquals(Remark.Snow(FreshSnow.LOTS), WeatherOutlook(0, null, snow(12.0)).remarks().last())
     }
 
     @Test
