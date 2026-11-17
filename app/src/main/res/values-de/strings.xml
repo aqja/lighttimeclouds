@@ -145,14 +145,34 @@
     <string name="summary_much_colder">Viel kälter als gestern um diese Zeit, %1$d° weniger.</string>
     <string name="summary_feels_colder">Fühlt sich %1$d° kälter an, als das Thermometer sagt.</string>
     <string name="summary_feels_warmer">Fühlt sich %1$d° wärmer an, als das Thermometer sagt.</string>
-    <string name="summary_rain_likely">%1$s Regen wahrscheinlich.</string>
-    <string name="summary_rain_possible">%1$s Regen möglich.</string>
-    <string name="summary_snow_likely">%1$s Schnee wahrscheinlich.</string>
-    <string name="summary_snow_possible">%1$s Schnee möglich.</string>
-    <string name="summary_rain_stops">Der Regen hört %1$s auf.</string>
-    <string name="summary_snow_stops">Der Schnee hört %1$s auf.</string>
-    <string name="summary_rain_lasts">Der Regen hält noch viele Stunden an.</string>
-    <string name="summary_snow_lasts">Der Schnee hält noch viele Stunden an.</string>
+    <string name="summary_likely">%1$s %2$s wahrscheinlich.</string>
+    <string name="summary_possible">%1$s %2$s möglich.</string>
+    <string name="summary_stops">%1$s hört %2$s auf.</string>
+    <string name="summary_lasts">%1$s hält noch viele Stunden an.</string>
+    <string-array name="summary_rain">
+        <item>etwas Regen</item>
+        <item>leichter Regen</item>
+        <item>Regen</item>
+        <item>kräftiger Regen</item>
+    </string-array>
+    <string-array name="summary_snow">
+        <item>etwas Schnee</item>
+        <item>leichter Schneefall</item>
+        <item>Schneefall</item>
+        <item>kräftiger Schneefall</item>
+    </string-array>
+    <string-array name="summary_rain_definite">
+        <item>der Regen</item>
+        <item>der leichte Regen</item>
+        <item>der Regen</item>
+        <item>der kräftige Regen</item>
+    </string-array>
+    <string-array name="summary_snow_definite">
+        <item>der Schnee</item>
+        <item>der leichte Schneefall</item>
+        <item>der Schneefall</item>
+        <item>der kräftige Schneefall</item>
+    </string-array>
     <string name="summary_dry">%1$s trocken.</string>
     <string name="summary_time_soon">bald</string>
     <string-array name="summary_time_later">

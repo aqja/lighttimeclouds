@@ -1,5 +1,8 @@
 package com.umfluten.lighttimeclouds.weather
 
+import com.umfluten.lighttimeclouds.weather.PrecipitationIntensity.HEAVY
+import com.umfluten.lighttimeclouds.weather.PrecipitationIntensity.LIGHT
+import com.umfluten.lighttimeclouds.weather.PrecipitationIntensity.SLIGHT
 import com.umfluten.lighttimeclouds.weather.PrecipitationKind.RAIN
 import com.umfluten.lighttimeclouds.weather.PrecipitationKind.SNOW
 import org.junit.Assert.assertEquals
@@ -63,26 +66,26 @@ class WeatherOutlookTest {
     @Test
     fun `rain falling now ends when it falls last`() {
         // Wet until 13:00, so the last rain falls at midday.
-        assertEquals(PrecipitationOutlook.Ongoing(RAIN, today(DayPeriod.MIDDAY)), precipitation(0 to rain, 1 to rain, 2 to rain))
+        assertEquals(PrecipitationOutlook.Ongoing(RAIN, LIGHT, today(DayPeriod.MIDDAY)), precipitation(0 to rain, 1 to rain, 2 to rain))
     }
 
     @Test
     fun `a single dry hour does not end the rain`() {
         assertEquals(
-            PrecipitationOutlook.Ongoing(RAIN, today(DayPeriod.AFTERNOON)),
+            PrecipitationOutlook.Ongoing(RAIN, LIGHT, today(DayPeriod.AFTERNOON)),
             precipitation(0 to rain, 1 to rain, 3 to rain, 4 to rain),
         )
     }
 
     @Test
     fun `rain that lasts beyond the horizon has no end`() {
-        assertEquals(PrecipitationOutlook.Ongoing(RAIN, null), precipitation(*(0..11).map { it to rain }.toTypedArray()))
+        assertEquals(PrecipitationOutlook.Ongoing(RAIN, LIGHT, null), precipitation(*(0..11).map { it to rain }.toTypedArray()))
     }
 
     @Test
     fun `rain to come in one part of the day`() {
         assertEquals(
-            PrecipitationOutlook.Coming(RAIN, likely = true, start = today(DayPeriod.AFTERNOON), continues = false),
+            PrecipitationOutlook.Coming(RAIN, LIGHT, likely = true, start = today(DayPeriod.AFTERNOON), continues = false),
             precipitation(6 to rain),
         )
     }
@@ -90,15 +93,23 @@ class WeatherOutlookTest {
     @Test
     fun `rain to come that goes on into the evening`() {
         assertEquals(
-            PrecipitationOutlook.Coming(RAIN, likely = true, start = today(DayPeriod.AFTERNOON), continues = true),
+            PrecipitationOutlook.Coming(RAIN, LIGHT, likely = true, start = today(DayPeriod.AFTERNOON), continues = true),
             precipitation(6 to rain, 7 to rain, 8 to rain, 9 to rain),
+        )
+    }
+
+    @Test
+    fun `the strongest hour sets the intensity`() {
+        assertEquals(
+            PrecipitationOutlook.Coming(RAIN, HEAVY, likely = true, start = today(DayPeriod.AFTERNOON), continues = false),
+            precipitation(4 to Wet(0.3, 50.0), 5 to Wet(12.0, 90.0), 6 to rain),
         )
     }
 
     @Test
     fun `snow that is only possible is not called likely`() {
         assertEquals(
-            PrecipitationOutlook.Coming(SNOW, likely = false, start = today(DayPeriod.AFTERNOON), continues = false),
+            PrecipitationOutlook.Coming(SNOW, SLIGHT, likely = false, start = today(DayPeriod.AFTERNOON), continues = false),
             precipitation(4 to Wet(0.2, 45.0, snowCm = 0.3)),
         )
     }
@@ -112,7 +123,7 @@ class WeatherOutlookTest {
     @Test
     fun `a mere chance right now is rain to come soon`() {
         assertEquals(
-            PrecipitationOutlook.Coming(RAIN, likely = false, start = TimeOfDay.Soon, continues = false),
+            PrecipitationOutlook.Coming(RAIN, SLIGHT, likely = false, start = TimeOfDay.Soon, continues = false),
             precipitation(0 to Wet(0.0, 60.0)),
         )
     }
@@ -121,7 +132,7 @@ class WeatherOutlookTest {
     fun `a mere chance needs more probability in the near hours`() {
         assertEquals(PrecipitationOutlook.Dry(today(DayPeriod.NIGHT)), precipitation(1 to Wet(0.0, 45.0)))
         assertEquals(
-            PrecipitationOutlook.Coming(RAIN, likely = false, start = today(DayPeriod.AFTERNOON), continues = false),
+            PrecipitationOutlook.Coming(RAIN, SLIGHT, likely = false, start = today(DayPeriod.AFTERNOON), continues = false),
             precipitation(4 to Wet(0.0, 45.0)),
         )
     }
@@ -129,8 +140,8 @@ class WeatherOutlookTest {
     @Test
     fun `snow when most of the spell is snow`() {
         val snow = Wet(2.0, 90.0, snowCm = 2.0)
-        assertEquals(PrecipitationOutlook.Ongoing(SNOW, today(DayPeriod.MIDDAY)), precipitation(0 to rain, 1 to snow, 2 to snow))
-        assertEquals(PrecipitationOutlook.Ongoing(RAIN, today(DayPeriod.MIDDAY)), precipitation(0 to rain, 1 to rain, 2 to snow))
+        assertEquals(PrecipitationOutlook.Ongoing(SNOW, LIGHT, today(DayPeriod.MIDDAY)), precipitation(0 to rain, 1 to snow, 2 to snow))
+        assertEquals(PrecipitationOutlook.Ongoing(RAIN, LIGHT, today(DayPeriod.MIDDAY)), precipitation(0 to rain, 1 to rain, 2 to snow))
     }
 
     @Test
@@ -142,7 +153,7 @@ class WeatherOutlookTest {
     @Test
     fun `remarks leave out the unremarkable when there is enough else to say`() {
         val dry = PrecipitationOutlook.Dry(today(DayPeriod.NIGHT))
-        val coming = PrecipitationOutlook.Coming(RAIN, likely = true, start = today(DayPeriod.EVENING), continues = true)
+        val coming = PrecipitationOutlook.Coming(RAIN, LIGHT, likely = true, start = today(DayPeriod.EVENING), continues = true)
         // Nothing notable: both unremarkable remarks.
         assertEquals(
             listOf(Remark.TemperatureChange(1), Remark.Precipitation(dry)),

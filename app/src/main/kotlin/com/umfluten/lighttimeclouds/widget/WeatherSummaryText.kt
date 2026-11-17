@@ -3,6 +3,7 @@ package com.umfluten.lighttimeclouds.widget
 import android.content.res.Resources
 import androidx.annotation.ArrayRes
 import com.umfluten.lighttimeclouds.R
+import com.umfluten.lighttimeclouds.weather.PrecipitationIntensity
 import com.umfluten.lighttimeclouds.weather.PrecipitationKind
 import com.umfluten.lighttimeclouds.weather.PrecipitationOutlook
 import com.umfluten.lighttimeclouds.weather.Remark
@@ -46,28 +47,29 @@ object WeatherSummaryText {
         else -> resources.getString(R.string.summary_similar)
     }
 
-    private fun precipitationSentence(resources: Resources, outlook: PrecipitationOutlook): String {
-        val snow = when (outlook) {
-            is PrecipitationOutlook.Dry -> false
-            is PrecipitationOutlook.Ongoing -> outlook.kind == PrecipitationKind.SNOW
-            is PrecipitationOutlook.Coming -> outlook.kind == PrecipitationKind.SNOW
-        }
-        return when (outlook) {
-            is PrecipitationOutlook.Dry -> resources.getString(R.string.summary_dry, time(resources, outlook.until, Phrase.UNTIL))
-            is PrecipitationOutlook.Ongoing -> when (val end = outlook.end) {
-                null -> resources.getString(if (snow) R.string.summary_snow_lasts else R.string.summary_rain_lasts)
-                else -> resources.getString(if (snow) R.string.summary_snow_stops else R.string.summary_rain_stops, time(resources, end, Phrase.AT))
-            }
-            is PrecipitationOutlook.Coming -> {
-                val text = when {
-                    snow && outlook.likely -> R.string.summary_snow_likely
-                    snow -> R.string.summary_snow_possible
-                    outlook.likely -> R.string.summary_rain_likely
-                    else -> R.string.summary_rain_possible
-                }
-                resources.getString(text, time(resources, outlook.start, if (outlook.continues) Phrase.FROM else Phrase.AT))
+    private fun precipitationSentence(resources: Resources, outlook: PrecipitationOutlook): String = when (outlook) {
+        is PrecipitationOutlook.Dry -> resources.getString(R.string.summary_dry, time(resources, outlook.until, Phrase.UNTIL))
+        is PrecipitationOutlook.Ongoing -> {
+            val what = what(resources, outlook.kind, outlook.intensity, definite = true)
+            when (val end = outlook.end) {
+                null -> resources.getString(R.string.summary_lasts, what)
+                else -> resources.getString(R.string.summary_stops, what, time(resources, end, Phrase.AT))
             }
         }
+        is PrecipitationOutlook.Coming -> resources.getString(
+            if (outlook.likely) R.string.summary_likely else R.string.summary_possible,
+            time(resources, outlook.start, if (outlook.continues) Phrase.FROM else Phrase.AT),
+            what(resources, outlook.kind, outlook.intensity, definite = false),
+        )
+    }
+
+    /** "light rain", or with [definite] "the light rain". */
+    private fun what(resources: Resources, kind: PrecipitationKind, intensity: PrecipitationIntensity, definite: Boolean): String {
+        val array = when (kind) {
+            PrecipitationKind.RAIN -> if (definite) R.array.summary_rain_definite else R.array.summary_rain
+            PrecipitationKind.SNOW -> if (definite) R.array.summary_snow_definite else R.array.summary_snow
+        }
+        return resources.getStringArray(array)[intensity.ordinal]
     }
 
     /** How a part of the day is joined to the sentence: "this afternoon", "from this afternoon", "into the afternoon". */

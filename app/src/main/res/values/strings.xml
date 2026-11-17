@@ -146,14 +146,37 @@
     <string name="summary_much_colder">Much colder than this time yesterday, down %1$d°.</string>
     <string name="summary_feels_colder">Feels %1$d° colder than the thermometer says.</string>
     <string name="summary_feels_warmer">Feels %1$d° warmer than the thermometer says.</string>
-    <string name="summary_rain_likely">Rain likely %1$s.</string>
-    <string name="summary_rain_possible">Rain possible %1$s.</string>
-    <string name="summary_snow_likely">Snow likely %1$s.</string>
-    <string name="summary_snow_possible">Snow possible %1$s.</string>
-    <string name="summary_rain_stops">The rain stops %1$s.</string>
-    <string name="summary_snow_stops">The snow stops %1$s.</string>
-    <string name="summary_rain_lasts">Rain for many hours to come.</string>
-    <string name="summary_snow_lasts">Snow for many hours to come.</string>
+    <!-- %1$s: when (e.g. "this evening"), %2$s: what falls, from summary_rain/summary_snow (e.g. "light rain"). -->
+    <string name="summary_likely">%2$s likely %1$s.</string>
+    <string name="summary_possible">%2$s possible %1$s.</string>
+    <!-- %1$s: what is falling, from summary_rain_definite/summary_snow_definite (e.g. "the light rain"), %2$s: when. -->
+    <string name="summary_stops">%1$s stops %2$s.</string>
+    <string name="summary_lasts">%1$s goes on for many hours.</string>
+    <!-- What falls, by its strongest hour, each in the order: below 0.5 mm per hour, up to 2.5, up to 10, above. -->
+    <string-array name="summary_rain">
+        <item>a little rain</item>
+        <item>light rain</item>
+        <item>rain</item>
+        <item>heavy rain</item>
+    </string-array>
+    <string-array name="summary_snow">
+        <item>a little snow</item>
+        <item>light snow</item>
+        <item>snow</item>
+        <item>heavy snow</item>
+    </string-array>
+    <string-array name="summary_rain_definite">
+        <item>the rain</item>
+        <item>the light rain</item>
+        <item>the rain</item>
+        <item>the heavy rain</item>
+    </string-array>
+    <string-array name="summary_snow_definite">
+        <item>the snow</item>
+        <item>the light snow</item>
+        <item>the snow</item>
+        <item>the heavy snow</item>
+    </string-array>
     <string name="summary_dry">Dry %1$s.</string>
     <!-- Parts of the day in the weather summary, each in the order: early morning (5–9), morning
          (9–12), midday (12–14), afternoon (14–18), evening (18–22), night (22–5). Times are kept

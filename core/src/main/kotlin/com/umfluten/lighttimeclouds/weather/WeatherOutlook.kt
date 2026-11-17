@@ -15,16 +15,20 @@ sealed interface PrecipitationOutlook {
     /** Nothing falls up to [until], the end of the horizon. */
     data class Dry(val until: TimeOfDay) : PrecipitationOutlook
 
-    /** [kind] is falling now and stops around [end]; null if it lasts beyond the horizon. */
-    data class Ongoing(val kind: PrecipitationKind, val end: TimeOfDay?) : PrecipitationOutlook
+    /**
+     * [kind] is falling now, at most as strong as [intensity], and stops around [end]; null if it
+     * lasts beyond the horizon.
+     */
+    data class Ongoing(val kind: PrecipitationKind, val intensity: PrecipitationIntensity, val end: TimeOfDay?) : PrecipitationOutlook
 
     /**
-     * [kind] starts around [start], [likely] or only possible. [continues] if it goes on into a
-     * later part of the day (or beyond the horizon), so "from the afternoon" rather than "in the
-     * afternoon".
+     * [kind] starts around [start], [likely] or only possible, at most as strong as [intensity].
+     * [continues] if it goes on into a later part of the day (or beyond the horizon), so "from the
+     * afternoon" rather than "in the afternoon".
      */
     data class Coming(
         val kind: PrecipitationKind,
+        val intensity: PrecipitationIntensity,
         val likely: Boolean,
         val start: TimeOfDay,
         val continues: Boolean,
@@ -157,13 +161,15 @@ data class WeatherOutlook(
             val end = (start + 1 until HORIZON_HOURS).firstOrNull { !wet(it) && (it + 1 >= HORIZON_HOURS || !wet(it + 1)) }
             val wetHours = (start until (end ?: HORIZON_HOURS)).filter(::wet)
             val kind = if (wetHours.count { conditions[it].isSnow } * 2 >= wetHours.size) PrecipitationKind.SNOW else PrecipitationKind.RAIN
+            // The strongest hour, in the same classes the ring draws its dots in.
+            val intensity = wetHours.maxOf { conditions[it].precipitationIntensity ?: PrecipitationIntensity.SLIGHT }
             // The last moment it falls, so rain until 18:00 ends in the afternoon, not the evening.
             val lastWet = end?.let { at(hourStart(it).minusMillis(1)) }
             return when {
-                start == 0 && likely(0) -> PrecipitationOutlook.Ongoing(kind, lastWet)
+                start == 0 && likely(0) -> PrecipitationOutlook.Ongoing(kind, intensity, lastWet)
                 else -> {
                     val startTime = at(hourStart(start).coerceAtLeast(now))
-                    PrecipitationOutlook.Coming(kind, wetHours.any(::likely), startTime, continues = lastWet != startTime)
+                    PrecipitationOutlook.Coming(kind, intensity, wetHours.any(::likely), startTime, continues = lastWet != startTime)
                 }
             }
         }
