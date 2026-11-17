@@ -236,6 +236,18 @@
         <item>the heavy snow</item>
     </string-array>
     <string name="summary_dry">Dry %1$s.</string>
+    <!-- %1$s: when, %2$s: a temperature with its degree sign (e.g. "−3°"). -->
+    <string name="summary_clearing">Clearing up %1$s.</string>
+    <string name="summary_clouding_over">Clouding over %1$s.</string>
+    <string name="summary_overcast">Overcast %1$s.</string>
+    <string name="summary_clear">Clear skies %1$s.</string>
+    <string name="summary_heat">Hot %1$s, up to %2$s.</string>
+    <string name="summary_heat_now">Hot, up to %1$s.</string>
+    <string name="summary_frost">Frost %1$s, down to %2$s.</string>
+    <string name="summary_lasting_frost">Below freezing %1$s, at most %2$s.</string>
+    <!-- %2$d: degrees of change. -->
+    <string name="summary_warming">%2$d° warmer %1$s.</string>
+    <string name="summary_cooling">%2$d° colder %1$s.</string>
     <!-- Parts of the day in the weather summary, each in the order: early morning (5–9), morning
          (9–12), midday (12–14), afternoon (14–18), evening (18–22), night (22–5). Times are kept
          vague on purpose, an hourly forecast is not accurate to the hour. -->

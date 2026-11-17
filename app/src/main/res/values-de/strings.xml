@@ -229,6 +229,16 @@
         <item>der kräftige Schneefall</item>
     </string-array>
     <string name="summary_dry">%1$s trocken.</string>
+    <string name="summary_clearing">%1$s klart es auf.</string>
+    <string name="summary_clouding_over">%1$s zieht es sich zu.</string>
+    <string name="summary_overcast">%1$s bedeckt.</string>
+    <string name="summary_clear">%1$s klarer Himmel.</string>
+    <string name="summary_heat">%1$s heiß, bis %2$s.</string>
+    <string name="summary_heat_now">Heiß, bis %1$s.</string>
+    <string name="summary_frost">%1$s Frost bis %2$s.</string>
+    <string name="summary_lasting_frost">%1$s Dauerfrost, höchstens %2$s.</string>
+    <string name="summary_warming">%1$s noch %2$d° wärmer.</string>
+    <string name="summary_cooling">%1$s %2$d° kälter.</string>
     <string name="summary_time_soon">bald</string>
     <string-array name="summary_time_later">
         <item>im Lauf des Morgens</item>
