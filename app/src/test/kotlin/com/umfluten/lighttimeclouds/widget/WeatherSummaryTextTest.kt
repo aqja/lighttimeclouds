@@ -63,7 +63,7 @@ class WeatherSummaryTextTest {
             WeatherSummaryText.of(resources, forecast(rainHours = setOf(11), mm = 12.0), now),
         )
         assertEquals(
-            "About as warm as this time yesterday. The rain goes on for many hours.",
+            "About as warm as this time yesterday. The steady rain goes on for many hours.",
             WeatherSummaryText.of(resources, forecast(rainHours = (0..23).toSet(), mm = 4.0), now),
         )
     }
@@ -77,7 +77,19 @@ class WeatherSummaryTextTest {
                 if (h.time.isAfter(now.toInstant()) && hour in 15..16) h.copy(precipitationMm = 1.5, snowfallCm = 1.0, precipitationProbabilityPercent = 50.0, temperatureC = -1.0) else h
             })
         }
-        assertEquals("Heute Nachmittag leichter Schneefall wahrscheinlich.", WeatherSummaryText.of(resources, f, now)!!.substringAfter(". "))
+        assertEquals(
+            "Heute Nachmittag leichter Schneefall wahrscheinlich. Einige Zentimeter Neuschnee.",
+            WeatherSummaryText.of(resources, f, now),
+        )
+    }
+
+    @Test
+    @Config(qualifiers = "de")
+    fun `german showers`() {
+        assertEquals(
+            "Etwa so warm wie gestern um diese Zeit. Die leichten Schauer hören heute gegen Mittag auf.",
+            WeatherSummaryText.of(resources, forecast(rainHours = setOf(10, 12, 13)), now),
+        )
     }
 
     @Test
@@ -99,7 +111,10 @@ class WeatherSummaryTextTest {
             R.array.summary_time_from_today, R.array.summary_time_from_tomorrow,
             R.array.summary_time_until_today, R.array.summary_time_until_tomorrow,
         ).forEach { assertEquals(DayPeriod.entries.size, resources.getStringArray(it).size) }
-        listOf(R.array.summary_rain, R.array.summary_snow, R.array.summary_rain_definite, R.array.summary_snow_definite)
-            .forEach { assertEquals(PrecipitationIntensity.entries.size, resources.getStringArray(it).size) }
+        listOf(
+            R.array.summary_rain, R.array.summary_snow, R.array.summary_rain_definite, R.array.summary_snow_definite,
+            R.array.summary_rain_showers, R.array.summary_rain_showers_definite, R.array.summary_rain_steady, R.array.summary_rain_steady_definite,
+            R.array.summary_snow_showers, R.array.summary_snow_showers_definite, R.array.summary_snow_steady, R.array.summary_snow_steady_definite,
+        ).forEach { assertEquals(PrecipitationIntensity.entries.size, resources.getStringArray(it).size) }
     }
 }

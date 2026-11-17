@@ -149,6 +149,13 @@
     <string name="summary_possible">%1$s %2$s möglich.</string>
     <string name="summary_stops">%1$s hört %2$s auf.</string>
     <string name="summary_lasts">%1$s hält noch viele Stunden an.</string>
+    <string name="summary_stops_plural">%1$s hören %2$s auf.</string>
+    <string name="summary_lasts_plural">%1$s halten noch viele Stunden an.</string>
+    <string-array name="summary_fresh_snow">
+        <item>Etwas Neuschnee.</item>
+        <item>Einige Zentimeter Neuschnee.</item>
+        <item>Viel Neuschnee.</item>
+    </string-array>
     <string-array name="summary_rain">
         <item>etwas Regen</item>
         <item>leichter Regen</item>
@@ -160,6 +167,54 @@
         <item>leichter Schneefall</item>
         <item>Schneefall</item>
         <item>kräftiger Schneefall</item>
+    </string-array>
+    <string-array name="summary_rain_showers">
+        <item>vereinzelt Schauer</item>
+        <item>leichte Schauer</item>
+        <item>Schauer</item>
+        <item>kräftige Schauer</item>
+    </string-array>
+    <string-array name="summary_rain_showers_definite">
+        <item>die Schauer</item>
+        <item>die leichten Schauer</item>
+        <item>die Schauer</item>
+        <item>die kräftigen Schauer</item>
+    </string-array>
+    <string-array name="summary_rain_steady">
+        <item>leichter Dauerregen</item>
+        <item>leichter Dauerregen</item>
+        <item>Dauerregen</item>
+        <item>kräftiger Dauerregen</item>
+    </string-array>
+    <string-array name="summary_rain_steady_definite">
+        <item>der leichte Dauerregen</item>
+        <item>der leichte Dauerregen</item>
+        <item>der Dauerregen</item>
+        <item>der kräftige Dauerregen</item>
+    </string-array>
+    <string-array name="summary_snow_showers">
+        <item>vereinzelt Schneeschauer</item>
+        <item>leichte Schneeschauer</item>
+        <item>Schneeschauer</item>
+        <item>kräftige Schneeschauer</item>
+    </string-array>
+    <string-array name="summary_snow_showers_definite">
+        <item>die Schneeschauer</item>
+        <item>die leichten Schneeschauer</item>
+        <item>die Schneeschauer</item>
+        <item>die kräftigen Schneeschauer</item>
+    </string-array>
+    <string-array name="summary_snow_steady">
+        <item>anhaltender leichter Schneefall</item>
+        <item>anhaltender leichter Schneefall</item>
+        <item>anhaltender Schneefall</item>
+        <item>anhaltender kräftiger Schneefall</item>
+    </string-array>
+    <string-array name="summary_snow_steady_definite">
+        <item>der anhaltende leichte Schneefall</item>
+        <item>der anhaltende leichte Schneefall</item>
+        <item>der anhaltende Schneefall</item>
+        <item>der anhaltende kräftige Schneefall</item>
     </string-array>
     <string-array name="summary_rain_definite">
         <item>der Regen</item>
