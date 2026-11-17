@@ -4,14 +4,17 @@ import android.content.res.Resources
 import androidx.annotation.ArrayRes
 import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.weather.CloudOutlook
+import com.umfluten.lighttimeclouds.weather.HeavyRainWarning
 import com.umfluten.lighttimeclouds.weather.PrecipitationKind
 import com.umfluten.lighttimeclouds.weather.PrecipitationOutlook
 import com.umfluten.lighttimeclouds.weather.Remark
 import com.umfluten.lighttimeclouds.weather.SpellCharacter
 import com.umfluten.lighttimeclouds.weather.TemperatureCourse
+import com.umfluten.lighttimeclouds.weather.TomorrowOutlook
 import com.umfluten.lighttimeclouds.weather.TimeOfDay
 import com.umfluten.lighttimeclouds.weather.WeatherForecast
 import com.umfluten.lighttimeclouds.weather.WeatherOutlook
+import com.umfluten.lighttimeclouds.weather.WeatherWarning
 import java.time.ZonedDateTime
 import kotlin.math.abs
 
@@ -41,6 +44,18 @@ object WeatherSummaryText {
         is Remark.Precipitation -> precipitationSentence(resources, remark.outlook)
         is Remark.Snow -> resources.getStringArray(R.array.summary_fresh_snow)[remark.amount.ordinal]
         is Remark.Temperature -> courseSentence(resources, remark.course)
+        is Remark.Warning -> when (val w = remark.warning) {
+            is WeatherWarning.HeavyRain -> resources.getString(
+                when (w.level) {
+                    HeavyRainWarning.MARKED -> R.string.summary_heavy_rain
+                    HeavyRainWarning.SEVERE -> R.string.summary_heavy_rain_severe
+                    HeavyRainWarning.EXTREME -> R.string.summary_heavy_rain_extreme
+                },
+                time(resources, w.at, Phrase.AT),
+            )
+            is WeatherWarning.FreezingRain -> resources.getString(R.string.summary_freezing_rain, time(resources, w.at, Phrase.AT))
+        }
+        is Remark.Tomorrow -> tomorrowSentence(resources, remark.outlook)
         is Remark.Clouds -> when (val c = remark.clouds) {
             is CloudOutlook.Clearing -> resources.getString(R.string.summary_clearing, time(resources, c.start, Phrase.AT))
             is CloudOutlook.CloudingOver -> resources.getString(R.string.summary_clouding_over, time(resources, c.start, Phrase.AT))
@@ -61,6 +76,26 @@ object WeatherSummaryText {
         is TemperatureCourse.Warming -> resources.getString(R.string.summary_warming, time(resources, course.until, Phrase.UNTIL), course.degrees)
         is TemperatureCourse.Cooling -> resources.getString(R.string.summary_cooling, time(resources, course.until, Phrase.UNTIL), course.degrees)
     }
+
+    private fun tomorrowSentence(resources: Resources, t: TomorrowOutlook): String {
+        val temperatures = if (t.todayMaxC < COLD_DAY_C) R.array.summary_tomorrow_temperature_cold else R.array.summary_tomorrow_temperature
+        val temperature = when {
+            t.change <= -WeatherOutlook.LARGE_CHANGE -> 0
+            t.change <= -WeatherOutlook.NOTABLE_CHANGE -> 1
+            t.change < WeatherOutlook.NOTABLE_CHANGE -> 2
+            t.change < WeatherOutlook.LARGE_CHANGE -> 3
+            else -> 4
+        }
+        val precipitations = if (t.kind == PrecipitationKind.SNOW) R.array.summary_tomorrow_snow else R.array.summary_tomorrow_rain
+        return resources.getString(
+            R.string.summary_tomorrow,
+            resources.getStringArray(temperatures)[temperature],
+            resources.getStringArray(precipitations)[t.precipitation.ordinal],
+        )
+    }
+
+    /** Below this highest temperature (°C), "colder" and "milder" fit better than "cooler" and "warmer". */
+    private const val COLD_DAY_C = 10
 
     private fun degrees(celsius: Int): String = formatTemperature(celsius.toDouble())
 

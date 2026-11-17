@@ -2,6 +2,7 @@ package com.umfluten.lighttimeclouds.weather
 
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlin.math.abs
@@ -80,7 +81,34 @@ sealed interface Remark {
     data class Temperature(val course: TemperatureCourse) : Remark
 
     data class Clouds(val clouds: CloudOutlook) : Remark
+
+    data class Warning(val warning: WeatherWarning) : Remark
+
+    data class Tomorrow(val outlook: TomorrowOutlook) : Remark
 }
+
+/** Weather that can be dangerous, the first time it is expected within the horizon. */
+sealed interface WeatherWarning {
+    /** Rain of at least [level] within one hour, at the strongest level around [at]. */
+    data class HeavyRain(val level: HeavyRainWarning, val at: TimeOfDay) : WeatherWarning
+
+    /** Rain at or below freezing, so glaze ice, from [at]. */
+    data class FreezingRain(val at: TimeOfDay) : WeatherWarning
+}
+
+/** How often it rains or snows in the daytime. */
+enum class DaytimePrecipitation { DRY, POSSIBLE, AT_TIMES, OFTEN }
+
+/**
+ * Tomorrow's daytime (9 to 18 o'clock) compared with today's: the highest temperature [change]
+ * from today's [todayMaxC], and how often [kind] falls.
+ */
+data class TomorrowOutlook(
+    val change: Int,
+    val todayMaxC: Int,
+    val precipitation: DaytimePrecipitation,
+    val kind: PrecipitationKind,
+)
 
 /** How the sky changes, or that it does not. */
 sealed interface CloudOutlook {
@@ -128,9 +156,13 @@ data class WeatherOutlook(
     val precipitation: PrecipitationOutlook?,
     val clouds: CloudOutlook? = null,
     val temperatureCourse: TemperatureCourse? = null,
+    val warnings: List<WeatherWarning> = emptyList(),
+    /** Only in the evening and at night. */
+    val tomorrow: TomorrowOutlook? = null,
 ) {
     val isEmpty: Boolean
-        get() = changeSinceYesterday == null && feelsLikeOffset == null && precipitation == null && clouds == null && temperatureCourse == null
+        get() = changeSinceYesterday == null && feelsLikeOffset == null && precipitation == null && clouds == null &&
+            temperatureCourse == null && warnings.isEmpty() && tomorrow == null
 
     /**
      * The remarks worth saying, in reading order: the [MAX_REMARKS] most notable ones, topped up
@@ -139,7 +171,7 @@ data class WeatherOutlook(
      * the weather does.
      */
     fun remarks(): List<Remark> {
-        val all = listOfNotNull(
+        val all = warnings.map { Remark.Warning(it) } + listOfNotNull(
             changeSinceYesterday?.let { Remark.TemperatureChange(it) },
             feelsLikeOffset?.let { Remark.FeelsLike(it) },
             temperatureCourse?.let { Remark.Temperature(it) },
@@ -147,6 +179,7 @@ data class WeatherOutlook(
             freshSnow()?.let { Remark.Snow(it) },
             // Rain or snow already says it is cloudy.
             clouds?.takeUnless { it is CloudOutlook.Overcast && precipitation is PrecipitationOutlook.Spell }?.let { Remark.Clouds(it) },
+            tomorrow?.let { Remark.Tomorrow(it) },
         )
         val notable = all.filter { weight(it) > 0 }.sortedByDescending(::weight).take(MAX_REMARKS)
         val filler = all.filter { weight(it) == 0 }.take((MIN_REMARKS - notable.size).coerceAtLeast(0))
@@ -205,6 +238,13 @@ data class WeatherOutlook(
         /** From this rise or fall (°C) within the horizon on, the course is worth a mention. */
         const val NOTABLE_COURSE = 6
 
+        /** Tomorrow's outlook compares the daytime from and until these hours. */
+        const val DAYTIME_FROM_HOUR = 9
+        const val DAYTIME_UNTIL_HOUR = 18
+
+        /** From this many likely hours of the daytime on, it rains often. */
+        const val OFTEN_HOURS = 4
+
         const val MAX_REMARKS = 3
         const val MIN_REMARKS = 2
 
@@ -227,6 +267,11 @@ data class WeatherOutlook(
                 is TemperatureCourse.LastingFrost -> 45
                 is TemperatureCourse.Warming, is TemperatureCourse.Cooling -> 30
             }
+            is Remark.Warning -> when (val w = remark.warning) {
+                is WeatherWarning.HeavyRain -> 100 + 5 * w.level.ordinal
+                is WeatherWarning.FreezingRain -> 95
+            }
+            is Remark.Tomorrow -> 50
             is Remark.Clouds -> when (remark.clouds) {
                 is CloudOutlook.Clearing -> 45
                 is CloudOutlook.CloudingOver -> 35
@@ -265,6 +310,52 @@ data class WeatherOutlook(
                 precipitation = horizon?.let(::precipitationOutlook),
                 clouds = horizon?.let(::cloudOutlook),
                 temperatureCourse = if (horizon != null && airNow != null) temperatureCourse(horizon, airNow) else null,
+                warnings = horizon?.let(::warnings).orEmpty(),
+                tomorrow = tomorrowOutlook(forecast, now, zone),
+            )
+        }
+
+        private fun WeatherCondition.isLikely(): Boolean =
+            precipitationMm >= LIKELY_PRECIPITATION_MM ||
+                (precipitationMm >= WeatherCondition.MIN_PRECIPITATION_MM && (precipitationProbabilityPercent ?: 100.0) >= LIKELY_PROBABILITY)
+
+        private fun WeatherCondition.isPossible(probability: Double): Boolean = (precipitationProbabilityPercent ?: 0.0) >= probability
+
+        /** Heavy rain at its strongest level, and rain at or below freezing, each the first time within the horizon. */
+        private fun warnings(h: Horizon): List<WeatherWarning> {
+            val heavy = h.conditions.mapNotNull { it.heavyRainWarning }.maxOrNull()?.let { level ->
+                WeatherWarning.HeavyRain(level, h.atHour(h.conditions.indexOfFirst { it.heavyRainWarning == level }))
+            }
+            val freezing = h.conditions.indexOfFirst { c ->
+                !c.isSnow && (c.isLikely() || c.isPossible(NEAR_PROBABILITY)) && c.temperatureC != null && c.temperatureC <= 0.0
+            }.takeIf { it >= 0 }?.let { WeatherWarning.FreezingRain(h.atHour(it)) }
+            return listOfNotNull(heavy, freezing)
+        }
+
+        /**
+         * Tomorrow's daytime against today's, in the evening and at night only, when the day's
+         * own weather is mostly past. Null where the forecast does not cover both daytimes.
+         */
+        private fun tomorrowOutlook(forecast: WeatherForecast, now: Instant, zone: ZoneId): TomorrowOutlook? {
+            if (DayPeriod.ofHour(now.atZone(zone).hour) !in setOf(DayPeriod.EVENING, DayPeriod.NIGHT)) return null
+            val today = TimeOfDay.dayOf(now, zone)
+            fun hours(day: LocalDate) = (DAYTIME_FROM_HOUR..DAYTIME_UNTIL_HOUR).map { day.atTime(it, 0).atZone(zone).toInstant() }
+            fun maxTemperature(day: LocalDate): Double? = hours(day).map { forecast.temperatureAt(it, TemperatureKind.AIR) ?: return null }.max()
+            val todayMax = maxTemperature(today) ?: return null
+            val tomorrowMax = maxTemperature(today.plusDays(1)) ?: return null
+            val conditions = hours(today.plusDays(1)).dropLast(1).map { forecast.conditionAt(it) ?: return null }
+            val wet = conditions.filter { it.isLikely() || it.isPossible(NEAR_PROBABILITY) }
+            val likelyHours = conditions.count { it.isLikely() }
+            return TomorrowOutlook(
+                change = (tomorrowMax - todayMax).roundToInt(),
+                todayMaxC = todayMax.roundToInt(),
+                precipitation = when {
+                    wet.isEmpty() -> DaytimePrecipitation.DRY
+                    likelyHours == 0 -> DaytimePrecipitation.POSSIBLE
+                    likelyHours < OFTEN_HOURS -> DaytimePrecipitation.AT_TIMES
+                    else -> DaytimePrecipitation.OFTEN
+                },
+                kind = if (wet.isNotEmpty() && wet.count { it.isSnow } * 2 >= wet.size) PrecipitationKind.SNOW else PrecipitationKind.RAIN,
             )
         }
 
@@ -275,11 +366,8 @@ data class WeatherOutlook(
          */
         private fun precipitationOutlook(h: Horizon): PrecipitationOutlook {
             val conditions = h.conditions
-            fun likely(i: Int) = conditions[i].let {
-                it.precipitationMm >= LIKELY_PRECIPITATION_MM ||
-                    (it.precipitationMm >= WeatherCondition.MIN_PRECIPITATION_MM && (it.precipitationProbabilityPercent ?: 100.0) >= LIKELY_PROBABILITY)
-            }
-            fun possible(i: Int) = (conditions[i].precipitationProbabilityPercent ?: 0.0) >= if (i < NEAR_HOURS) NEAR_PROBABILITY else LATER_PROBABILITY
+            fun likely(i: Int) = conditions[i].isLikely()
+            fun possible(i: Int) = conditions[i].isPossible(if (i < NEAR_HOURS) NEAR_PROBABILITY else LATER_PROBABILITY)
             fun wet(i: Int) = likely(i) || possible(i)
 
             val start = conditions.indices.firstOrNull(::wet) ?: return PrecipitationOutlook.Dry(h.atEnd)

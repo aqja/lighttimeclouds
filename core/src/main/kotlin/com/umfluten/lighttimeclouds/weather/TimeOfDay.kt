@@ -53,7 +53,7 @@ sealed interface TimeOfDay {
         }
 
         /** The day [instant]'s period belongs to: the calendar day, but the previous one before dawn. */
-        private fun dayOf(instant: Instant, zone: ZoneId): LocalDate =
+        fun dayOf(instant: Instant, zone: ZoneId): LocalDate =
             instant.atZone(zone).minusHours(DayPeriod.EARLY_MORNING.startHour.toLong()).toLocalDate()
     }
 }
