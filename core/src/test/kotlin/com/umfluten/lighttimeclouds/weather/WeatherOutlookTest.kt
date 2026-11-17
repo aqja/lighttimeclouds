@@ -31,7 +31,7 @@ class WeatherOutlookTest {
         wet: Map<Int, Wet> = emptyMap(),
         cloud: (Int) -> Double = { 50.0 },
     ): WeatherForecast {
-        val hours = (0L..40L).map { i ->
+        val hours = (0L..64L).map { i ->
             val time = t0.plus(Duration.ofHours(i))
             // A step holds the precipitation of the hour before it.
             val hour = Duration.between(Instant.parse("2026-10-17T10:00:00Z"), time).toHours().toInt() - 1
@@ -246,6 +246,43 @@ class WeatherOutlookTest {
             listOf(Remark.FeelsLike(-9), Remark.Temperature(frost), Remark.Precipitation(coming)),
             WeatherOutlook(1, -9, coming, clearing, frost).remarks(),
         )
+    }
+
+    @Test
+    fun `heavy rain at its strongest level`() {
+        val o = WeatherOutlook.of(forecast(wet = mapOf(4 to Wet(18.0, 90.0), 6 to Wet(30.0, 90.0))), now, zone)
+        assertEquals(listOf(WeatherWarning.HeavyRain(HeavyRainWarning.SEVERE, today(DayPeriod.AFTERNOON))), o.warnings)
+        assertEquals(Remark.Warning(o.warnings.single()), o.remarks().first())
+    }
+
+    @Test
+    fun `no heavy rain warning for snow`() {
+        assertTrue(WeatherOutlook.of(forecast(wet = mapOf(4 to Wet(18.0, 90.0, snowCm = 15.0))), now, zone).warnings.isEmpty())
+    }
+
+    @Test
+    fun `rain at freezing is glaze ice`() {
+        val o = WeatherOutlook.of(forecast(temperature = { -1.0 }, wet = mapOf(3 to rain)), now, zone)
+        assertEquals(listOf(WeatherWarning.FreezingRain(today(DayPeriod.MIDDAY))), o.warnings)
+    }
+
+    private val evening: Instant = Instant.parse("2026-10-17T19:30:00Z")
+
+    @Test
+    fun `tomorrow in the evening only`() {
+        // Index 25 is today 9:00, index 49 tomorrow 9:00.
+        val f = forecast(temperature = { if (it in 49L..58L) 16.0 else 10.0 })
+        assertEquals(TomorrowOutlook(6, 10, DaytimePrecipitation.DRY, RAIN), WeatherOutlook.of(f, evening, zone).tomorrow)
+        assertNull(WeatherOutlook.of(f, now, zone).tomorrow)
+    }
+
+    @Test
+    fun `how often it rains tomorrow`() {
+        fun tomorrow(vararg wet: Pair<Int, Wet>) = WeatherOutlook.of(forecast(wet = wet.toMap()), evening, zone).tomorrow!!.precipitation
+        // Tomorrow 12:00 is hour 26 from today 10:00.
+        assertEquals(DaytimePrecipitation.POSSIBLE, tomorrow(26 to Wet(0.0, 60.0)))
+        assertEquals(DaytimePrecipitation.AT_TIMES, tomorrow(26 to rain, 27 to rain))
+        assertEquals(DaytimePrecipitation.OFTEN, tomorrow(*(24..27).map { it to rain }.toTypedArray()))
     }
 
     @Test

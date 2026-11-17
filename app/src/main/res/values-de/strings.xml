@@ -229,6 +229,37 @@
         <item>der kräftige Schneefall</item>
     </string-array>
     <string name="summary_dry">%1$s trocken.</string>
+    <string name="summary_heavy_rain">%1$s Gefahr von Starkregen.</string>
+    <string name="summary_heavy_rain_severe">%1$s Gefahr von heftigem Starkregen.</string>
+    <string name="summary_heavy_rain_extreme">%1$s Gefahr von extrem heftigem Starkregen.</string>
+    <string name="summary_freezing_rain">%1$s Glatteisgefahr.</string>
+    <string name="summary_tomorrow">Morgen %1$s und %2$s.</string>
+    <string-array name="summary_tomorrow_temperature">
+        <item>deutlich kühler</item>
+        <item>kühler</item>
+        <item>ähnlich warm</item>
+        <item>wärmer</item>
+        <item>deutlich wärmer</item>
+    </string-array>
+    <string-array name="summary_tomorrow_temperature_cold">
+        <item>deutlich kälter</item>
+        <item>kälter</item>
+        <item>ähnlich kalt</item>
+        <item>milder</item>
+        <item>deutlich milder</item>
+    </string-array>
+    <string-array name="summary_tomorrow_rain">
+        <item>trocken</item>
+        <item>vielleicht etwas Regen</item>
+        <item>zeitweise Regen</item>
+        <item>regnerisch</item>
+    </string-array>
+    <string-array name="summary_tomorrow_snow">
+        <item>trocken</item>
+        <item>vielleicht etwas Schnee</item>
+        <item>zeitweise Schnee</item>
+        <item>häufig Schnee</item>
+    </string-array>
     <string name="summary_clearing">%1$s klart es auf.</string>
     <string name="summary_clouding_over">%1$s zieht es sich zu.</string>
     <string name="summary_overcast">%1$s bedeckt.</string>

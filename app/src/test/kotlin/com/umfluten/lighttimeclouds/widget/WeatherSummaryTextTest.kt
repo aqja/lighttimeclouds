@@ -27,7 +27,7 @@ class WeatherSummaryTextTest {
     /** Ten degrees all day, with [mm] of rain in each hour starting at the local [rainHours]. */
     private fun forecast(rainHours: Set<Int> = emptySet(), mm: Double = 2.0): WeatherForecast {
         val start = now.minusDays(1).withMinute(0)
-        val hours = (0L..48L).map { i ->
+        val hours = (0L..72L).map { i ->
             val time = start.plusHours(i)
             val rain = time.minusHours(1).hour in rainHours && time.isAfter(now)
             HourlyWeather(time.toInstant(), 50.0, if (rain) mm else 0.0, 0.0, if (rain) 90.0 else 0.0, 10.0, 10.0)
@@ -125,6 +125,27 @@ class WeatherSummaryTextTest {
     }
 
     @Test
+    @Config(qualifiers = "de")
+    fun `german heavy rain`() {
+        assertEquals(
+            "Heute Nachmittag Gefahr von Starkregen. Heute Nachmittag kräftiger Regen wahrscheinlich.",
+            WeatherSummaryText.of(resources, forecast(rainHours = setOf(15), mm = 20.0), now),
+        )
+    }
+
+    @Test
+    @Config(qualifiers = "de")
+    fun `german outlook on tomorrow in the evening`() {
+        val evening = now.withHour(20)
+        // Today up to 8°, tomorrow up to 12°: milder, as both are cold days.
+        val f = forecastWith(temperature = { if (it.dayOfMonth == 18 && it.hour in 9..18) 12.0 else 8.0 })
+        assertEquals(
+            "Etwa so warm wie gestern um diese Zeit. Morgen milder und trocken.",
+            WeatherSummaryText.of(resources, f, evening),
+        )
+    }
+
+    @Test
     fun `no text without a forecast`() {
         assertEquals(null, WeatherSummaryText.of(resources, null, now))
     }
@@ -148,5 +169,7 @@ class WeatherSummaryTextTest {
             R.array.summary_rain_showers, R.array.summary_rain_showers_definite, R.array.summary_rain_steady, R.array.summary_rain_steady_definite,
             R.array.summary_snow_showers, R.array.summary_snow_showers_definite, R.array.summary_snow_steady, R.array.summary_snow_steady_definite,
         ).forEach { assertEquals(PrecipitationIntensity.entries.size, resources.getStringArray(it).size) }
+        listOf(R.array.summary_tomorrow_temperature, R.array.summary_tomorrow_temperature_cold).forEach { assertEquals(5, resources.getStringArray(it).size) }
+        listOf(R.array.summary_tomorrow_rain, R.array.summary_tomorrow_snow).forEach { assertEquals(4, resources.getStringArray(it).size) }
     }
 }

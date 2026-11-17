@@ -236,6 +236,43 @@
         <item>the heavy snow</item>
     </string-array>
     <string name="summary_dry">Dry %1$s.</string>
+    <!-- Heavy rain by the DWD's warning levels: from 15, 25 and 40 mm within one hour. -->
+    <string name="summary_heavy_rain">Risk of heavy downpours %1$s.</string>
+    <string name="summary_heavy_rain_severe">Risk of very heavy downpours %1$s.</string>
+    <string name="summary_heavy_rain_extreme">Risk of extremely heavy downpours %1$s.</string>
+    <!-- Rain at or below freezing. -->
+    <string name="summary_freezing_rain">Risk of black ice %1$s.</string>
+    <!-- Evening outlook on tomorrow's daytime. %1$s: temperature compared with today, %2$s: rain or snow. -->
+    <string name="summary_tomorrow">Tomorrow %1$s, %2$s.</string>
+    <!-- Tomorrow's highest temperature compared with today's: 5° and more lower, 2° and more lower, about
+         the same, 2° and more higher, 5° and more higher. The cold variant for days below 10°. -->
+    <string-array name="summary_tomorrow_temperature">
+        <item>much cooler</item>
+        <item>cooler</item>
+        <item>about as warm</item>
+        <item>warmer</item>
+        <item>much warmer</item>
+    </string-array>
+    <string-array name="summary_tomorrow_temperature_cold">
+        <item>much colder</item>
+        <item>colder</item>
+        <item>about as cold</item>
+        <item>milder</item>
+        <item>much milder</item>
+    </string-array>
+    <!-- How often it rains or snows tomorrow in the daytime: not at all, maybe, at times (up to 3 hours), often. -->
+    <string-array name="summary_tomorrow_rain">
+        <item>dry</item>
+        <item>maybe a little rain</item>
+        <item>rain at times</item>
+        <item>rainy</item>
+    </string-array>
+    <string-array name="summary_tomorrow_snow">
+        <item>dry</item>
+        <item>maybe a little snow</item>
+        <item>snow at times</item>
+        <item>frequent snow</item>
+    </string-array>
     <!-- %1$s: when, %2$s: a temperature with its degree sign (e.g. "−3°"). -->
     <string name="summary_clearing">Clearing up %1$s.</string>
     <string name="summary_clouding_over">Clouding over %1$s.</string>
