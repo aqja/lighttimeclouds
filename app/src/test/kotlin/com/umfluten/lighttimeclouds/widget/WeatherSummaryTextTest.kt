@@ -4,6 +4,7 @@ import android.content.res.Resources
 import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.data.Place
 import com.umfluten.lighttimeclouds.weather.DayPeriod
+import com.umfluten.lighttimeclouds.weather.GustLevel
 import com.umfluten.lighttimeclouds.weather.HourlyWeather
 import com.umfluten.lighttimeclouds.weather.PrecipitationIntensity
 import com.umfluten.lighttimeclouds.weather.WeatherForecast
@@ -146,6 +147,21 @@ class WeatherSummaryTextTest {
     }
 
     @Test
+    @Config(qualifiers = "de")
+    fun `german storm gusts`() {
+        val f = forecast().let { f ->
+            f.copy(hours = f.hours.map { h ->
+                val hour = h.time.atZone(zone).minusHours(1).hour
+                h.copy(windGustsKmh = if (h.time.isAfter(now.toInstant()) && hour in 19..20) 75.0 else 30.0)
+            })
+        }
+        assertEquals(
+            "Heute Abend Sturmböen möglich. Etwa so warm wie gestern um diese Zeit.",
+            WeatherSummaryText.of(resources, f, now),
+        )
+    }
+
+    @Test
     fun `no text without a forecast`() {
         assertEquals(null, WeatherSummaryText.of(resources, null, now))
     }
@@ -171,5 +187,6 @@ class WeatherSummaryTextTest {
         ).forEach { assertEquals(PrecipitationIntensity.entries.size, resources.getStringArray(it).size) }
         listOf(R.array.summary_tomorrow_temperature, R.array.summary_tomorrow_temperature_cold).forEach { assertEquals(5, resources.getStringArray(it).size) }
         listOf(R.array.summary_tomorrow_rain, R.array.summary_tomorrow_snow).forEach { assertEquals(4, resources.getStringArray(it).size) }
+        assertEquals(GustLevel.entries.size, resources.getStringArray(R.array.summary_gusts).size)
     }
 }

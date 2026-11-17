@@ -30,13 +30,14 @@ class WeatherOutlookTest {
         apparent: (Long) -> Double = temperature,
         wet: Map<Int, Wet> = emptyMap(),
         cloud: (Int) -> Double = { 50.0 },
+        gusts: (Int) -> Double = { 20.0 },
     ): WeatherForecast {
         val hours = (0L..64L).map { i ->
             val time = t0.plus(Duration.ofHours(i))
             // A step holds the precipitation of the hour before it.
             val hour = Duration.between(Instant.parse("2026-10-17T10:00:00Z"), time).toHours().toInt() - 1
             val w = wet[hour] ?: Wet(0.0, 0.0)
-            HourlyWeather(time, cloud(hour + 1), w.mm, w.snowCm, w.probability, temperature(i), apparent(i))
+            HourlyWeather(time, cloud(hour + 1), w.mm, w.snowCm, w.probability, temperature(i), apparent(i), gusts(hour))
         }
         return WeatherForecast(52.52, 13.41, now, hours)
     }
@@ -283,6 +284,21 @@ class WeatherOutlookTest {
         assertEquals(DaytimePrecipitation.POSSIBLE, tomorrow(26 to Wet(0.0, 60.0)))
         assertEquals(DaytimePrecipitation.AT_TIMES, tomorrow(26 to rain, 27 to rain))
         assertEquals(DaytimePrecipitation.OFTEN, tomorrow(*(24..27).map { it to rain }.toTypedArray()))
+    }
+
+    @Test
+    fun `the strongest gusts, from the first hour they reach their level`() {
+        fun wind(gusts: (Int) -> Double) = WeatherOutlook.of(forecast(gusts = gusts), now, zone).wind
+        assertNull(wind { 45.0 })
+        assertEquals(Remark.Wind(GustLevel.GUSTS, TimeOfDay.Soon), wind { 55.0 })
+        assertEquals(Remark.Wind(GustLevel.STORM, today(DayPeriod.AFTERNOON)), wind { if (it in 5..7) 70.0 + it else 55.0 })
+    }
+
+    @Test
+    fun `storm gusts rank as a warning`() {
+        val storm = Remark.Wind(GustLevel.SEVERE_STORM, today(DayPeriod.EVENING))
+        val coming = PrecipitationOutlook.Coming(RAIN, LIGHT, likely = true, start = today(DayPeriod.EVENING), continues = true)
+        assertEquals(listOf(storm, Remark.TemperatureChange(-6), Remark.Precipitation(coming)), WeatherOutlook(-6, -4, coming, wind = storm).remarks())
     }
 
     @Test

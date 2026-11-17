@@ -5,9 +5,9 @@ import java.time.Instant
 
 /**
  * One hourly step as Open-Meteo reports it: [cloudCoverPercent] and the temperatures are instant
- * values at [time]; [precipitationMm] (rain, showers and snow as water), [snowfallCm] and
- * [precipitationProbabilityPercent] (chance of more than 0.1 mm) refer to the hour *before*
- * [time]. The optional values are null where the model has none.
+ * values at [time]; [precipitationMm] (rain, showers and snow as water), [snowfallCm],
+ * [precipitationProbabilityPercent] (chance of more than 0.1 mm) and [windGustsKmh] (the strongest
+ * gust) refer to the hour *before* [time]. The optional values are null where the model has none.
  */
 data class HourlyWeather(
     val time: Instant,
@@ -17,6 +17,7 @@ data class HourlyWeather(
     val precipitationProbabilityPercent: Double? = null,
     val temperatureC: Double? = null,
     val apparentTemperatureC: Double? = null,
+    val windGustsKmh: Double? = null,
 )
 
 /** Which temperature the dial labels show. */
@@ -35,6 +36,18 @@ enum class PrecipitationIntensity(val minMmPerHour: Double) {
     HEAVY(10.0),
 }
 
+/**
+ * The DWD's wind warning levels by the strongest gust, starting at [minKmh]: Beaufort 7, 8, 10, 11
+ * and 12.
+ */
+enum class GustLevel(val minKmh: Double) {
+    GUSTS(50.0),
+    STORM(62.0),
+    SEVERE_STORM(89.0),
+    VIOLENT_STORM(103.0),
+    HURRICANE(118.0),
+}
+
 /** The DWD's heavy rain warning levels, starting at [minMmPerHour] of rain within one hour. */
 enum class HeavyRainWarning(val minMmPerHour: Double) {
     MARKED(15.0),
@@ -49,6 +62,7 @@ data class WeatherCondition(
     val snowfallCm: Double,
     val precipitationProbabilityPercent: Double? = null,
     val temperatureC: Double? = null,
+    val windGustsKmh: Double? = null,
 ) {
     private val hasAmount: Boolean get() = precipitationMm >= MIN_PRECIPITATION_MM
 
@@ -127,6 +141,7 @@ data class WeatherForecast(
             snowfallCm = end.snowfallCm,
             precipitationProbabilityPercent = end.precipitationProbabilityPercent,
             temperatureC = mean(start?.temperatureC, end.temperatureC),
+            windGustsKmh = end.windGustsKmh,
         )
     }
 
