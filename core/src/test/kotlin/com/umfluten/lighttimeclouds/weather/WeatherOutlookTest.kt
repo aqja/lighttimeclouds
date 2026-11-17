@@ -29,13 +29,14 @@ class WeatherOutlookTest {
         temperature: (Long) -> Double = { 10.0 },
         apparent: (Long) -> Double = temperature,
         wet: Map<Int, Wet> = emptyMap(),
+        cloud: (Int) -> Double = { 50.0 },
     ): WeatherForecast {
         val hours = (0L..40L).map { i ->
             val time = t0.plus(Duration.ofHours(i))
             // A step holds the precipitation of the hour before it.
             val hour = Duration.between(Instant.parse("2026-10-17T10:00:00Z"), time).toHours().toInt() - 1
             val w = wet[hour] ?: Wet(0.0, 0.0)
-            HourlyWeather(time, 50.0, w.mm, w.snowCm, w.probability, temperature(i), apparent(i))
+            HourlyWeather(time, cloud(hour + 1), w.mm, w.snowCm, w.probability, temperature(i), apparent(i))
         }
         return WeatherForecast(52.52, 13.41, now, hours)
     }
@@ -175,6 +176,76 @@ class WeatherOutlookTest {
             WeatherOutlook(0, null, snow(0.3)).remarks(),
         )
         assertEquals(Remark.Snow(FreshSnow.LOTS), WeatherOutlook(0, null, snow(12.0)).remarks().last())
+    }
+
+    /** The outlook with the temperature [byHour] counted from now's hour, which starts at index 26. */
+    private fun withTemperature(byHour: (Long) -> Double) = WeatherOutlook.of(forecast(temperature = { byHour(it - 26) }), now, zone)
+
+    /** The outlook with the cloud cover at the full hours counted from now's hour; an hour has the mean of its start and end. */
+    private fun withClouds(cloud: (Int) -> Double, vararg wet: Pair<Int, Wet>) =
+        WeatherOutlook.of(forecast(cloud = cloud, wet = wet.toMap()), now, zone)
+
+    @Test
+    fun `clearing up after the clouds`() {
+        assertEquals(CloudOutlook.Clearing(today(DayPeriod.AFTERNOON)), withClouds({ if (it < 5) 95.0 else 10.0 }).clouds)
+    }
+
+    @Test
+    fun `clouding over after a clear morning`() {
+        assertEquals(CloudOutlook.CloudingOver(today(DayPeriod.EVENING)), withClouds({ if (it < 9) 10.0 else 95.0 }).clouds)
+    }
+
+    @Test
+    fun `a sky that stays the same`() {
+        assertEquals(CloudOutlook.Overcast(today(DayPeriod.NIGHT)), withClouds({ 95.0 }).clouds)
+        assertEquals(CloudOutlook.Clear(today(DayPeriod.NIGHT)), withClouds({ 5.0 }).clouds)
+        assertNull(withClouds({ 50.0 }).clouds)
+    }
+
+    @Test
+    fun `overcast is not worth saying next to rain`() {
+        val o = withClouds({ 95.0 }, 3 to rain)
+        assertTrue(o.remarks().none { it is Remark.Clouds })
+        assertTrue(withClouds({ 95.0 }).remarks().any { it is Remark.Clouds })
+    }
+
+    @Test
+    fun `heat at the warmest hour`() {
+        assertEquals(TemperatureCourse.Heat(32, today(DayPeriod.AFTERNOON)), withTemperature { if (it == 5L) 32.0 else 25.0 }.temperatureCourse)
+    }
+
+    @Test
+    fun `frost to come at the coldest hour`() {
+        assertEquals(TemperatureCourse.Frost(-3, today(DayPeriod.EVENING)), withTemperature { if (it == 8L) -3.0 else 2.0 }.temperatureCourse)
+        // Light frost that rounds to zero is not worth it.
+        assertNull(withTemperature { if (it == 8L) -0.4 else 2.0 }.temperatureCourse)
+    }
+
+    @Test
+    fun `lasting frost`() {
+        assertEquals(TemperatureCourse.LastingFrost(-2, today(DayPeriod.NIGHT)), withTemperature { -2.0 }.temperatureCourse)
+    }
+
+    @Test
+    fun `a large rise or fall`() {
+        assertEquals(TemperatureCourse.Warming(12, today(DayPeriod.NIGHT)), withTemperature { 5.0 + it }.temperatureCourse)
+        assertEquals(TemperatureCourse.Cooling(12, today(DayPeriod.NIGHT)), withTemperature { 15.0 - it }.temperatureCourse)
+        assertNull(withTemperature { 10.0 + it / 4.0 }.temperatureCourse)
+    }
+
+    @Test
+    fun `a small feels-like gap gives way to more notable remarks`() {
+        val coming = PrecipitationOutlook.Coming(RAIN, LIGHT, likely = true, start = today(DayPeriod.EVENING), continues = true)
+        val clearing = CloudOutlook.Clearing(today(DayPeriod.AFTERNOON))
+        val frost = TemperatureCourse.Frost(-2, today(DayPeriod.NIGHT))
+        assertEquals(
+            listOf(Remark.Temperature(frost), Remark.Precipitation(coming), Remark.Clouds(clearing)),
+            WeatherOutlook(1, -4, coming, clearing, frost).remarks(),
+        )
+        assertEquals(
+            listOf(Remark.FeelsLike(-9), Remark.Temperature(frost), Remark.Precipitation(coming)),
+            WeatherOutlook(1, -9, coming, clearing, frost).remarks(),
+        )
     }
 
     @Test

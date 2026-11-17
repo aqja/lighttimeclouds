@@ -76,6 +76,43 @@ sealed interface Remark {
 
     /** The fresh snow the coming or falling snow leaves. */
     data class Snow(val amount: FreshSnow) : Remark
+
+    data class Temperature(val course: TemperatureCourse) : Remark
+
+    data class Clouds(val clouds: CloudOutlook) : Remark
+}
+
+/** How the sky changes, or that it does not. */
+sealed interface CloudOutlook {
+    /** Cloudy now, clear from [start]. */
+    data class Clearing(val start: TimeOfDay) : CloudOutlook
+
+    /** Clear now, cloudy from [start]. */
+    data class CloudingOver(val start: TimeOfDay) : CloudOutlook
+
+    /** Overcast up to [until], the end of the horizon. */
+    data class Overcast(val until: TimeOfDay) : CloudOutlook
+
+    /** Hardly a cloud up to [until], the end of the horizon. */
+    data class Clear(val until: TimeOfDay) : CloudOutlook
+}
+
+/** The course of the air temperature in the coming hours, in whole degrees. */
+sealed interface TemperatureCourse {
+    /** Up to [maxC] around [at]. */
+    data class Heat(val maxC: Int, val at: TimeOfDay) : TemperatureCourse
+
+    /** Below freezing now and up to [until], at most [maxC]. */
+    data class LastingFrost(val maxC: Int, val until: TimeOfDay) : TemperatureCourse
+
+    /** Above freezing now, down to [minC] around [at]. */
+    data class Frost(val minC: Int, val at: TimeOfDay) : TemperatureCourse
+
+    /** [degrees] warmer until [until]. */
+    data class Warming(val degrees: Int, val until: TimeOfDay) : TemperatureCourse
+
+    /** [degrees] colder until [until]. */
+    data class Cooling(val degrees: Int, val until: TimeOfDay) : TemperatureCourse
 }
 
 /**
@@ -89,8 +126,11 @@ data class WeatherOutlook(
     /** Apparent minus air temperature now, in whole degrees; only if at least [NOTABLE_FEELS_LIKE] apart. */
     val feelsLikeOffset: Int?,
     val precipitation: PrecipitationOutlook?,
+    val clouds: CloudOutlook? = null,
+    val temperatureCourse: TemperatureCourse? = null,
 ) {
-    val isEmpty: Boolean get() = changeSinceYesterday == null && feelsLikeOffset == null && precipitation == null
+    val isEmpty: Boolean
+        get() = changeSinceYesterday == null && feelsLikeOffset == null && precipitation == null && clouds == null && temperatureCourse == null
 
     /**
      * The remarks worth saying, in reading order: the [MAX_REMARKS] most notable ones, topped up
@@ -102,8 +142,11 @@ data class WeatherOutlook(
         val all = listOfNotNull(
             changeSinceYesterday?.let { Remark.TemperatureChange(it) },
             feelsLikeOffset?.let { Remark.FeelsLike(it) },
+            temperatureCourse?.let { Remark.Temperature(it) },
             precipitation?.let { Remark.Precipitation(it) },
             freshSnow()?.let { Remark.Snow(it) },
+            // Rain or snow already says it is cloudy.
+            clouds?.takeUnless { it is CloudOutlook.Overcast && precipitation is PrecipitationOutlook.Spell }?.let { Remark.Clouds(it) },
         )
         val notable = all.filter { weight(it) > 0 }.sortedByDescending(::weight).take(MAX_REMARKS)
         val filler = all.filter { weight(it) == 0 }.take((MIN_REMARKS - notable.size).coerceAtLeast(0))
@@ -128,6 +171,9 @@ data class WeatherOutlook(
         /** From this gap on (°C), the apparent temperature is worth a mention. */
         const val NOTABLE_FEELS_LIKE = 3
 
+        /** From this gap on (°C), the apparent temperature is among the first things to say. */
+        const val LARGE_FEELS_LIKE = 8
+
         /** From this amount (mm in one hour) on, rain or snow is likely whatever the probability. */
         const val LIKELY_PRECIPITATION_MM = 1.0
 
@@ -145,6 +191,20 @@ data class WeatherOutlook(
         /** A spell without breaks of at least this many hours is steady rain or snow. */
         const val STEADY_HOURS = 6
 
+        /** Cloud cover (%) from which an hour counts as cloudy, and up to which as clear ... */
+        const val CLOUDY_PERCENT = 70.0
+        const val CLEAR_PERCENT = 30.0
+
+        /** ... and the bounds for a sky that stays overcast (7/8) or clear (2/8) all along. */
+        const val OVERCAST_PERCENT = 87.5
+        const val MOSTLY_CLEAR_PERCENT = 25.0
+
+        /** From this temperature on (°C), the day is hot. */
+        const val HEAT_C = 30
+
+        /** From this rise or fall (°C) within the horizon on, the course is worth a mention. */
+        const val NOTABLE_COURSE = 6
+
         const val MAX_REMARKS = 3
         const val MIN_REMARKS = 2
 
@@ -155,7 +215,24 @@ data class WeatherOutlook(
                 abs(remark.degrees) >= NOTABLE_CHANGE -> 40
                 else -> 0
             }
-            is Remark.FeelsLike -> 50
+            // A few degrees colder are common with any wind, so only a large gap ranks high.
+            is Remark.FeelsLike -> when {
+                abs(remark.offset) >= LARGE_FEELS_LIKE -> 65
+                abs(remark.offset) >= 5 -> 45
+                else -> 20
+            }
+            is Remark.Temperature -> when (remark.course) {
+                is TemperatureCourse.Heat -> 60
+                is TemperatureCourse.Frost -> 55
+                is TemperatureCourse.LastingFrost -> 45
+                is TemperatureCourse.Warming, is TemperatureCourse.Cooling -> 30
+            }
+            is Remark.Clouds -> when (remark.clouds) {
+                is CloudOutlook.Clearing -> 45
+                is CloudOutlook.CloudingOver -> 35
+                is CloudOutlook.Clear -> 25
+                is CloudOutlook.Overcast -> 10
+            }
             // Below any snow spell, so the amount is only said together with the snow.
             is Remark.Snow -> when (remark.amount) {
                 FreshSnow.LITTLE -> 30
@@ -177,6 +254,7 @@ data class WeatherOutlook(
             val airNow = forecast.temperatureAt(now, TemperatureKind.AIR)
             val airYesterday = forecast.temperatureAt(now.minus(Duration.ofDays(1)), TemperatureKind.AIR)
             val apparentNow = forecast.temperatureAt(now, TemperatureKind.APPARENT)
+            val horizon = Horizon.of(forecast, now, zone)
             return WeatherOutlook(
                 changeSinceYesterday = if (airNow != null && airYesterday != null) (airNow - airYesterday).roundToInt() else null,
                 feelsLikeOffset = if (airNow != null && apparentNow != null) {
@@ -184,29 +262,27 @@ data class WeatherOutlook(
                 } else {
                     null
                 },
-                precipitation = precipitationOutlook(forecast, now, zone),
+                precipitation = horizon?.let(::precipitationOutlook),
+                clouds = horizon?.let(::cloudOutlook),
+                temperatureCourse = if (horizon != null && airNow != null) temperatureCourse(horizon, airNow) else null,
             )
         }
 
         /**
          * The first spell of precipitation within the horizon: from the first hour where it is
          * likely or possible to the first one of two dry hours in a row, so a single dry hour
-         * between showers does not split the spell. Unknown if the forecast ends earlier.
+         * between showers does not split the spell.
          */
-        private fun precipitationOutlook(forecast: WeatherForecast, now: Instant, zone: ZoneId): PrecipitationOutlook? {
-            val firstHour = now.truncatedTo(ChronoUnit.HOURS)
-            fun hourStart(i: Int): Instant = firstHour.plus(Duration.ofHours(i.toLong()))
-            val conditions = (0 until HORIZON_HOURS).map { forecast.conditionAt(hourStart(it)) ?: return null }
+        private fun precipitationOutlook(h: Horizon): PrecipitationOutlook {
+            val conditions = h.conditions
             fun likely(i: Int) = conditions[i].let {
                 it.precipitationMm >= LIKELY_PRECIPITATION_MM ||
                     (it.precipitationMm >= WeatherCondition.MIN_PRECIPITATION_MM && (it.precipitationProbabilityPercent ?: 100.0) >= LIKELY_PROBABILITY)
             }
             fun possible(i: Int) = (conditions[i].precipitationProbabilityPercent ?: 0.0) >= if (i < NEAR_HOURS) NEAR_PROBABILITY else LATER_PROBABILITY
             fun wet(i: Int) = likely(i) || possible(i)
-            fun at(instant: Instant) = TimeOfDay.of(instant, now, zone)
 
-            val start = conditions.indices.firstOrNull(::wet)
-                ?: return PrecipitationOutlook.Dry(at(now.plus(Duration.ofHours(HORIZON_HOURS.toLong()))))
+            val start = conditions.indices.firstOrNull(::wet) ?: return PrecipitationOutlook.Dry(h.atEnd)
             val end = (start + 1 until HORIZON_HOURS).firstOrNull { !wet(it) && (it + 1 >= HORIZON_HOURS || !wet(it + 1)) }
             val wetHours = (start until (end ?: HORIZON_HOURS)).filter(::wet)
             val kind = if (wetHours.count { conditions[it].isSnow } * 2 >= wetHours.size) PrecipitationKind.SNOW else PrecipitationKind.RAIN
@@ -221,11 +297,11 @@ data class WeatherOutlook(
             }
             val snowfallCm = wetHours.sumOf { conditions[it].snowfallCm }
             // The last moment it falls, so rain until 18:00 ends in the afternoon, not the evening.
-            val lastWet = end?.let { at(hourStart(it).minusMillis(1)) }
+            val lastWet = end?.let { h.at(h.hourStart(it).minusMillis(1)) }
             return when {
                 start == 0 && likely(0) -> PrecipitationOutlook.Ongoing(kind, intensity, lastWet, character, snowfallCm)
                 else -> {
-                    val startTime = at(hourStart(start).coerceAtLeast(now))
+                    val startTime = h.atHour(start)
                     PrecipitationOutlook.Coming(
                         kind, intensity, wetHours.any(::likely), startTime, continues = lastWet != startTime,
                         character = character, snowfallCm = snowfallCm,
@@ -234,6 +310,75 @@ data class WeatherOutlook(
             }
         }
 
-        private fun Instant.coerceAtLeast(other: Instant): Instant = if (isBefore(other)) other else this
+        /**
+         * A change between cloudy and clear for at least two hours in a row, or a sky that stays
+         * overcast or clear over the whole horizon; null for anything in between.
+         */
+        private fun cloudOutlook(h: Horizon): CloudOutlook? {
+            val cover = h.conditions.map { it.cloudCoverPercent }
+            fun cloudy(i: Int) = cover[i] >= CLOUDY_PERCENT
+            fun clear(i: Int) = cover[i] <= CLEAR_PERCENT
+            fun firstTwo(test: (Int) -> Boolean) = (2 until HORIZON_HOURS - 1).firstOrNull { test(it) && test(it + 1) }
+            return when {
+                cover.all { it >= OVERCAST_PERCENT } -> CloudOutlook.Overcast(h.atEnd)
+                cover.all { it <= MOSTLY_CLEAR_PERCENT } -> CloudOutlook.Clear(h.atEnd)
+                cloudy(0) && cloudy(1) -> firstTwo(::clear)?.let { CloudOutlook.Clearing(h.atHour(it)) }
+                clear(0) && clear(1) -> firstTwo(::cloudy)?.let { CloudOutlook.CloudingOver(h.atHour(it)) }
+                else -> null
+            }
+        }
+
+        /**
+         * The most notable course of the air temperature over the horizon, from [airNow]: heat,
+         * lasting frost, frost to come, or a large rise or fall.
+         */
+        private fun temperatureCourse(h: Horizon, airNow: Double): TemperatureCourse? {
+            val points = (1..HORIZON_HOURS).mapNotNull { i ->
+                val time = h.hourStart(i)
+                h.forecast.temperatureAt(time, TemperatureKind.AIR)?.let { time to it }
+            } + (h.now to airNow)
+            val (maxTime, max) = points.maxBy { it.second }
+            val (minTime, min) = points.minBy { it.second }
+            val maxC = max.roundToInt()
+            val minC = min.roundToInt()
+            return when {
+                maxC >= HEAT_C -> TemperatureCourse.Heat(maxC, h.at(maxTime))
+                maxC <= 0 -> TemperatureCourse.LastingFrost(maxC, h.atEnd)
+                airNow > 0.0 && minC <= -1 -> TemperatureCourse.Frost(minC, h.at(minTime))
+                (max - airNow).roundToInt() >= NOTABLE_COURSE && (max - airNow) >= (airNow - min) ->
+                    TemperatureCourse.Warming((max - airNow).roundToInt(), h.at(maxTime))
+                (airNow - min).roundToInt() >= NOTABLE_COURSE -> TemperatureCourse.Cooling((airNow - min).roundToInt(), h.at(minTime))
+                else -> null
+            }
+        }
+    }
+}
+
+/**
+ * The hours from the one containing [now] to [WeatherOutlook.HORIZON_HOURS] later, with their
+ * [conditions]; hours are full UTC hours like the forecast's steps.
+ */
+private class Horizon(val forecast: WeatherForecast, val now: Instant, val zone: ZoneId, val conditions: List<WeatherCondition>) {
+    private val firstHour: Instant = now.truncatedTo(ChronoUnit.HOURS)
+
+    fun hourStart(i: Int): Instant = firstHour.plus(Duration.ofHours(i.toLong()))
+
+    fun at(instant: Instant): TimeOfDay = TimeOfDay.of(instant, now, zone)
+
+    /** When hour [i] starts, but not before now. */
+    fun atHour(i: Int): TimeOfDay = at(hourStart(i).let { if (it.isBefore(now)) now else it })
+
+    /** The end of the horizon. */
+    val atEnd: TimeOfDay get() = at(now.plus(Duration.ofHours(WeatherOutlook.HORIZON_HOURS.toLong())))
+
+    companion object {
+        /** Null if the forecast does not cover the whole horizon. */
+        fun of(forecast: WeatherForecast, now: Instant, zone: ZoneId): Horizon? {
+            val firstHour = now.truncatedTo(ChronoUnit.HOURS)
+            val conditions = (0 until WeatherOutlook.HORIZON_HOURS).map {
+                forecast.conditionAt(firstHour.plus(Duration.ofHours(it.toLong()))) ?: return null
+            }
+            return Horizon(forecast, now, zone, conditions)
+        }
     }
 }

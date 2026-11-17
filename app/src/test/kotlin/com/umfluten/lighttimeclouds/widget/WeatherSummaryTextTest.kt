@@ -74,7 +74,7 @@ class WeatherSummaryTextTest {
         val f = forecast().let { f ->
             f.copy(hours = f.hours.map { h ->
                 val hour = h.time.atZone(zone).minusHours(1).hour
-                if (h.time.isAfter(now.toInstant()) && hour in 15..16) h.copy(precipitationMm = 1.5, snowfallCm = 1.0, precipitationProbabilityPercent = 50.0, temperatureC = -1.0) else h
+                if (h.time.isAfter(now.toInstant()) && hour in 15..16) h.copy(precipitationMm = 1.5, snowfallCm = 1.0, precipitationProbabilityPercent = 50.0) else h
             })
         }
         assertEquals(
@@ -89,6 +89,38 @@ class WeatherSummaryTextTest {
         assertEquals(
             "Etwa so warm wie gestern um diese Zeit. Die leichten Schauer hören heute gegen Mittag auf.",
             WeatherSummaryText.of(resources, forecast(rainHours = setOf(10, 12, 13)), now),
+        )
+    }
+
+    /** [forecast] with the air temperature and cloud cover per local full hour of today and tomorrow. */
+    private fun forecastWith(temperature: (ZonedDateTime) -> Double, cloud: (ZonedDateTime) -> Double = { 50.0 }) =
+        forecast().let { f ->
+            f.copy(hours = f.hours.map { h ->
+                val t = h.time.atZone(zone)
+                h.copy(temperatureC = temperature(t), apparentTemperatureC = temperature(t), cloudCoverPercent = cloud(t))
+            })
+        }
+
+    @Test
+    @Config(qualifiers = "de")
+    fun `german frost and clearing`() {
+        // Equally warm as yesterday at this hour, then frost in the evening; clear from the afternoon.
+        val f = forecastWith(
+            temperature = { if (it.isAfter(now) && it.hour == 19 && it.dayOfMonth == 17) -3.0 else 2.0 },
+            cloud = { if (it.isAfter(now.plusHours(4))) 5.0 else 95.0 },
+        )
+        assertEquals(
+            "Heute Abend Frost bis \u22123°. Heute Nachmittag klart es auf.",
+            WeatherSummaryText.of(resources, f, now),
+        )
+    }
+
+    @Test
+    fun `english heat`() {
+        val f = forecastWith(temperature = { if (it.isAfter(now) && it.hour == 15 && it.dayOfMonth == 17) 32.0 else 26.0 })
+        assertEquals(
+            "About as warm as this time yesterday. Hot this afternoon, up to 32°.",
+            WeatherSummaryText.of(resources, f, now),
         )
     }
 

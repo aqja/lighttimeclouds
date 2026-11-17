@@ -3,10 +3,12 @@ package com.umfluten.lighttimeclouds.widget
 import android.content.res.Resources
 import androidx.annotation.ArrayRes
 import com.umfluten.lighttimeclouds.R
+import com.umfluten.lighttimeclouds.weather.CloudOutlook
 import com.umfluten.lighttimeclouds.weather.PrecipitationKind
 import com.umfluten.lighttimeclouds.weather.PrecipitationOutlook
 import com.umfluten.lighttimeclouds.weather.Remark
 import com.umfluten.lighttimeclouds.weather.SpellCharacter
+import com.umfluten.lighttimeclouds.weather.TemperatureCourse
 import com.umfluten.lighttimeclouds.weather.TimeOfDay
 import com.umfluten.lighttimeclouds.weather.WeatherForecast
 import com.umfluten.lighttimeclouds.weather.WeatherOutlook
@@ -38,7 +40,29 @@ object WeatherSummaryText {
         )
         is Remark.Precipitation -> precipitationSentence(resources, remark.outlook)
         is Remark.Snow -> resources.getStringArray(R.array.summary_fresh_snow)[remark.amount.ordinal]
+        is Remark.Temperature -> courseSentence(resources, remark.course)
+        is Remark.Clouds -> when (val c = remark.clouds) {
+            is CloudOutlook.Clearing -> resources.getString(R.string.summary_clearing, time(resources, c.start, Phrase.AT))
+            is CloudOutlook.CloudingOver -> resources.getString(R.string.summary_clouding_over, time(resources, c.start, Phrase.AT))
+            is CloudOutlook.Overcast -> resources.getString(R.string.summary_overcast, time(resources, c.until, Phrase.UNTIL))
+            is CloudOutlook.Clear -> resources.getString(R.string.summary_clear, time(resources, c.until, Phrase.UNTIL))
+        }
     }
+
+    private fun courseSentence(resources: Resources, course: TemperatureCourse): String = when (course) {
+        is TemperatureCourse.Heat -> when (course.at) {
+            // Hot already or within the next hours.
+            TimeOfDay.Soon -> resources.getString(R.string.summary_heat_now, degrees(course.maxC))
+            else -> resources.getString(R.string.summary_heat, time(resources, course.at, Phrase.AT), degrees(course.maxC))
+        }
+        is TemperatureCourse.Frost -> resources.getString(R.string.summary_frost, time(resources, course.at, Phrase.AT), degrees(course.minC))
+        is TemperatureCourse.LastingFrost ->
+            resources.getString(R.string.summary_lasting_frost, time(resources, course.until, Phrase.UNTIL), degrees(course.maxC))
+        is TemperatureCourse.Warming -> resources.getString(R.string.summary_warming, time(resources, course.until, Phrase.UNTIL), course.degrees)
+        is TemperatureCourse.Cooling -> resources.getString(R.string.summary_cooling, time(resources, course.until, Phrase.UNTIL), course.degrees)
+    }
+
+    private fun degrees(celsius: Int): String = formatTemperature(celsius.toDouble())
 
     private fun temperatureSentence(resources: Resources, change: Int): String = when {
         change >= WeatherOutlook.LARGE_CHANGE -> resources.getString(R.string.summary_much_warmer, change)
