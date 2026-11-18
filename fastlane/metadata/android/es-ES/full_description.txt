@@ -1,4 +1,4 @@
-<p>LightTimeClouds es un widget para la pantalla de inicio: una esfera de reloj analógica normal con un anillo alrededor que muestra el transcurso del día en tu lugar, de la noche al alba, la luz del día y el anochecer, además de la luna con su fase actual. Inspirado en sunclock.net, pero con una <b>esfera normal de 12 horas</b> por defecto (24 horas opcional).</p>
+<p>LightTimeClouds es un widget para la pantalla de inicio: una esfera de reloj analógica normal con un anillo alrededor que muestra el transcurso del día en tu lugar, de la noche al alba, la luz del día y el anochecer, además de la luna con su fase actual. Inspirado en sunclock.net y en el reloj meteorológico OpenSky, con una <b>esfera normal de 12 horas</b> por defecto (24 horas opcional).</p>
 
 <ul>
 <li><b>Anillo del cielo:</b> cada tramo del anillo muestra el cielo desde el horizonte hacia arriba a esa hora del día. La luz del día, la salida y la puesta del sol, la hora azul y la noche salen de un modelo físico de dispersión de la luz, tal como el ojo humano ve el cielo. Como alternativa, colores fijos para cada fase.</li>

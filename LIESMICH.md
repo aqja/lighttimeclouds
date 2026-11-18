@@ -2,38 +2,27 @@
 
 [English](README.md) | **Deutsch**
 
-Android-Homescreen-Widget: eine analoge Sonnen- und Monduhr, inspiriert von [sunclock.net](https://sunclock.net) und von der Wetteruhr [OpenSky](https://donohoe.dev/weather/) von Michael Donohoe, die das Wetter der nächsten Stunden rund um das Zifferblatt zeigt und in wenigen Sätzen zusammenfasst.
+Android-Homescreen-Widget: eine analoge Sonnen- und Monduhr, inspiriert von [sunclock.net](https://sunclock.net) und von der Wetteruhr [OpenSky](https://donohoe.dev/weather/).
 
-Ein Ring um ein gewöhnliches Zifferblatt zeigt den Tagesverlauf von Nacht über Dämmerung bis Tag am aktuellen Standort, ergänzt um einen Mond-Marker mit aktueller Phase. Anders als die 24h-Uhr von sunclock nutzt LightTimeClouds standardmäßig ein normales **12-Stunden-Zifferblatt** (optional auch 24h).
+<img src="fastlane/metadata/android/de-DE/images/phoneScreenshots/2.png" alt="Das Widget mit Himmelsring, Wetterring und dem Wetter in Worten" width="270">
 
 ## Features
 
-- Analoges 12h- oder 24h-Zifferblatt, minutengenau, ohne Sekundenzeiger, optional mit Minutenstrichen
-- Tag/Dämmerung/Nacht-Ring nach aktuellem Sonnenstand am konfigurierten Standort. Jeder Ringabschnitt zeigt den Himmel vom Horizont nach oben (Horizont innen oder außen einstellbar): Tag, Morgen-/Abendrot und das Blau der Dämmerung aus einem physikalischen Streuungsmodell (spektral, mit Mehrfachstreuung und Dunst aus gemessenen Aerosolen), so wie das menschliche Auge ihn sieht: an das Licht angepasst, mit der Blauverschiebung und den verblassenden Farben bei wenig Licht, bis zum schwachen Eigenleuchten des Nachthimmels
-- Sonne und Mond (mit Phase) im Ring zur aktuellen Uhrzeit, so weit vom Horizontrand entfernt, wie sie über dem Horizont stehen; die Sonne als kleine Scheibe in ihrer wahren Größe entlang des Rings, in der Farbe, die sie durch die Atmosphäre hat, mit ihrer Aureole; der Mond ebenso in wahrer Größe, nur sein beleuchteter Teil, am Taghimmel blass und am Horizont orange bis rot, nachts mit einem Hof, wobei er den Himmel im Ring je nach Phase aufhellt; höher als dargestellt als kleiner Punkt am Rand gegenüber dem Horizont; unter dem Horizont gar nicht. Optional die Bahn des Mondes über den ganzen angezeigten Zeitraum als dünne graue Linie. Wie hoch über dem Horizont der äußere Rand reicht (10°–80°), ist einstellbar; der Himmelsverlauf passt sich an
-- Konfigurierbare Umschalt-Strategie für den Ring: feste Uhrzeiten (12h: zwei, Standard 6 und 18 Uhr; 24h: eine, Standard Mitternacht) oder mitlaufend, sodass der Zeiger immer am Anfang des gezeigten Zeitraums steht. Der Ring kann auf seinen letzten 0°–30° (Standard 15°) durchsichtig auslaufen, damit sein Ende nicht mit der Zeit direkt nach seinem Anfang verwechselt wird
-- Optionale Markierungen für Sonnenmittag/-mitternacht und Sonnenauf-/untergang
-- Optional ein roter Stundenstrich beim nächsten Wecker, sobald er im angezeigten Zeitraum liegt (Android gibt nur den nächsten Wecker preis); folgt sofort jeder Änderung, beim Schlummern also der neuen Weckzeit, sofern die Wecker-App sie meldet
-- Mond mit Phase, wahlweise am Stundenzeiger (Bahn schneidet den Horizontkreis zu den echten Auf- und Untergangszeiten) oder als eigener Zeiger, der dem Stundenzeiger um den Abstand des Mondes zur Sonne nachläuft; Abstand zur Mitte zeigt die Mondhöhe, dazu Tagesbahn des Mondes mit den Himmelsrichtungen, die er durchläuft, und Horizontkreis (ausblendbar)
-- Tab „Vorschau“ in der App: das Widget mit den aktuellen, auch noch nicht gespeicherten Einstellungen; Schieberegler für Breiten- und Längengrad, Datum im Jahresverlauf und Uhrzeit verändern nur die Vorschau
-- Tab „Zeiten“ in der App: alle Sonnenereignisse des Sonnentags, Mondphase, Mondauf- und -untergang
-- Gespeicherte Orte mit Name, Koordinaten und Zeitzone; jedes Widget zeigt die Ortszeit (Weltuhr mit mehreren Widgets). Von Hand eingegeben oder aus einer Karten-App übernommen: Einen Ort aus Organic Maps, OsmAnd oder einer anderen App mit `geo:`-Link oder Koordinaten teilen („Als Ort hinzufügen“) öffnet über der Karten-App den Dialog „Neuer Ort“ und nimmt ihn in die gespeicherten Orte auf, ohne ein Widget zu ändern; mit der Zeitzone des nächstgelegenen Hauptorts der Zeitzonen-Datenbank als Vorschlag. Kein GPS, keine Standort-Berechtigung. Koordinaten behält die App mit höchstens drei Nachkommastellen, also auf etwa 100 m genau. Netzwerkzugriff nur für den optionalen Wetter-Ring
-- Antippen öffnet die System-Uhr-App, die App selbst oder beides: innerhalb der Ringe die Uhr-App, außerhalb die App (ab Android 12)
-- Eigenes Launcher-Icon für die Konfiguration, unabhängig vom Widget
-- Einstellungsdatei (JSON) zum Exportieren und Importieren der Einstellungen eines Widgets mit allen Orten; System-Backups und Geräteumzüge lässt die App aus
-- Frei skalierbares, quadratisches Widget (Standard 2×2), mehrere Instanzen mit eigenen Einstellungen möglich
-- Farbmodi Hell/Dunkel/Automatisch (folgt dem System-Dunkelmodus); Ziffern und Zeiger in Material-You-Akzentfarben
-- Optionaler Wetter-Ring um den Tag/Nacht-Ring herum (Standard) oder direkt innerhalb davon: Bewölkung als Grauton (bei klarem Himmel durchsichtig), darüber Niederschlag in Blau (Schnee violett) – je dunkler, desto mehr; je deckender, desto wahrscheinlicher. Vergangene Stunden abgeschwächt. Vorhersage von Open-Meteo, etwa alle zwei Stunden im Hintergrund geladen (nicht bei niedrigem Akkustand), nur wenn ein Widget den Ring nutzt; dafür werden die Koordinaten des Orts an open-meteo.com übertragen
-- Luft- (Standard) oder gefühlte Temperatur (Mittelwert je Abschnitt) als Skala um den äußersten Ring (Standard) oder zwischen den Stundenziffern, oder keine
-- „Wetter in Worten“ im Tab „Wetter“ und optional links, rechts oder unter der Uhr: Vergleich mit gestern um dieselbe Zeit, eine deutlich abweichende gefühlte Temperatur und Regen oder Schnee in den nächsten 3 bzw. 6 Stunden, nach festen Regeln aus der Vorhersage
+- **Himmelsring:** der Himmel jeder Stunde des Tages um ein normales 12-Stunden-Zifferblatt (24 Stunden wählbar), vom Tag über Abendrot und blaue Stunde bis zur Nacht, physikalisch berechnet, wie das Auge ihn sieht
+- **Sonne und Mond** im Ring in ihrer echten Höhe, der Mond mit seiner Phase
+- **Wetter** (optional): Bewölkung, Regen und Schnee der nächsten Stunden als Ring, Temperaturen am Rand und das Wetter in wenigen Worten neben der Uhr
+- **Markierungen** für Sonnenaufgang, Sonnenuntergang, Sonnenmittag und den nächsten Wecker
+- **Orte** mit eigener Zeitzone, eingetippt oder aus einer Karten-App geteilt; mehrere Widgets ergeben eine Weltuhr
+- **Privat:** keine Standort-Berechtigung, kein Tracking; das Netz dient nur der Wettervorhersage von Open-Meteo
+- Hell- und Dunkelmodus in Material-You-Farben, frei skalierbar, auf Deutsch, Englisch, Spanisch und Französisch
 
 ## Installation
 
 [<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Bei Obtainium holen" height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/aqja/lighttimeclouds)
 
-An jedem [GitHub-Release](https://github.com/aqja/lighttimeclouds/releases) hängt die APK. [Obtainium](https://github.com/ImranR98/Obtainium) installiert sie von dort und hält sie aktuell. Bisher gibt es nur Vorabversionen (Beta), dafür in Obtainium bei der App die Pre-Releases einschalten (englisch „Include prereleases“). Die App soll auch zu F-Droid kommen, mit demselben Schlüssel signiert, sodass man ohne Neuinstallation zwischen beiden wechseln kann.
+An jedem [GitHub-Release](https://github.com/aqja/lighttimeclouds/releases) hängt die APK, von dort installiert und aktualisiert sie [Obtainium](https://github.com/ImranR98/Obtainium). Bisher gibt es nur Betas: In Obtainium „Include prereleases“ einschalten. F-Droid soll folgen.
 
-Die Version ist das Datum des Releases: Die erste Zahl zählt die Jahre seit 2026, dann folgen Monat, Tag und die Nummer des Releases an diesem Tag. 0.11.18-1 ist der erste Release vom 18. November 2026.
+Versionen sind Daten: 0.11.18-1 ist der erste Release vom 18. November 2026; die erste Zahl zählt die Jahre seit 2026.
 
 ## Projektstruktur
 
