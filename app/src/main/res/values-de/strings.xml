@@ -147,6 +147,8 @@
     <string name="summary_feels_warmer">Fühlt sich %1$d° wärmer an, als das Thermometer sagt.</string>
     <string name="summary_likely">%1$s %2$s wahrscheinlich.</string>
     <string name="summary_possible">%1$s %2$s möglich.</string>
+    <string name="summary_likely_plural">%1$s %2$s wahrscheinlich.</string>
+    <string name="summary_possible_plural">%1$s %2$s möglich.</string>
     <string name="summary_stops">%1$s hört %2$s auf.</string>
     <string name="summary_lasts">%1$s hält noch viele Stunden an.</string>
     <string name="summary_stops_plural">%1$s hören %2$s auf.</string>

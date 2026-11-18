@@ -161,6 +161,52 @@ class WeatherSummaryTextTest {
         )
     }
 
+    /** [forecast] with gusts of [kmh] in the local [hours]. */
+    private fun forecastWithGusts(hours: IntRange, kmh: Double) = forecast().let { f ->
+        f.copy(hours = f.hours.map { h ->
+            val hour = h.time.atZone(zone).minusHours(1).hour
+            h.copy(windGustsKmh = if (h.time.isAfter(now.toInstant()) && hour in hours) kmh else 30.0)
+        })
+    }
+
+    @Test
+    @Config(qualifiers = "fr")
+    fun `french sentences`() {
+        assertEquals(
+            "À peu près aussi chaud qu’hier à la même heure. Pluie faible probable cet après-midi.",
+            WeatherSummaryText.of(resources, forecast(rainHours = setOf(15, 16)), now),
+        )
+        assertEquals(
+            "À peu près aussi chaud qu’hier à la même heure. Les faibles averses cessent vers midi.",
+            WeatherSummaryText.of(resources, forecast(rainHours = setOf(10, 12, 13)), now),
+        )
+        assertEquals(
+            "À peu près aussi chaud qu’hier à la même heure. Faibles averses probables cet après-midi.",
+            WeatherSummaryText.of(resources, forecast(rainHours = setOf(15, 17)), now),
+        )
+        assertEquals(
+            "Rafales de coup de vent possibles ce soir. À peu près aussi chaud qu’hier à la même heure.",
+            WeatherSummaryText.of(resources, forecastWithGusts(19..20, 75.0), now),
+        )
+    }
+
+    @Test
+    @Config(qualifiers = "es")
+    fun `spanish sentences`() {
+        assertEquals(
+            "Temperatura parecida a la de ayer a esta hora. Probable lluvia débil a partir de última hora de la tarde.",
+            WeatherSummaryText.of(resources, forecast(rainHours = setOf(19, 20, 21, 22)), now),
+        )
+        assertEquals(
+            "Temperatura parecida a la de ayer a esta hora. Probables chubascos débiles esta tarde.",
+            WeatherSummaryText.of(resources, forecast(rainHours = setOf(15, 17)), now),
+        )
+        assertEquals(
+            "Temperatura parecida a la de ayer a esta hora. La lluvia persistente continúa durante muchas horas.",
+            WeatherSummaryText.of(resources, forecast(rainHours = (0..23).toSet(), mm = 4.0), now),
+        )
+    }
+
     @Test
     fun `no text without a forecast`() {
         assertEquals(null, WeatherSummaryText.of(resources, null, now))
@@ -172,6 +218,14 @@ class WeatherSummaryTextTest {
 
     @Test
     fun `every part of the day has an english phrase`() = assertPhraseCounts()
+
+    @Test
+    @Config(qualifiers = "es")
+    fun `every part of the day has a spanish phrase`() = assertPhraseCounts()
+
+    @Test
+    @Config(qualifiers = "fr")
+    fun `every part of the day has a french phrase`() = assertPhraseCounts()
 
     private fun assertPhraseCounts() {
         listOf(

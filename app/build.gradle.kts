@@ -66,7 +66,7 @@ android {
         generateLocaleConfig = true
         // Only the languages the app itself is translated into; the libraries' other translations
         // would only make a few system texts (e.g. for accessibility) foreign in an English app.
-        localeFilters += listOf("en", "de")
+        localeFilters += listOf("en", "de", "es", "fr")
     }
 
     testOptions {
