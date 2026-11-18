@@ -40,6 +40,7 @@
     <string name="show_sun_in_ring">Sol en el anillo</string>
     <string name="show_moon_in_ring">Luna en el anillo</string>
     <string name="bodies_in_ring_hint">A la hora actual, tan lejos del borde del horizonte como alto estén sobre el horizonte. Por debajo del horizonte o más altos de lo representado: un pequeño punto en ese borde.</string>
+    <string name="show_sun_path_in_ring">Trayectoria del sol en el anillo</string>
     <string name="show_moon_path_in_ring">Trayectoria de la luna en el anillo</string>
     <string name="show_minute_ticks">Marcas de minutos</string>
     <string name="show_solar_marks">Mediodía y medianoche solares</string>

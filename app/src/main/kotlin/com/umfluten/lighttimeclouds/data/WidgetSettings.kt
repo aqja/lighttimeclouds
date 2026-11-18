@@ -72,6 +72,8 @@ data class WidgetSettings(
     val showSunInRing: Boolean = true,
     /** Like [showSunInRing], for the moon with its phase. */
     val showMoonInRing: Boolean = true,
+    /** With [showSunInRing]: the sun's altitude over the whole shown time span as a thin white line in the ring. */
+    val showSunPathInRing: Boolean = true,
     /** With [showMoonInRing]: the moon's altitude over the whole shown time span as a thin line in the ring. */
     val showMoonPathInRing: Boolean = true,
     val showMinuteTicks: Boolean = false,

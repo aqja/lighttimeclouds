@@ -31,6 +31,7 @@ class WidgetPrefsRepository(private val context: Context) {
         val skyTopElevation = intPreferencesKey(prefix + "sky_top_elevation")
         val sunInRing = booleanPreferencesKey(prefix + "sun_in_ring")
         val moonInRing = booleanPreferencesKey(prefix + "moon_in_ring")
+        val sunPathInRing = booleanPreferencesKey(prefix + "sun_path_in_ring")
         val moonPathInRing = booleanPreferencesKey(prefix + "moon_path_in_ring")
         val weatherRingPosition = stringPreferencesKey(prefix + "weather_ring_position")
         val minuteTicks = booleanPreferencesKey(prefix + "minute_ticks")
@@ -69,6 +70,7 @@ class WidgetPrefsRepository(private val context: Context) {
                 .coerceAtMost(WidgetSettings.MAX_SKY_TOP_ELEVATION_DEG),
             showSunInRing = prefs[k.sunInRing] ?: d.showSunInRing,
             showMoonInRing = prefs[k.moonInRing] ?: d.showMoonInRing,
+            showSunPathInRing = prefs[k.sunPathInRing] ?: d.showSunPathInRing,
             showMoonPathInRing = prefs[k.moonPathInRing] ?: d.showMoonPathInRing,
             weatherRingPosition = prefs.enumOr(k.weatherRingPosition, d.weatherRingPosition),
             showMinuteTicks = prefs[k.minuteTicks] ?: d.showMinuteTicks,
@@ -102,6 +104,7 @@ class WidgetPrefsRepository(private val context: Context) {
             prefs[k.skyTopElevation] = settings.skyTopElevationDeg
             prefs[k.sunInRing] = settings.showSunInRing
             prefs[k.moonInRing] = settings.showMoonInRing
+            prefs[k.sunPathInRing] = settings.showSunPathInRing
             prefs[k.moonPathInRing] = settings.showMoonPathInRing
             prefs[k.weatherRingPosition] = settings.weatherRingPosition.name
             prefs[k.minuteTicks] = settings.showMinuteTicks

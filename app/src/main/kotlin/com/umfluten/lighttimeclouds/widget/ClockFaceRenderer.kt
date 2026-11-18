@@ -53,7 +53,7 @@ object ClockFaceRenderer {
             withRingEndFade {
                 drawDayNightRing()
                 if (settings.showSolarMarks || settings.showSunriseSunsetMarks) drawSolarMarks()
-                if (settings.showMoonInRing && settings.showMoonPathInRing) drawMoonPathInRing()
+                drawSkyPathsInRing()
             }
             if (settings.showSunInRing || settings.showMoonInRing) drawSkyBodies()
             if (settings.showWeather && weather != null) drawWeatherRing(weather)

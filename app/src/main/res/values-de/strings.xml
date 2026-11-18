@@ -40,6 +40,7 @@
     <string name="show_sun_in_ring">Sonne im Ring</string>
     <string name="show_moon_in_ring">Mond im Ring</string>
     <string name="bodies_in_ring_hint">Zur aktuellen Uhrzeit, so weit vom Horizontrand entfernt, wie sie über dem Horizont stehen. Unter dem Horizont oder höher als dargestellt: ein kleiner Punkt am jeweiligen Rand.</string>
+    <string name="show_sun_path_in_ring">Sonnenbahn im Ring</string>
     <string name="show_moon_path_in_ring">Mondbahn im Ring</string>
     <string name="show_minute_ticks">Minutenstriche</string>
     <string name="show_solar_marks">Sonnenmittag und -mitternacht</string>

@@ -41,6 +41,7 @@
     <string name="show_sun_in_ring">Soleil dans l’anneau</string>
     <string name="show_moon_in_ring">Lune dans l’anneau</string>
     <string name="bodies_in_ring_hint">À l’heure actuelle, aussi loin du bord de l’horizon qu’ils sont hauts au-dessus de l’horizon. Sous l’horizon ou plus haut que représenté : un petit point sur ce bord.</string>
+    <string name="show_sun_path_in_ring">Trajectoire du soleil dans l’anneau</string>
     <string name="show_moon_path_in_ring">Trajectoire de la lune dans l’anneau</string>
     <string name="show_minute_ticks">Graduations des minutes</string>
     <string name="show_solar_marks">Midi et minuit solaires</string>

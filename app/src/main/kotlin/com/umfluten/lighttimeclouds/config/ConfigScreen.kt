@@ -284,6 +284,13 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
         if (settings.showSunInRing || settings.showMoonInRing) {
             Hint(stringResource(R.string.bodies_in_ring_hint))
         }
+        if (settings.showSunInRing) {
+            SwitchRow(
+                label = stringResource(R.string.show_sun_path_in_ring),
+                checked = settings.showSunPathInRing,
+                onCheckedChange = { viewModel.update { s -> s.copy(showSunPathInRing = it) } },
+            )
+        }
         if (settings.showMoonInRing) {
             SwitchRow(
                 label = stringResource(R.string.show_moon_path_in_ring),

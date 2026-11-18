@@ -858,9 +858,11 @@ The distance from the horizon edge of the ring band follows the same projection 
 $u = \tan h / \tan e_t$. The bodies thus sit exactly where their altitude lies in the sky gradient.
 Below the horizon ($h < 0$) they are not drawn; above $e_t$ they appear as a small dot at the edge
 opposite the horizon. The Sun uses the geometric altitude (like the ring color), the Moon the
-apparent one, with refraction. The optional moon path is $h_\mathrm{Moon}(t)$ over the shown time
-span. Below the horizon it leaves the band (limited to $u \ge -0.5$ and clipped at the edge); above
-$e_t$ it runs along the edge opposite the horizon ($u = 1$), where the Moon's dot then sits.
+apparent one, with refraction. The optional paths (the Sun's white, the Moon's grey) are $h(t)$ of
+each body over the shown time span. Below the horizon they leave the band (limited to $u \ge -0.5$
+and clipped at the edge); above $e_t$ they run along the edge opposite the horizon ($u = 1$), where
+the body's dot then sits. Around the current time each path leaves out the body's half width plus
+5 minutes on either side, so it does not run through the body.
 
 The Sun's disc takes its color from the sunlight that reaches the observer through the
 atmosphere: the spectrum above the atmosphere times the transmittance $T(0,\,90° - h)$ (section
