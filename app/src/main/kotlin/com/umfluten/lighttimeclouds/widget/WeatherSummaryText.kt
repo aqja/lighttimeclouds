@@ -57,7 +57,7 @@ object WeatherSummaryText {
         }
         is Remark.Tomorrow -> tomorrowSentence(resources, remark.outlook)
         is Remark.Wind -> resources.getString(
-            R.string.summary_possible,
+            R.string.summary_possible_plural,
             time(resources, remark.at, Phrase.AT),
             resources.getStringArray(R.array.summary_gusts)[remark.level.ordinal],
         )
@@ -127,7 +127,10 @@ object WeatherSummaryText {
             }
         }
         is PrecipitationOutlook.Coming -> resources.getString(
-            if (outlook.likely) R.string.summary_likely else R.string.summary_possible,
+            when {
+                outlook.character == SpellCharacter.SHOWERS -> if (outlook.likely) R.string.summary_likely_plural else R.string.summary_possible_plural
+                else -> if (outlook.likely) R.string.summary_likely else R.string.summary_possible
+            },
             time(resources, outlook.start, if (outlook.continues) Phrase.FROM else Phrase.AT),
             what(resources, outlook, definite = false),
         )

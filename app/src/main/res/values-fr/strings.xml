@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French typography: a narrow no-break space before ; ? ! and %, a no-break space before : and inside « ». -->
+<resources>
+    <string name="widget_content_description">Horloge solaire et lunaire</string>
+    <string name="widget_open_clock">Ouvrir l’application d’horloge</string>
+
+    <!-- Common actions -->
+    <string name="action_save">Enregistrer</string>
+    <string name="action_cancel">Annuler</string>
+    <string name="action_ok">OK</string>
+    <string name="action_change">Changer</string>
+    <string name="action_edit">Modifier</string>
+    <string name="action_delete">Supprimer</string>
+    <string name="action_close">Fermer</string>
+
+    <!-- Widget picker and editor -->
+    <string name="picker_subtitle">Quel widget voulez-vous modifier ?</string>
+    <string name="picker_widget_fallback">Widget nº %1$d</string>
+    <string name="picker_display_mode_12h">12 h</string>
+    <string name="picker_display_mode_24h">24 h</string>
+    <string name="editor_subtitle_template">Modèle pour les nouveaux widgets</string>
+    <string name="editor_subtitle_widget">Paramètres du widget</string>
+    <string name="tab_settings">Paramètres</string>
+    <string name="tab_preview">Aperçu</string>
+    <string name="tab_times">Horaires</string>
+    <string name="tab_weather">Météo</string>
+    <string name="template_hint">Aucun widget sur l’écran d’accueil pour l’instant. Ces paramètres s’appliquent aux widgets que vous ajouterez.</string>
+
+    <!-- Clock face -->
+    <string name="section_dial">Cadran</string>
+    <string name="display_mode_12h">12 heures</string>
+    <string name="display_mode_24h">24 heures</string>
+    <string name="section_ring">Anneau jour/nuit</string>
+    <string name="section_moon">Lune</string>
+    <string name="section_weather">Météo</string>
+    <string name="sky_horizon_label">Horizon dans l’anneau</string>
+    <string name="sky_horizon_inner">Intérieur</string>
+    <string name="sky_horizon_outer">Extérieur</string>
+    <string name="sky_top_elevation_label">Ciel dans l’anneau jusqu’à</string>
+    <string name="sky_top_elevation_value">%1$d° au-dessus de l’horizon</string>
+    <string name="show_sun_in_ring">Soleil dans l’anneau</string>
+    <string name="show_moon_in_ring">Lune dans l’anneau</string>
+    <string name="bodies_in_ring_hint">À l’heure actuelle, aussi loin du bord de l’horizon qu’ils sont hauts au-dessus de l’horizon. Sous l’horizon ou plus haut que représenté : un petit point sur ce bord.</string>
+    <string name="show_moon_path_in_ring">Trajectoire de la lune dans l’anneau</string>
+    <string name="show_minute_ticks">Graduations des minutes</string>
+    <string name="show_solar_marks">Midi et minuit solaires</string>
+    <string name="show_sunrise_sunset_marks">Lever et coucher du soleil</string>
+    <string name="show_moon">Lune et sa trajectoire</string>
+    <string name="show_moon_compass">Points cardinaux sur la trajectoire de la lune</string>
+    <string name="compass_north">N</string>
+    <string name="compass_east">E</string>
+    <string name="compass_south">S</string>
+    <string name="compass_west">O</string>
+    <string name="moon_style_on_hour_hand">Sur l’aiguille des heures</string>
+    <string name="moon_style_separate_hand">Aiguille propre</string>
+    <string name="moon_style_on_hour_hand_hint">La lune est portée par l’aiguille des heures ; sa distance au centre indique sa hauteur. Là où la trajectoire croise le pâle cercle de l’horizon, la lune se lève ou se couche à cette heure.</string>
+    <string name="moon_style_separate_hand_hint">L’aiguille de la lune suit l’aiguille des heures avec le même retard que la lune sur le soleil, et montre ainsi où en est la lune dans sa course quotidienne par rapport au soleil. Sa distance au centre indique sa hauteur ; les chiffres n’indiquent pas les heures de lever et de coucher de la lune.</string>
+    <string name="show_next_alarm">Marquer la prochaine alarme</string>
+    <string name="next_alarm_hint">Un trait rouge dès que la prochaine alarme tombe dans la période affichée. Android ne communique aux autres applications que la prochaine alarme, pas toutes celles qui sont réglées. Si vous la reportez, le trait passe à la nouvelle heure, à condition que l’application d’horloge la communique.</string>
+
+    <!-- Weather -->
+    <string name="show_weather">Météo (nuages et précipitations)</string>
+    <string name="weather_hint">Anneau supplémentaire : gris selon la couverture nuageuse, transparent par ciel dégagé. Précipitations en bleu (neige en violet) : plus c’est foncé, plus il en tombe ; plus c’est opaque, plus c’est probable. Les prévisions sont téléchargées environ toutes les deux heures ; pour cela, les coordonnées du lieu sont envoyées à open-meteo.com. %1$s.</string>
+    <string name="weather_attribution">Données météo d’Open-Meteo.com (CC BY 4.0)</string>
+    <string name="weather_ring_position_label">Position de l’anneau météo</string>
+    <string name="weather_ring_inside">Intérieur</string>
+    <string name="weather_ring_outside">Tout à l’extérieur</string>
+    <string name="temperature_label">Température par heure</string>
+    <string name="temperature_none">Non</string>
+    <string name="temperature_air">Air</string>
+    <string name="temperature_apparent">Ressentie</string>
+    <string name="temperature_between_numerals">Entre les chiffres</string>
+    <string name="temperature_outside">Extérieur</string>
+    <string name="no_network_access">L’application n’a pas accès au réseau, aucune prévision ne peut donc être chargée.</string>
+    <string name="open_permissions">Ouvrir les autorisations</string>
+
+    <!-- Ring switch: where the shown 12h or 24h window begins -->
+    <string name="day_night_switch_label">Bascule jour/nuit</string>
+    <string name="day_change_label">Changement de jour</string>
+    <string name="switch_fixed_times">Heures fixes</string>
+    <string name="switch_trailing">Glissant</string>
+    <string name="switch_time">Heure de bascule</string>
+    <string name="switch_time_1">Heure de bascule 1</string>
+    <string name="switch_time_2">Heure de bascule 2</string>
+    <string name="ring_end_fade_label">Estomper la fin de l’anneau</string>
+    <string name="ring_end_fade_value">%1$d°</string>
+    <string name="ring_end_fade_hint">Estompe l’anneau jour/nuit sur son dernier tronçon, pour que la fin de la période affichée ne soit pas confondue avec le moment qui suit son début. Jamais avant l’heure actuelle.</string>
+
+    <!-- Color mode and tap action -->
+    <string name="section_color_mode">Mode de couleur</string>
+    <string name="color_mode_hint">Chiffres et aiguilles dans les couleurs système de votre fond d’écran, pour un arrière-plan clair ou sombre.</string>
+    <string name="color_mode_auto">Automatique</string>
+    <string name="color_mode_light">Clair</string>
+    <string name="color_mode_dark">Sombre</string>
+    <string name="color_mode_auto_hint">Suit le mode sombre du système.</string>
+    <string name="section_tap_action">Un appui ouvre</string>
+    <string name="tap_action_system_clock">L’horloge</string>
+    <string name="tap_action_own_app">Cette appli</string>
+    <string name="tap_action_split">Les deux</string>
+    <string name="tap_action_split_hint">Un appui à l’intérieur des anneaux ouvre l’application d’horloge, à l’extérieur cette application.</string>
+
+    <!-- Settings file -->
+    <string name="section_settings_file">Fichier de paramètres</string>
+    <string name="settings_file_hint">Le fichier contient les paramètres de ce widget et tous les lieux avec leurs coordonnées. Il permet de passer à un nouvel appareil ou de reprendre les paramètres dans un autre widget ; il n’y a pas de sauvegarde par le système.</string>
+    <string name="settings_file_export">Exporter</string>
+    <string name="settings_file_import">Importer</string>
+    <string name="settings_file_exported">Paramètres exportés.</string>
+    <string name="settings_file_export_failed">Le fichier n’a pas pu être écrit.</string>
+    <string name="settings_file_import_failed">Ce n’est pas un fichier de paramètres lisible.</string>
+    <plurals name="settings_file_imported">
+        <item quantity="one">%d lieu importé. Les paramètres s’appliquent après l’enregistrement.</item>
+        <item quantity="many">%d lieux importés. Les paramètres s’appliquent après l’enregistrement.</item>
+        <item quantity="other">%d lieux importés. Les paramètres s’appliquent après l’enregistrement.</item>
+    </plurals>
+
+    <!-- Places -->
+    <string name="section_location">Lieu</string>
+    <string name="label_position_label">Nom du lieu dans le widget</string>
+    <string name="label_position_none">Non</string>
+    <string name="label_position_above">En haut</string>
+    <string name="label_position_below">En bas</string>
+    <string name="place_delete_title">Supprimer le lieu ?</string>
+    <string name="place_delete_text">« %1$s » sera retiré des lieux enregistrés.</string>
+    <string name="places_title">Lieux enregistrés</string>
+    <string name="place_in_use">Utilisé</string>
+    <string name="place_new">Nouveau lieu</string>
+    <string name="place_edit">Modifier le lieu</string>
+    <string name="place_name">Nom</string>
+    <string name="place_latitude">Latitude</string>
+    <string name="place_longitude">Longitude</string>
+    <string name="place_time_zone">Fuseau horaire</string>
+    <string name="place_invalid_value">Valeur non valide</string>
+    <string name="share_target_label">Ajouter comme lieu</string>
+    <string name="share_no_coordinates">Aucune coordonnée trouvée dans le contenu partagé.</string>
+    <string name="share_place_added">« %1$s » ajouté aux lieux.</string>
+    <string name="zone_search">Rechercher</string>
+
+    <!-- Weather summary -->
+    <string name="summary_position_label">La météo en mots</string>
+    <string name="summary_position_left">Gauche</string>
+    <string name="summary_position_right">Droite</string>
+    <string name="summary_position_hint">Quelques mots sur la météo : alertes, pluie et neige, vent, nuages, la température comparée à la veille et dans les heures à venir, et le soir aussi le lendemain. À gauche ou à droite de l’horloge, il faut un widget plus large que haut.</string>
+    <string name="summary_much_warmer">Beaucoup plus chaud qu’hier à la même heure, %1$d° de plus.</string>
+    <string name="summary_warmer">Un peu plus chaud qu’hier à la même heure.</string>
+    <string name="summary_similar">À peu près aussi chaud qu’hier à la même heure.</string>
+    <string name="summary_cooler">Un peu plus frais qu’hier à la même heure.</string>
+    <string name="summary_much_colder">Beaucoup plus froid qu’hier à la même heure, %1$d° de moins.</string>
+    <string name="summary_feels_colder">Température ressentie inférieure de %1$d° à celle du thermomètre.</string>
+    <string name="summary_feels_warmer">Température ressentie supérieure de %1$d° à celle du thermomètre.</string>
+    <!-- %1$s: when (e.g. "ce soir"), %2$s: what falls, from summary_rain/summary_snow (e.g. "pluie faible"). -->
+    <string name="summary_likely">%2$s probable %1$s.</string>
+    <string name="summary_possible">%2$s possible %1$s.</string>
+    <string name="summary_likely_plural">%2$s probables %1$s.</string>
+    <string name="summary_possible_plural">%2$s possibles %1$s.</string>
+    <!-- %1$s: what is falling, from summary_rain_definite/summary_snow_definite (e.g. "la pluie faible"), %2$s: when. -->
+    <string name="summary_stops">%1$s cesse %2$s.</string>
+    <string name="summary_lasts">%1$s dure encore de longues heures.</string>
+    <string name="summary_stops_plural">%1$s cessent %2$s.</string>
+    <string name="summary_lasts_plural">%1$s durent encore de longues heures.</string>
+    <string-array name="summary_fresh_snow">
+        <item>Un peu de neige fraîche.</item>
+        <item>Quelques centimètres de neige fraîche.</item>
+        <item>Beaucoup de neige fraîche.</item>
+    </string-array>
+    <string-array name="summary_rain">
+        <item>un peu de pluie</item>
+        <item>pluie faible</item>
+        <item>pluie</item>
+        <item>forte pluie</item>
+    </string-array>
+    <string-array name="summary_snow">
+        <item>un peu de neige</item>
+        <item>neige faible</item>
+        <item>neige</item>
+        <item>neige abondante</item>
+    </string-array>
+    <string-array name="summary_rain_showers">
+        <item>quelques averses</item>
+        <item>faibles averses</item>
+        <item>averses</item>
+        <item>fortes averses</item>
+    </string-array>
+    <string-array name="summary_rain_showers_definite">
+        <item>les averses</item>
+        <item>les faibles averses</item>
+        <item>les averses</item>
+        <item>les fortes averses</item>
+    </string-array>
+    <string-array name="summary_rain_steady">
+        <item>pluie faible et continue</item>
+        <item>pluie faible et continue</item>
+        <item>pluie continue</item>
+        <item>forte pluie continue</item>
+    </string-array>
+    <string-array name="summary_rain_steady_definite">
+        <item>la pluie faible et continue</item>
+        <item>la pluie faible et continue</item>
+        <item>la pluie continue</item>
+        <item>la forte pluie continue</item>
+    </string-array>
+    <string-array name="summary_snow_showers">
+        <item>quelques averses de neige</item>
+        <item>faibles averses de neige</item>
+        <item>averses de neige</item>
+        <item>fortes averses de neige</item>
+    </string-array>
+    <string-array name="summary_snow_showers_definite">
+        <item>les averses de neige</item>
+        <item>les faibles averses de neige</item>
+        <item>les averses de neige</item>
+        <item>les fortes averses de neige</item>
+    </string-array>
+    <string-array name="summary_snow_steady">
+        <item>neige faible et continue</item>
+        <item>neige faible et continue</item>
+        <item>neige continue</item>
+        <item>neige abondante et continue</item>
+    </string-array>
+    <string-array name="summary_snow_steady_definite">
+        <item>la neige faible et continue</item>
+        <item>la neige faible et continue</item>
+        <item>la neige continue</item>
+        <item>la neige abondante et continue</item>
+    </string-array>
+    <string-array name="summary_rain_definite">
+        <item>la pluie</item>
+        <item>la pluie faible</item>
+        <item>la pluie</item>
+        <item>la forte pluie</item>
+    </string-array>
+    <string-array name="summary_snow_definite">
+        <item>la neige</item>
+        <item>la neige faible</item>
+        <item>la neige</item>
+        <item>la neige abondante</item>
+    </string-array>
+    <string name="summary_dry">Temps sec %1$s.</string>
+    <!-- Beaufort 7, 8, 10, 11 and 12. -->
+    <string-array name="summary_gusts">
+        <item>fortes rafales</item>
+        <item>rafales de coup de vent</item>
+        <item>rafales de tempête</item>
+        <item>rafales de violente tempête</item>
+        <item>rafales d’ouragan</item>
+    </string-array>
+    <string name="summary_heavy_rain">Risque de fortes averses %1$s.</string>
+    <string name="summary_heavy_rain_severe">Risque de très fortes averses %1$s.</string>
+    <string name="summary_heavy_rain_extreme">Risque de pluies diluviennes %1$s.</string>
+    <string name="summary_freezing_rain">Risque de verglas %1$s.</string>
+    <string name="summary_tomorrow">Demain %1$s, %2$s.</string>
+    <string-array name="summary_tomorrow_temperature">
+        <item>beaucoup plus frais</item>
+        <item>plus frais</item>
+        <item>aussi chaud</item>
+        <item>plus chaud</item>
+        <item>beaucoup plus chaud</item>
+    </string-array>
+    <string-array name="summary_tomorrow_temperature_cold">
+        <item>beaucoup plus froid</item>
+        <item>plus froid</item>
+        <item>aussi froid</item>
+        <item>plus doux</item>
+        <item>beaucoup plus doux</item>
+    </string-array>
+    <string-array name="summary_tomorrow_rain">
+        <item>temps sec</item>
+        <item>peut-être un peu de pluie</item>
+        <item>pluie par moments</item>
+        <item>souvent pluvieux</item>
+    </string-array>
+    <string-array name="summary_tomorrow_snow">
+        <item>temps sec</item>
+        <item>peut-être un peu de neige</item>
+        <item>neige par moments</item>
+        <item>neige fréquente</item>
+    </string-array>
+    <string name="summary_clearing">Le ciel se dégage %1$s.</string>
+    <string name="summary_clouding_over">Le ciel se couvre %1$s.</string>
+    <string name="summary_overcast">Ciel couvert %1$s.</string>
+    <string name="summary_clear">Ciel dégagé %1$s.</string>
+    <string name="summary_heat">Chaleur %1$s, jusqu’à %2$s.</string>
+    <string name="summary_heat_now">Chaleur, jusqu’à %1$s.</string>
+    <string name="summary_frost">Gel %1$s, minimum %2$s.</string>
+    <string name="summary_lasting_frost">Températures négatives %1$s, maximum %2$s.</string>
+    <string name="summary_warming">La température monte de %2$d° %1$s.</string>
+    <string name="summary_cooling">La température baisse de %2$d° %1$s.</string>
+    <!-- Early morning (5–9), morning (9–12), midday (12–14), afternoon (14–18), evening (18–22), night (22–5). -->
+    <string name="summary_time_soon">sous peu</string>
+    <string-array name="summary_time_later">
+        <item>plus tard dans la matinée</item>
+        <item>plus tard dans la matinée</item>
+        <item>en milieu de journée</item>
+        <item>plus tard dans l’après-midi</item>
+        <item>plus tard dans la soirée</item>
+        <item>plus tard dans la nuit</item>
+    </string-array>
+    <string-array name="summary_time_at_today">
+        <item>au petit matin</item>
+        <item>ce matin</item>
+        <item>vers midi</item>
+        <item>cet après-midi</item>
+        <item>ce soir</item>
+        <item>cette nuit</item>
+    </string-array>
+    <string-array name="summary_time_at_tomorrow">
+        <item>demain au petit matin</item>
+        <item>demain matin</item>
+        <item>demain vers midi</item>
+        <item>demain après-midi</item>
+        <item>demain soir</item>
+        <item>dans la nuit de demain</item>
+    </string-array>
+    <string-array name="summary_time_from_today">
+        <item>à partir du petit matin</item>
+        <item>à partir de ce matin</item>
+        <item>à partir de midi</item>
+        <item>à partir de cet après-midi</item>
+        <item>à partir de ce soir</item>
+        <item>à partir de cette nuit</item>
+    </string-array>
+    <string-array name="summary_time_from_tomorrow">
+        <item>à partir de demain au petit matin</item>
+        <item>à partir de demain matin</item>
+        <item>à partir de demain midi</item>
+        <item>à partir de demain après-midi</item>
+        <item>à partir de demain soir</item>
+        <item>à partir de la nuit de demain</item>
+    </string-array>
+    <string-array name="summary_time_until_today">
+        <item>jusqu’au petit matin</item>
+        <item>jusque dans la matinée</item>
+        <item>jusqu’à midi</item>
+        <item>jusque dans l’après-midi</item>
+        <item>jusque dans la soirée</item>
+        <item>jusque dans la nuit</item>
+    </string-array>
+    <string-array name="summary_time_until_tomorrow">
+        <item>jusqu’à demain au petit matin</item>
+        <item>jusqu’à demain matin</item>
+        <item>jusqu’à demain midi</item>
+        <item>jusqu’à demain après-midi</item>
+        <item>jusqu’à demain soir</item>
+        <item>jusqu’à la nuit de demain</item>
+    </string-array>
+
+    <!-- Weather tab -->
+    <string name="weather_no_forecast">Aucune prévision chargée pour l’instant. Elle est téléchargée après l’enregistrement, dès qu’un widget de ce lieu affiche l’anneau météo.</string>
+    <string name="weather_legend_now">Maintenant</string>
+    <string name="weather_chart_hour">Choisir l’heure</string>
+    <string name="weather_column_air">Air</string>
+    <string name="weather_column_apparent">Ressentie</string>
+    <string name="weather_column_clouds">Nuages</string>
+    <string name="weather_column_precipitation">Précipitations</string>
+    <string name="percent">%1$d %%</string>
+    <string name="weather_probability">%1$d %% de probabilité</string>
+    <string name="weather_amount">%1$s mm</string>
+    <string name="weather_amount_snow">❄ %1$s mm</string>
+    <string name="forecast_loaded">Prévisions chargées</string>
+    <string name="forecast_not_yet">pas encore</string>
+
+    <!-- Preview tab -->
+    <string name="preview_intro">Le widget avec les paramètres actuels, même avant l’enregistrement. Les curseurs ne modifient que l’aperçu ; l’heure est affichée dans le fuseau horaire du lieu.</string>
+    <string name="preview_date">Date</string>
+    <string name="preview_time">Heure</string>
+    <string name="preview_reset">Réinitialiser</string>
+
+    <!-- Times tab -->
+    <string name="event_does_not_occur">n’a pas lieu ce jour-là</string>
+    <string name="date_time">%1$s, %2$s</string>
+    <string name="moon_phase">Phase de la lune</string>
+    <string name="moon_illuminated">Éclairée à %1$d %%</string>
+    <string name="moon_no_events">Ni lever ni coucher de lune pendant ce jour solaire</string>
+    <string name="moon_stays_up">La lune reste au-dessus de l’horizon.</string>
+    <string name="moon_stays_down">La lune reste sous l’horizon.</string>
+    <string name="moonrise">Lever de lune</string>
+    <string name="moonset">Coucher de lune</string>
+
+    <string name="moon_phase_new">Nouvelle lune</string>
+    <string name="moon_phase_waxing_crescent">Premier croissant</string>
+    <string name="moon_phase_first_quarter">Premier quartier</string>
+    <string name="moon_phase_waxing_gibbous">Gibbeuse croissante</string>
+    <string name="moon_phase_full">Pleine lune</string>
+    <string name="moon_phase_waning_gibbous">Gibbeuse décroissante</string>
+    <string name="moon_phase_last_quarter">Dernier quartier</string>
+    <string name="moon_phase_waning_crescent">Dernier croissant</string>
+
+    <string name="solar_midnight">Minuit solaire</string>
+    <string name="astronomical_dawn">Aube astronomique</string>
+    <string name="nautical_dawn">Aube nautique</string>
+    <string name="civil_dawn">Aube civile</string>
+    <string name="sunrise">Lever du soleil</string>
+    <string name="sunrise_end">Fin du lever du soleil</string>
+    <string name="golden_hour_end">Fin de l’heure dorée</string>
+    <string name="solar_noon">Midi solaire</string>
+    <string name="golden_hour_start">Début de l’heure dorée</string>
+    <string name="sunset_start">Début du coucher du soleil</string>
+    <string name="sunset">Coucher du soleil</string>
+    <string name="civil_dusk">Crépuscule civil</string>
+    <string name="nautical_dusk">Crépuscule nautique</string>
+    <string name="astronomical_dusk">Crépuscule astronomique</string>
+</resources>

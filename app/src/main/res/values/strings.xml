@@ -149,6 +149,9 @@
     <!-- %1$s: when (e.g. "this evening"), %2$s: what falls, from summary_rain/summary_snow (e.g. "light rain"). -->
     <string name="summary_likely">%2$s likely %1$s.</string>
     <string name="summary_possible">%2$s possible %1$s.</string>
+    <!-- The same for plural nouns (showers, gusts), where languages like French need "probables". -->
+    <string name="summary_likely_plural">%2$s likely %1$s.</string>
+    <string name="summary_possible_plural">%2$s possible %1$s.</string>
     <!-- %1$s: what is falling, from summary_rain_definite/summary_snow_definite (e.g. "the light rain"), %2$s: when. -->
     <string name="summary_stops">%1$s stops %2$s.</string>
     <string name="summary_lasts">%1$s goes on for many hours.</string>
@@ -236,7 +239,7 @@
         <item>the heavy snow</item>
     </string-array>
     <string name="summary_dry">Dry %1$s.</string>
-    <!-- The strongest gusts, used with summary_possible, by the DWD's levels: from 50, 62, 89, 103 and 118 km/h. -->
+    <!-- The strongest gusts, used with summary_possible_plural, by the DWD's levels: from 50, 62, 89, 103 and 118 km/h. -->
     <string-array name="summary_gusts">
         <item>strong gusts</item>
         <item>gale-force gusts</item>
