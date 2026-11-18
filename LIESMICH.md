@@ -2,9 +2,9 @@
 
 [English](README.md) | **Deutsch**
 
-Android-Homescreen-Widget: eine analoge Sonnen- und Monduhr, inspiriert von [sunclock.net](https://sunclock.net).
+Android-Homescreen-Widget: eine analoge Sonnen- und Monduhr, inspiriert von [sunclock.net](https://sunclock.net) und von der Wetteruhr [OpenSky](https://donohoe.dev/weather/) von Michael Donohoe, die das Wetter der nächsten Stunden rund um das Zifferblatt zeigt und in wenigen Sätzen zusammenfasst.
 
-Ein Ring um ein gewöhnliches Zifferblatt zeigt den Tagesverlauf von Nacht über Dämmerung bis Tag am aktuellen Standort, ergänzt um einen Mond-Marker mit aktueller Phase. Anders als die 24h-Vorlage nutzt LightTimeClouds standardmäßig ein normales **12-Stunden-Zifferblatt** (optional auch 24h).
+Ein Ring um ein gewöhnliches Zifferblatt zeigt den Tagesverlauf von Nacht über Dämmerung bis Tag am aktuellen Standort, ergänzt um einen Mond-Marker mit aktueller Phase. Anders als die 24h-Uhr von sunclock nutzt LightTimeClouds standardmäßig ein normales **12-Stunden-Zifferblatt** (optional auch 24h).
 
 ## Features
 
