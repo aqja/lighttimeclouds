@@ -1,0 +1,1 @@
+Première version : horloge analogique solaire et lunaire avec anneau du ciel, lune, anneau météo facultatif, températures et repère de la prochaine alarme. Les lieux peuvent être partagés depuis des applications de cartes comme Organic Maps et OsmAnd.
