@@ -20,8 +20,11 @@ android {
         applicationId = "com.umfluten.lighttimeclouds"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        // The version is the release date: (year - 2026).month.day-n, n counting that day's
+        // releases. versionCode is (year - 2026) * 1000000 + month * 10000 + day * 100 + n, so it
+        // keeps rising. Both stay literals, as F-Droid reads them from this file.
+        versionCode = 111801
+        versionName = "0.11.18-1"
     }
 
     signingConfigs {

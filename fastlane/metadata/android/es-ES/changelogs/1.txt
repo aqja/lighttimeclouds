@@ -1,1 +1,0 @@
-Primera versión: reloj analógico de sol y luna con anillo del cielo, luna, anillo del tiempo opcional, temperaturas y marca de la próxima alarma. Los lugares se pueden compartir desde apps de mapas como Organic Maps y OsmAnd.

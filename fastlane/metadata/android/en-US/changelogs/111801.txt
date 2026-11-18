@@ -1,0 +1,1 @@
+First release (beta): analog sun and moon clock widget with sky ring, moon, optional weather ring, temperatures, the weather in words and a next-alarm mark. In English, German, Spanish and French. Places can be shared from map apps such as Organic Maps and OsmAnd.
