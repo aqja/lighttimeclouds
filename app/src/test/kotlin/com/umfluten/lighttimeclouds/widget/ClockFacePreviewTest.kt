@@ -206,6 +206,9 @@ class ClockFacePreviewTest {
         render("bodies", "ring_bodies_24h_moonlit_night", fullDay.copy(showMoonPathInRing = false), null, darkBackground = true, at = moonlit.plusMinutes(30))
         val dayMoon = ZonedDateTime.of(2026, 11, 1, 10, 30, 0, 0, Place.DEFAULT.zone)
         render("bodies", "ring_bodies_12h_moon_by_day", plain, null, darkBackground = true, at = dayMoon)
+        val paths = plain.copy(showSunPathInRing = true, showMoonPathInRing = true)
+        render("bodies", "ring_bodies_12h_paths_by_day", paths, null, darkBackground = true, at = dayMoon)
+        render("bodies", "ring_bodies_24h_paths_full_moon_night", paths.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR), null, darkBackground = true, at = fullMoonNight)
         val duskCrescent = ZonedDateTime.of(2026, 11, 13, 17, 0, 0, 0, Place.DEFAULT.zone)
         render("bodies", "ring_bodies_12h_moon_crescent_dusk", plain.copy(skyTopElevationDeg = 15), null, darkBackground = true, at = duskCrescent)
         val outer = plain.copy(skyHorizon = SkyHorizon.OUTER)
@@ -225,7 +228,7 @@ class ClockFacePreviewTest {
     fun sunInRingFollowsTheHorizonEdge() {
         val sunOnly = WidgetSettings(
             widgetId = 1, displayMode = DisplayMode.TWENTY_FOUR_HOUR, showMoon = false, showMoonInRing = false,
-            showSunPathInRing = false, showSolarMarks = false, showSunriseSunsetMarks = false,
+            showSolarMarks = false, showSunriseSunsetMarks = false,
         )
         val altitude = SunMoonCalculator.sunAltitudeDegrees(now.toInstant(), Place.DEFAULT.latitude, Place.DEFAULT.longitude)
         val fraction = SkyProjection.fraction(altitude, 45.0).toFloat()
@@ -267,7 +270,7 @@ class ClockFacePreviewTest {
         val top = 20
         val base = WidgetSettings(
             widgetId = 1, displayMode = DisplayMode.TWENTY_FOUR_HOUR, colorMode = ColorMode.DARK, skyTopElevationDeg = top,
-            showMoon = false, showSunInRing = false, showSolarMarks = false, showSunriseSunsetMarks = false,
+            showMoonPathInRing = true, showMoon = false, showSunInRing = false, showSolarMarks = false, showSunriseSunsetMarks = false,
         )
         val size = 600
         val app = RuntimeEnvironment.getApplication()
