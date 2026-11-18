@@ -2,9 +2,9 @@
 
 **English** | [Deutsch](LIESMICH.md)
 
-Android home screen widget: an analog sun and moon clock, inspired by [sunclock.net](https://sunclock.net).
+Android home screen widget: an analog sun and moon clock, inspired by [sunclock.net](https://sunclock.net) and by the weather clock [OpenSky](https://donohoe.dev/weather/) by Michael Donohoe, which shows the weather of the coming hours around the clock face and sums it up in a few sentences.
 
-A ring around an ordinary clock face shows the course of the day at the current location, from night through twilight to day, together with a moon marker showing the current phase. Unlike the 24-hour original, LightTimeClouds uses a regular **12-hour clock face** by default (24 hours optional).
+A ring around an ordinary clock face shows the course of the day at the current location, from night through twilight to day, together with a moon marker showing the current phase. Unlike the 24-hour sunclock, LightTimeClouds uses a regular **12-hour clock face** by default (24 hours optional).
 
 ## Features
 
