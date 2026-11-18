@@ -1,0 +1,15 @@
+<p>LightTimeClouds est un widget pour l’écran d’accueil : un cadran d’horloge analogique ordinaire entouré d’un anneau qui montre le déroulement de la journée là où vous êtes, de la nuit à l’aube, au jour et au crépuscule, ainsi que la lune et sa phase actuelle. Inspiré de sunclock.net, mais avec par défaut un <b>cadran normal de 12 heures</b> (24 heures en option).</p>
+
+<ul>
+<li><b>Anneau du ciel :</b> chaque portion de l’anneau montre le ciel depuis l’horizon vers le haut à ce moment de la journée. La lumière du jour, le lever et le coucher du soleil, l’heure bleue et la nuit proviennent d’un modèle physique de diffusion de la lumière, tel que l’œil humain voit le ciel. Au choix, des couleurs fixes pour chaque phase.</li>
+<li><b>Lune :</b> avec sa phase, sur l’aiguille des heures ou avec sa propre aiguille ; sa distance au centre indique sa hauteur, avec sa trajectoire quotidienne.</li>
+<li><b>Anneau météo facultatif</b> (prévisions d’Open-Meteo) : la couverture nuageuse en gris, les précipitations en bleu (la neige en violet), plus foncées selon la quantité et plus opaques selon la probabilité. Température de l’air ou ressentie en échelle autour du bord ou entre les chiffres, et la météo en mots à côté ou en dessous de l’horloge (« Un peu plus frais qu’hier à la même heure. Pluie faible probable à partir de ce soir. »).</li>
+<li>Repères pour le midi et le minuit solaires, le lever et le coucher du soleil et, en option, la prochaine alarme.</li>
+<li>Lieux enregistrés avec leur propre fuseau horaire : plusieurs widgets forment une horloge mondiale. Les lieux peuvent être partagés depuis Organic Maps, OsmAnd et d’autres applications de cartes.</li>
+<li>Onglet « Horaires » dans l’application avec tous les événements solaires du jour, la phase de la lune et ses lever et coucher.</li>
+<li>Mode de couleur clair, sombre ou automatique, chiffres et aiguilles dans vos couleurs Material You. Taille libre, plusieurs widgets avec leurs propres paramètres.</li>
+</ul>
+
+<p><b>Confidentialité :</b> pas de pistage, pas de publicité, pas d’autorisation de localisation (les lieux sont saisis à la main ou partagés depuis une application de cartes). L’application ne se connecte à Internet que pour l’anneau météo facultatif : environ toutes les deux heures, elle envoie à open-meteo.com les coordonnées de vos lieux, arrondies à environ 100 m, pour obtenir les prévisions.</p>
+
+<p>Données météo d’Open-Meteo.com (CC BY 4.0). Soleil et lune d’après les théories ELP 2000-82B et VSOP87 (IMCCE, Observatoire de Paris), couleurs du ciel adaptées d’Horizon (MIT).</p>
