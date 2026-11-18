@@ -27,6 +27,14 @@ Ein Ring um ein gewöhnliches Zifferblatt zeigt den Tagesverlauf von Nacht über
 - Luft- (Standard) oder gefühlte Temperatur (Mittelwert je Abschnitt) als Skala um den äußersten Ring (Standard) oder zwischen den Stundenziffern, oder keine
 - „Wetter in Worten“ im Tab „Wetter“ und optional links, rechts oder unter der Uhr: Vergleich mit gestern um dieselbe Zeit, eine deutlich abweichende gefühlte Temperatur und Regen oder Schnee in den nächsten 3 bzw. 6 Stunden, nach festen Regeln aus der Vorhersage
 
+## Installation
+
+[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Bei Obtainium holen" height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/aqja/lighttimeclouds)
+
+An jedem [GitHub-Release](https://github.com/aqja/lighttimeclouds/releases) hängt die APK. [Obtainium](https://github.com/ImranR98/Obtainium) installiert sie von dort und hält sie aktuell. Bisher gibt es nur Vorabversionen (Beta), dafür in Obtainium bei der App die Pre-Releases einschalten (englisch „Include prereleases“). Die App soll auch zu F-Droid kommen, mit demselben Schlüssel signiert, sodass man ohne Neuinstallation zwischen beiden wechseln kann.
+
+Die Version ist das Datum des Releases: Die erste Zahl zählt die Jahre seit 2026, dann folgen Monat, Tag und die Nummer des Releases an diesem Tag. 0.11.18-1 ist der erste Release vom 18. November 2026.
+
 ## Projektstruktur
 
 ```

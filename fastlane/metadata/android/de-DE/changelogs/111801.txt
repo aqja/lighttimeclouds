@@ -1,0 +1,1 @@
+Erste Veröffentlichung (Beta): analoge Sonnen- und Monduhr mit Himmelsring, Mond, optionalem Wetterring, Temperaturen, dem Wetter in Worten und Markierung des nächsten Weckers. Auf Deutsch, Englisch, Spanisch und Französisch. Orte lassen sich aus Karten-Apps wie Organic Maps und OsmAnd teilen.

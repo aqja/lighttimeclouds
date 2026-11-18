@@ -27,6 +27,14 @@ A ring around an ordinary clock face shows the course of the day at the current 
 - Air (default) or apparent temperature (mean per section) as a scale around the outermost ring (default) or between the hour numerals, or none
 - "Weather summary" in the "Weather" tab and optionally left of, right of or below the clock: warnings (heavy rain, glaze ice, storm gusts), rain and snow with their strength, wind, clouds, the temperature compared with yesterday and over the next 12 hours, and in the evening an outlook on tomorrow. Times are parts of the day ("this afternoon") rather than clock times, as an hourly forecast is not accurate to the hour. Fixed rules pick the two or three most notable sentences
 
+## Installation
+
+[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/aqja/lighttimeclouds)
+
+Every [GitHub release](https://github.com/aqja/lighttimeclouds/releases) has the APK attached. [Obtainium](https://github.com/ImranR98/Obtainium) installs it from there and keeps it up to date. So far there are only pre-releases (beta), so turn on "Include prereleases" for the app in Obtainium. The app is also to come to F-Droid, signed with the same key, so you can switch between both without reinstalling.
+
+The version is the release date: the first number counts the years since 2026, followed by month, day and the number of the release on that day. 0.11.18-1 is the first release of 18 November 2026.
+
 ## Project structure
 
 ```

@@ -1,1 +1,0 @@
-Erste Veröffentlichung: analoge Sonnen- und Monduhr mit Himmelsring, Mond, optionalem Wetterring, Temperaturen und Markierung des nächsten Weckers. Orte lassen sich aus Karten-Apps wie Organic Maps und OsmAnd teilen.

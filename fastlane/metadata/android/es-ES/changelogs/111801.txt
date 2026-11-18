@@ -1,0 +1,1 @@
+Primera versión (beta): reloj analógico de sol y luna con anillo del cielo, luna, anillo del tiempo opcional, temperaturas, el tiempo en palabras y marca de la próxima alarma. En español, inglés, alemán y francés. Los lugares se pueden compartir desde apps de mapas como Organic Maps y OsmAnd.

@@ -10,8 +10,15 @@ cd "$(dirname "$0")/.."
 
 version=$(sed -n 's/^ *versionName = "\(.*\)"$/\1/p' app/build.gradle.kts)
 tag="v$version"
+
+# The version is the release date, (year - 2026).month.day-n, and versionCode follows from it.
+[[ "$version" =~ ^([0-9]+)\.([0-9]{2})\.([0-9]{2})-([0-9]{1,2})$ ]] \
+    || { echo "versionName $version is not (year - 2026).MM.DD-n" >&2; exit 1; }
+expected=$((BASH_REMATCH[1] * 1000000 + 10#${BASH_REMATCH[2]} * 10000 + 10#${BASH_REMATCH[3]} * 100 + 10#${BASH_REMATCH[4]}))
+code=$(sed -n 's/^ *versionCode = \([0-9]*\)$/\1/p' app/build.gradle.kts)
+[[ "$code" == "$expected" ]] || { echo "versionCode is $code, expected $expected for $version" >&2; exit 1; }
 [[ "$(git rev-parse HEAD)" == "$(git rev-parse -q --verify "$tag^{commit}" || true)" ]] \
-    || echo "Warning: HEAD is not tagged $tag; F-Droid builds from the tag." >&2
+    || echo "Warning: HEAD is not tagged $tag; F-Droid builds from the tag, so the release must target this commit." >&2
 
 ./gradlew --no-daemon clean :app:assembleRelease
 

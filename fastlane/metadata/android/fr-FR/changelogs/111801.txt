@@ -1,0 +1,1 @@
+Première version (bêta) : horloge analogique solaire et lunaire avec anneau du ciel, lune, anneau météo facultatif, températures, la météo en mots et repère de la prochaine alarme. En français, anglais, allemand et espagnol. Les lieux peuvent être partagés depuis des applications de cartes comme Organic Maps et OsmAnd.

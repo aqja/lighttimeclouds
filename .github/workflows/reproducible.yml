@@ -7,8 +7,8 @@
 # does: on every published release, and when started by hand with a release or a draft release
 # that holds one. A draft creates no tag and is not public, so this works before the first tag:
 #
-#   gh release create v0.1.0-check --draft --target <commit> lighttimeclouds-0.1.0.apk
-#   gh workflow run reproducible.yml -f ref=<commit> -f release=v0.1.0-check
+#   gh release create v0.11.18-1-check --draft --target <commit> lighttimeclouds-0.11.18-1.apk
+#   gh workflow run reproducible.yml -f ref=<commit> -f release=v0.11.18-1-check
 #
 # The unsigned APKs are kept as artifacts, to compare with a locally signed one instead:
 #
