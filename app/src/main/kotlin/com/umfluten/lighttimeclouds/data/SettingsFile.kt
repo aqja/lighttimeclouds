@@ -57,6 +57,7 @@ object SettingsFile {
                 put("skyTopElevationDeg", settings.skyTopElevationDeg)
                 put("showSunInRing", settings.showSunInRing)
                 put("showMoonInRing", settings.showMoonInRing)
+                put("showSunPathInRing", settings.showSunPathInRing)
                 put("showMoonPathInRing", settings.showMoonPathInRing)
                 put("showMinuteTicks", settings.showMinuteTicks)
                 put("showSolarMarks", settings.showSolarMarks)
@@ -110,6 +111,7 @@ object SettingsFile {
                 .coerceIn(WidgetSettings.MIN_SKY_TOP_ELEVATION_DEG, WidgetSettings.MAX_SKY_TOP_ELEVATION_DEG),
             showSunInRing = s.boolean("showSunInRing") ?: d.showSunInRing,
             showMoonInRing = s.boolean("showMoonInRing") ?: d.showMoonInRing,
+            showSunPathInRing = s.boolean("showSunPathInRing") ?: d.showSunPathInRing,
             showMoonPathInRing = s.boolean("showMoonPathInRing") ?: d.showMoonPathInRing,
             showMinuteTicks = s.boolean("showMinuteTicks") ?: d.showMinuteTicks,
             showSolarMarks = s.boolean("showSolarMarks") ?: d.showSolarMarks,

@@ -30,6 +30,7 @@ class SettingsFileTest {
         skyTopElevationDeg = 60,
         showSunInRing = false,
         showMoonInRing = false,
+        showSunPathInRing = false,
         showMoonPathInRing = false,
         showMinuteTicks = true,
         showSolarMarks = false,

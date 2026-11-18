@@ -63,7 +63,7 @@ private fun Dial.skyBandFor(): SkyBand {
 
 private const val SKY_PATH_SAMPLES = 240
 
-/** Sizes (fractions of the dial radius) of the edge dots and the moon path line in the ring. */
+/** Sizes (fractions of the dial radius) of the edge dots and the path lines in the ring. */
 private const val SKY_DOT_SIZE = 0.02f
 private const val SKY_PATH_WIDTH = 0.008f
 
@@ -73,8 +73,8 @@ private const val SKY_PATH_WIDTH = 0.008f
  * [WidgetSettings.skyTopElevationDeg] at the far edge. A disc at its true size (the moon's lit
  * part only) while within that range, clipped by the band's edges like a body setting behind
  * the horizon; above it a small dot at the far edge. Below the horizon neither shows: the hour
- * hand already points there, and the ring's colors tell whether the sun is up. The moon's
- * course over the shown time span is [drawMoonPathInRing].
+ * hand already points there, and the ring's colors tell whether the sun is up. Their courses
+ * over the shown time span are [drawSkyPathsInRing].
  */
 internal fun Dial.drawSkyBodies() {
     val sky = skyBandFor()
@@ -151,15 +151,35 @@ private fun Dial.drawBodyAureole(sky: SkyBand, angleDeg: Double, altitudeDeg: Do
 }
 
 /**
- * With [WidgetSettings.showMoonPathInRing], the moon's altitude over the whole shown time span as a
- * thin line in [MARK_COLOR], read like the moon in the ring (see [drawSkyBodies]). It is broken
- * where the shown window has its seam (oldest next to newest time). It leaves the band where the
- * moon sets, capped so it stays nearby for the clip to cut, and runs along the far edge, just
- * inside it, while the moon stands higher than that edge shows. The sun needs none: the ring's
- * colors and the sunrise/sunset marks already tell its course.
+ * The courses of sun and moon over the whole shown time span as thin lines, per
+ * [WidgetSettings.showSunPathInRing] and [WidgetSettings.showMoonPathInRing]: the sun's in white,
+ * the moon's in [MARK_COLOR], each read like its body in the ring (see [drawSkyBodies]). Around
+ * the current time each line leaves a gap of [PATH_GAP] on both sides of its body, so the line
+ * does not run through it.
  */
-internal fun Dial.drawMoonPathInRing() {
+internal fun Dial.drawSkyPathsInRing() {
     val sky = skyBandFor()
+    if (settings.showMoonInRing && settings.showMoonPathInRing) {
+        drawSkyPath(sky, MARK_COLOR, SunMoonCalculator::moonPosition) { SunMoonCalculator.moonSemiDiameterDegrees(it) }
+    }
+    if (settings.showSunInRing && settings.showSunPathInRing) {
+        drawSkyPath(sky, Color.WHITE, SunMoonCalculator::sunPosition) { SkyModel.SUN_SEMI_DIAMETER_DEG }
+    }
+}
+
+/**
+ * One body's altitude over the shown time span as a thin line in [color]. It is broken where the
+ * shown window has its seam (oldest next to newest time). It leaves the band where the body sets,
+ * capped so it stays nearby for the clip to cut, and runs along the far edge, just inside it,
+ * while the body stands higher than that edge shows.
+ */
+private fun Dial.drawSkyPath(
+    sky: SkyBand,
+    color: Int,
+    position: (Instant, Double, Double) -> SunMoonCalculator.HorizontalPosition,
+    semiDiameterDeg: (Instant) -> Double,
+) {
+    val altitudeAt = { instant: Instant -> position(instant, settings.place.latitude, settings.place.longitude).altitudeDegrees }
     val window = shownWindow(settings, now).let { (start, end) -> Duration.between(start, end) }
     val maxStep = window.dividedBy(SKY_PATH_SAMPLES.toLong()).multipliedBy(2)
     val strokeWidth = radius * SKY_PATH_WIDTH
@@ -168,23 +188,65 @@ internal fun Dial.drawMoonPathInRing() {
     for (i in 0..SKY_PATH_SAMPLES) {
         val angle = 360.0 * i / SKY_PATH_SAMPLES
         val instant = resolveInstantForAngle(angle, settings, now)
-        val altitude = SunMoonCalculator.moonAltitudeDegrees(instant, settings.place.latitude, settings.place.longitude)
-        val r = sky.capAtTop(sky.radiusFor(altitude, overshoot = 0.5), strokeWidth / 2f)
+        val r = sky.capAtTop(sky.radiusFor(altitudeAt(instant), overshoot = 0.5), strokeWidth / 2f)
         val (x, y) = pointOnDial(r, angle)
         val step = previous?.let { Duration.between(it, instant) }
         if (step != null && !step.isNegative && step <= maxStep) path.lineTo(x, y) else path.moveTo(x, y)
         previous = instant
     }
     val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        // The grey of the sun marks: visible on the bright day sky and the dark night alike.
-        color = MARK_COLOR
+        this.color = color
         style = Paint.Style.STROKE
         this.strokeWidth = strokeWidth
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
     }
-    canvas.withClip(ringBandPath()) { drawPath(path, paint) }
+    val gap = bodyGapWedge(sky, altitudeAt, position, semiDiameterDeg)
+    canvas.withClip(ringBandPath()) {
+        gap?.let { clipOutPath(it) }
+        drawPath(path, paint)
+    }
 }
+
+/**
+ * The wedge around the body at the current time that its path leaves out: the body's half width
+ * as [drawSkyBodies] draws it (a dot at the far edge counted as two side by side, as sun and
+ * moon may stand there together), plus [PATH_GAP] of time on either side. None while the body is
+ * below the horizon, where it is not drawn.
+ */
+private fun Dial.bodyGapWedge(
+    sky: SkyBand,
+    altitudeAt: (Instant) -> Double,
+    position: (Instant, Double, Double) -> SunMoonCalculator.HorizontalPosition,
+    semiDiameterDeg: (Instant) -> Double,
+): Path? {
+    val instant = now.toInstant()
+    val altitude = altitudeAt(instant)
+    if (altitude < 0.0) return null
+    val dotRadius = radius * SKY_DOT_SIZE
+    val (r, halfWidth) = if (altitude > sky.topElevation) {
+        sky.fromTop(dotRadius) to dotRadius * 2.15f
+    } else {
+        val r = sky.radiusFor(altitude)
+        r to (semiDiameterDeg(instant) * pixelsPerDegree(r, instant, position)).toFloat()
+    }
+    val degreesPerHour = when (settings.displayMode) {
+        DisplayMode.TWELVE_HOUR -> 30.0
+        DisplayMode.TWENTY_FOUR_HOUR -> 15.0
+    }
+    val half = Math.toDegrees((halfWidth / r).toDouble()) + PATH_GAP.toMinutes() / 60.0 * degreesPerHour
+    val angle = dialAngle(now, settings.displayMode)
+    val far = radius * 2f
+    return Path().apply {
+        val (cx, cy) = pointOnDial(0f, angle)
+        moveTo(cx, cy)
+        for (a in listOf(angle - half, angle, angle + half)) pointOnDial(far, a).let { (x, y) -> lineTo(x, y) }
+        close()
+    }
+}
+
+/** Time the paths of sun and moon leave free on each side of their body. */
+private val PATH_GAP: Duration = Duration.ofMinutes(5)
 
 /** A filled circle: the dots of bodies beyond the far edge. */
 private fun drawSkyDot(canvas: Canvas, x: Float, y: Float, r: Float, color: Int) {

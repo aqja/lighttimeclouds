@@ -874,10 +874,12 @@ Der Abstand vom Horizontrand des Ringbands folgt derselben Projektion wie die Hi
 $u = \tan h / \tan e_t$. Die Körper stehen also genau dort, wo ihre Höhe im Himmelsverlauf liegt.
 Unter dem Horizont ($h < 0$) werden sie nicht gezeichnet, über $e_t$ als kleiner Punkt am Rand
 gegenüber dem Horizont. Die Sonne nutzt die geometrische Höhe (wie die Ringfarbe), der Mond die
-gesehene, mit Refraktion. Die optionale Mondbahn ist $h_\mathrm{Mond}(t)$ über den angezeigten
-Zeitraum. Unter dem Horizont verlässt sie das Band (begrenzt auf $u \ge -0{,}5$ und am Rand
-abgeschnitten), über $e_t$ läuft sie am Rand gegenüber dem Horizont entlang ($u = 1$), wo dann
-auch der Punkt des Mondes sitzt.
+gesehene, mit Refraktion. Die optionalen Bahnen (die der Sonne weiß, die des Mondes grau) sind
+$h(t)$ des jeweiligen Körpers über den angezeigten Zeitraum. Unter dem Horizont verlassen sie das
+Band (begrenzt auf $u \ge -0{,}5$ und am Rand abgeschnitten), über $e_t$ laufen sie am Rand
+gegenüber dem Horizont entlang ($u = 1$), wo dann auch der Punkt des Körpers sitzt. Um die
+aktuelle Zeit lässt jede Bahn die halbe Breite ihres Körpers und auf beiden Seiten 5 Minuten frei,
+damit sie nicht durch ihn hindurchläuft.
 
 Die Sonnenscheibe hat die Farbe des Sonnenlichts, das den Beobachter durch die Atmosphäre
 erreicht: das Spektrum oberhalb der Atmosphäre mal der Transmission $T(0,\,90° - h)$ (Abschnitt

@@ -225,7 +225,7 @@ class ClockFacePreviewTest {
     fun sunInRingFollowsTheHorizonEdge() {
         val sunOnly = WidgetSettings(
             widgetId = 1, displayMode = DisplayMode.TWENTY_FOUR_HOUR, showMoon = false, showMoonInRing = false,
-            showSolarMarks = false, showSunriseSunsetMarks = false,
+            showSunPathInRing = false, showSolarMarks = false, showSunriseSunsetMarks = false,
         )
         val altitude = SunMoonCalculator.sunAltitudeDegrees(now.toInstant(), Place.DEFAULT.latitude, Place.DEFAULT.longitude)
         val fraction = SkyProjection.fraction(altitude, 45.0).toFloat()
@@ -275,9 +275,12 @@ class ClockFacePreviewTest {
         // A day with the moon high in the south in the afternoon.
         val at = ZonedDateTime.of(2026, 11, 1, 15, 0, 0, 0, Place.DEFAULT.zone)
         val midnight = at.truncatedTo(ChronoUnit.DAYS)
+        // Not next to the moon itself, where the path leaves a gap.
+        val moonAngle = Duration.between(midnight, at).toMinutes() / 4.0
         val highAngles = (0 until 360 step 3).filter { degrees ->
             val instant = midnight.plusMinutes(degrees * 4L).toInstant()
-            SunMoonCalculator.moonAltitudeDegrees(instant, Place.DEFAULT.latitude, Place.DEFAULT.longitude) > top + 5
+            abs(degrees - moonAngle) > 6 &&
+                SunMoonCalculator.moonAltitudeDegrees(instant, Place.DEFAULT.latitude, Place.DEFAULT.longitude) > top + 5
         }
         assertTrue("the moon never climbs above $top° on this day", highAngles.size > 10)
         for (horizon in SkyHorizon.entries) {
