@@ -1,4 +1,4 @@
-<p>LightTimeClouds is a home screen widget: an ordinary analog clock face with a ring around it that shows the course of the day at your place, from night through dawn and daylight to dusk, plus the moon with its current phase. Inspired by sunclock.net, but with a normal <b>12-hour dial</b> by default (24 hours optional).</p>
+<p>LightTimeClouds is a home screen widget: an ordinary analog clock face with a ring around it that shows the course of the day at your place, from night through dawn and daylight to dusk, plus the moon with its current phase. Inspired by sunclock.net and the weather clock OpenSky, with a normal <b>12-hour dial</b> by default (24 hours optional).</p>
 
 <ul>
 <li><b>Sky ring:</b> each section of the ring shows the sky from the horizon upward at that time of day. Daylight, sunrise and sunset, the blue hour and the night come from a physical light scattering model, as the human eye sees the sky. Alternatively fixed colors per phase.</li>

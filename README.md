@@ -2,38 +2,27 @@
 
 **English** | [Deutsch](LIESMICH.md)
 
-Android home screen widget: an analog sun and moon clock, inspired by [sunclock.net](https://sunclock.net) and by the weather clock [OpenSky](https://donohoe.dev/weather/) by Michael Donohoe, which shows the weather of the coming hours around the clock face and sums it up in a few sentences.
+Android home screen widget: an analog sun and moon clock, inspired by [sunclock.net](https://sunclock.net) and by the weather clock [OpenSky](https://donohoe.dev/weather/).
 
-A ring around an ordinary clock face shows the course of the day at the current location, from night through twilight to day, together with a moon marker showing the current phase. Unlike the 24-hour sunclock, LightTimeClouds uses a regular **12-hour clock face** by default (24 hours optional).
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" alt="The widget with sky ring, weather ring and the weather in words" width="270">
 
 ## Features
 
-- Analog 12-hour or 24-hour clock face, updated every minute, without a second hand, optionally with minute ticks
-- Day/twilight/night ring following the current position of the sun at the configured location. Every section of the ring shows the sky from the horizon upwards (horizon inside or outside, as you choose): daylight, sunrise and sunset colors and the blue of twilight, from a physical scattering model (spectral, with multiple scattering and haze from measured aerosols), as the human eye sees it: adapted to the light, with the blue shift and fading colors of dim light, down to the night sky's own faint glow
-- Sun and moon (with phase) in the ring at the current time, as far from the horizon edge as they stand above the horizon; the sun as a small disc at its true size along the ring, colored as seen through the atmosphere, with its aureole; the moon likewise at its true size, only its lit part, pale in the day sky and orange to red near the horizon, at night with a halo, lighting the sky in the ring according to its phase; higher than shown as a small dot at the edge opposite the horizon; not at all below the horizon. Optionally the moon's path over the whole displayed period as a thin gray line. How high above the horizon the outer edge reaches (10°–80°) is adjustable; the sky gradient adapts
-- Configurable strategy for advancing the ring: fixed times (12 hours: two, by default 6:00 and 18:00; 24 hours: one, by default midnight) or moving with the hand, which then always sits at the start of the shown period. The ring can fade out over its last 0°–30° (default 15°), so its end is not mistaken for the time right after its start
-- Optional marks for solar noon and midnight and for sunrise and sunset
-- Optionally a red hour tick at the next alarm as soon as it falls within the displayed period (Android only reveals the next alarm); follows every change immediately, so when snoozing it moves to the new alarm time if the clock app reports it
-- Moon with phase, either on the hour hand (its path crosses the horizon circle at the actual times of moonrise and moonset) or as its own hand that trails the hour hand by the moon's distance from the sun; the distance from the center shows the moon's altitude, together with the moon's daily path, the compass points it passes and the horizon circle (can be hidden)
-- "Preview" tab in the app: the widget with the current settings, including unsaved ones; sliders for latitude, longitude, date in the course of the year and time of day change only the preview
-- "Times" tab in the app: all sun events of the solar day, moon phase, moonrise and moonset
-- Saved places with name, coordinates and time zone; every widget shows the local time of its place (world clock with several widgets). Entered by hand or taken over from a map app: sharing a location from Organic Maps, OsmAnd or another app with a `geo:` link or coordinates ("Add as place") opens the new-place dialog over the map app and adds it to the saved places, without changing a widget; with the time zone of the nearest principal city of the time zone database as a suggestion. No GPS, no location permission. The app keeps coordinates to at most three decimals, about 100 m. Network access only for the optional weather ring
-- Tapping opens the system clock app, the app itself, or both: the clock app inside the rings and the app outside them (Android 12 and later)
-- Separate launcher icon for the settings, independent of the widget
-- Settings file (JSON) to export and import a widget's settings with all places; the app keeps out of system backups and device transfers
-- Freely resizable, square widget (2×2 by default); several instances with their own settings
-- Light, dark and automatic color modes (following the system dark mode); numerals and hands in Material You accent colors
-- Optional weather ring around the day/night ring (default) or just inside it: cloud cover in gray (transparent when the sky is clear), precipitation on top in blue (snow in violet): the darker, the more; the more opaque, the more likely. Past hours are dimmed. Forecast from Open-Meteo, loaded in the background about every two hours (not when the battery is low) and only if a widget uses the ring; for this, the place's coordinates are sent to open-meteo.com
-- Air (default) or apparent temperature (mean per section) as a scale around the outermost ring (default) or between the hour numerals, or none
-- "Weather summary" in the "Weather" tab and optionally left of, right of or below the clock: warnings (heavy rain, glaze ice, storm gusts), rain and snow with their strength, wind, clouds, the temperature compared with yesterday and over the next 12 hours, and in the evening an outlook on tomorrow. Times are parts of the day ("this afternoon") rather than clock times, as an hourly forecast is not accurate to the hour. Fixed rules pick the two or three most notable sentences
+- **Sky ring:** the sky of every hour of the day around a normal 12-hour clock face (24 hours optional), from daylight through sunset and blue hour to night, computed physically as the eye sees it
+- **Sun and moon** in the ring at their real height, the moon with its phase
+- **Weather** (optional): cloud cover, rain and snow of the coming hours as a ring, temperatures around the edge and the weather in a few words beside the clock
+- **Marks** for sunrise, sunset, solar noon and the next alarm
+- **Places** with their own time zone, typed in or shared from a map app; several widgets make a world clock
+- **Private:** no location permission, no tracking; the network is only used for the weather forecast from Open-Meteo
+- Light and dark mode in Material You colors, freely resizable, in English, German, Spanish and French
 
 ## Installation
 
 [<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/aqja/lighttimeclouds)
 
-Every [GitHub release](https://github.com/aqja/lighttimeclouds/releases) has the APK attached. [Obtainium](https://github.com/ImranR98/Obtainium) installs it from there and keeps it up to date. So far there are only pre-releases (beta), so turn on "Include prereleases" for the app in Obtainium. The app is also to come to F-Droid, signed with the same key, so you can switch between both without reinstalling.
+The APK is attached to every [GitHub release](https://github.com/aqja/lighttimeclouds/releases), from where [Obtainium](https://github.com/ImranR98/Obtainium) installs and updates it. For now there are only betas: turn on "Include prereleases" in Obtainium. F-Droid is to follow.
 
-The version is the release date: the first number counts the years since 2026, followed by month, day and the number of the release on that day. 0.11.18-1 is the first release of 18 November 2026.
+Versions are dates: 0.11.18-1 is the first release on 18 November 2026; the first number counts the years since 2026.
 
 ## Project structure
 

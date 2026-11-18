@@ -1,4 +1,4 @@
-<p>LightTimeClouds ist ein Widget für den Startbildschirm: ein gewöhnliches analoges Zifferblatt mit einem Ring, der den Tagesverlauf an deinem Ort zeigt, von der Nacht über Dämmerung und Tag bis zum Abend, dazu den Mond mit seiner aktuellen Phase. Inspiriert von sunclock.net, aber standardmäßig mit einem normalen <b>12-Stunden-Zifferblatt</b> (24 Stunden wählbar).</p>
+<p>LightTimeClouds ist ein Widget für den Startbildschirm: ein gewöhnliches analoges Zifferblatt mit einem Ring, der den Tagesverlauf an deinem Ort zeigt, von der Nacht über Dämmerung und Tag bis zum Abend, dazu den Mond mit seiner aktuellen Phase. Inspiriert von sunclock.net und der Wetteruhr OpenSky, standardmäßig mit einem normalen <b>12-Stunden-Zifferblatt</b> (24 Stunden wählbar).</p>
 
 <ul>
 <li><b>Himmelsring:</b> Jeder Abschnitt des Rings zeigt den Himmel vom Horizont nach oben zu dieser Tageszeit. Tag, Morgen- und Abendrot, die blaue Stunde und die Nacht stammen aus einem physikalischen Streuungsmodell, so wie das menschliche Auge den Himmel sieht. Alternativ feste Farben je Phase.</li>
