@@ -1,0 +1,1 @@
+Beta: la esfera de 24 horas y la luna con su propia aguja son ahora la configuración predeterminada. Nuevas opciones: las trayectorias del sol y de la luna en el anillo, con un hueco alrededor de cada astro, y marcas en las horas impares de la esfera de 24 horas. Un botón en los ajustes restablece todo salvo el lugar.

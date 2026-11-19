@@ -1,0 +1,1 @@
+Bêta : le cadran de 24 heures et la lune sur sa propre aiguille sont désormais les réglages par défaut. Nouvelles options : les trajectoires du soleil et de la lune dans l’anneau, avec un espace autour de chaque astre, et des traits aux heures impaires du cadran de 24 heures. Un bouton dans les réglages rétablit tout sauf le lieu.

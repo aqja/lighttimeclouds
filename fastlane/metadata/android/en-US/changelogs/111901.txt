@@ -1,0 +1,1 @@
+Beta: the 24-hour dial and the moon on its own hand are now the defaults. New options: the paths of the sun and moon through the ring, with a gap around each body, and ticks at the odd hours of the 24-hour dial. A button in the settings resets everything except the place to the defaults.
