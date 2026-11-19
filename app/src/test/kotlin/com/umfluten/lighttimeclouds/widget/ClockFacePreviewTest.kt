@@ -122,13 +122,13 @@ class ClockFacePreviewTest {
 
     /** Weather ring and temperatures inside the dial, which the scenarios below vary from. */
     private val weatherSettings = WidgetSettings(
-        widgetId = 1, showWeather = true, weatherRingPosition = WeatherRingPosition.INSIDE,
+        widgetId = 1, displayMode = DisplayMode.TWELVE_HOUR, moonStyle = MoonStyle.ON_HOUR_HAND, showWeather = true, weatherRingPosition = WeatherRingPosition.INSIDE,
         temperatureDisplay = TemperatureDisplay.AIR, temperaturePosition = TemperaturePosition.BETWEEN_NUMERALS,
     )
 
     @Test
     fun ringPreviews() {
-        val plain = WidgetSettings(widgetId = 1, colorMode = ColorMode.DARK, showMoon = false)
+        val plain = WidgetSettings(widgetId = 1, displayMode = DisplayMode.TWELVE_HOUR, moonStyle = MoonStyle.ON_HOUR_HAND, colorMode = ColorMode.DARK, showMoon = false)
         val fullDay = plain.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR)
         // Afternoon, sun about 25° high, waxing moon low in the south-east.
         render("rings", "sky_24h", fullDay, null, darkBackground = true)
@@ -175,7 +175,7 @@ class ClockFacePreviewTest {
 
     @Test
     fun skyBodyPreviews() {
-        val plain = WidgetSettings(widgetId = 1, colorMode = ColorMode.DARK, showMoon = false)
+        val plain = WidgetSettings(widgetId = 1, displayMode = DisplayMode.TWELVE_HOUR, moonStyle = MoonStyle.ON_HOUR_HAND, colorMode = ColorMode.DARK, showMoon = false)
         val fullDay = plain.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR)
         render("bodies", "ring_bodies_24h_top_80", fullDay.copy(skyTopElevationDeg = 80), null, darkBackground = true)
         render("bodies", "ring_bodies_24h_top_15", fullDay.copy(skyTopElevationDeg = 15), null, darkBackground = true)
@@ -344,7 +344,7 @@ class ClockFacePreviewTest {
 
     @Test
     fun moonPreviews() {
-        val onHand = WidgetSettings(widgetId = 1, colorMode = ColorMode.DARK, moonStyle = MoonStyle.ON_HOUR_HAND)
+        val onHand = WidgetSettings(widgetId = 1, displayMode = DisplayMode.TWELVE_HOUR, colorMode = ColorMode.DARK, moonStyle = MoonStyle.ON_HOUR_HAND)
         val separate = onHand.copy(moonStyle = MoonStyle.SEPARATE_HAND)
         // Two days after full moon, risen at 17:39: the two styles point about 14h apart.
         val waningGibbous = ZonedDateTime.of(2026, 10, 28, 20, 0, 0, 0, Place.DEFAULT.zone)
@@ -379,7 +379,7 @@ class ClockFacePreviewTest {
 
     @Test
     fun alarmPreviews() {
-        val plain = WidgetSettings(widgetId = 1, colorMode = ColorMode.DARK, showNextAlarm = true)
+        val plain = WidgetSettings(widgetId = 1, displayMode = DisplayMode.TWELVE_HOUR, moonStyle = MoonStyle.ON_HOUR_HAND, colorMode = ColorMode.DARK, showNextAlarm = true)
         val evening = ZonedDateTime.of(2026, 10, 17, 19, 10, 0, 0, Place.DEFAULT.zone)
         // 12h, window 18:00-06:00: an alarm at 05:45 the next morning is shown.
         render("alarm", "alarm_12h_evening", plain, null, darkBackground = true, at = evening, alarm = evening.plusDays(1).withHour(5).withMinute(45))
@@ -399,7 +399,7 @@ class ClockFacePreviewTest {
     /** 12h, window 06:00-18:00: an alarm at 06:30 tomorrow lies outside and leaves the dial unchanged. */
     @Test
     fun alarmOutsideTheWindowIsNotDrawn() {
-        val settings = WidgetSettings(widgetId = 1, colorMode = ColorMode.DARK, showNextAlarm = true)
+        val settings = WidgetSettings(widgetId = 1, displayMode = DisplayMode.TWELVE_HOUR, moonStyle = MoonStyle.ON_HOUR_HAND, colorMode = ColorMode.DARK, showNextAlarm = true)
         val withAlarm = renderClock(settings, null, alarm = now.plusDays(1).withHour(6).withMinute(30))
         assertTrue(withAlarm.sameAs(renderClock(settings, null)))
     }
@@ -432,12 +432,12 @@ class ClockFacePreviewTest {
             mixedForecast(),
             darkBackground = true,
         )
-        render("dial", "12h_dark_no_weather", WidgetSettings(widgetId = 1, colorMode = ColorMode.DARK), null, darkBackground = true)
+        render("dial", "12h_dark_no_weather", WidgetSettings(widgetId = 1, displayMode = DisplayMode.TWELVE_HOUR, moonStyle = MoonStyle.ON_HOUR_HAND, colorMode = ColorMode.DARK), null, darkBackground = true)
         // Out of the box: all defaults, then with only the weather switched on.
         render("dial", "default", WidgetSettings(widgetId = 1), null, darkBackground = false)
         render("dial", "default_weather", WidgetSettings(widgetId = 1, showWeather = true), mixedForecast(), darkBackground = false)
         // Odd hours of the 24-hour dial as ticks, alone and next to the minute ticks.
-        val oddHours = WidgetSettings(widgetId = 1, colorMode = ColorMode.DARK, displayMode = DisplayMode.TWENTY_FOUR_HOUR, showOddHourTicks = true)
+        val oddHours = WidgetSettings(widgetId = 1, moonStyle = MoonStyle.ON_HOUR_HAND, colorMode = ColorMode.DARK, displayMode = DisplayMode.TWENTY_FOUR_HOUR, showOddHourTicks = true)
         render("dial", "24h_dark_odd_hour_ticks", oddHours, null, darkBackground = true)
         render("dial", "24h_dark_odd_hour_ticks_minuteticks", oddHours.copy(showMinuteTicks = true), null, darkBackground = true)
         render("dial", "24h_light_odd_hour_ticks_minuteticks", oddHours.copy(colorMode = ColorMode.LIGHT, showMinuteTicks = true), null, darkBackground = false)
@@ -463,7 +463,7 @@ class ClockFacePreviewTest {
      */
     @Test
     fun aureoleDoesNotDarkenTheFadedRingEnd() {
-        val plain = WidgetSettings(widgetId = 1, colorMode = ColorMode.DARK, showMoon = false, showMoonInRing = false, ringEndFadeDeg = 30)
+        val plain = WidgetSettings(widgetId = 1, displayMode = DisplayMode.TWELVE_HOUR, moonStyle = MoonStyle.ON_HOUR_HAND, colorMode = ColorMode.DARK, showMoon = false, showMoonInRing = false, ringEndFadeDeg = 30)
         val atSwitch = ZonedDateTime.of(2026, 6, 21, 18, 0, 0, 0, Place.DEFAULT.zone)
         val with = renderClock(plain, null, atSwitch)
         val without = renderClock(plain.copy(showSunInRing = false), null, atSwitch)

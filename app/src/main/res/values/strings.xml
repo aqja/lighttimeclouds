@@ -102,6 +102,10 @@
     <string name="tap_action_split_hint">Tapping inside the rings opens the clock app, tapping outside them this app.</string>
 
     <!-- Settings file -->
+    <string name="section_reset">Defaults</string>
+    <string name="reset_hint">Sets every setting of this widget except the place back to its default. Look at it in the preview; only saving keeps it.</string>
+    <string name="reset_action">Reset to defaults</string>
+    <string name="reset_done">Reset. Not saved yet.</string>
     <string name="section_settings_file">Settings file</string>
     <string name="settings_file_hint">The file holds this widget\'s settings and all places with their coordinates. Use it to move to a new device or to carry the settings over to another widget; there is no system backup.</string>
     <string name="settings_file_export">Export</string>

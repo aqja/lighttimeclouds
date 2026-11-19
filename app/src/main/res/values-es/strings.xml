@@ -101,6 +101,10 @@
     <string name="tap_action_split_hint">Al tocar dentro de los anillos se abre la app de reloj; fuera de ellos, esta app.</string>
 
     <!-- Settings file -->
+    <string name="section_reset">Valores predeterminados</string>
+    <string name="reset_hint">Restablece todos los ajustes de este widget, salvo el lugar, a sus valores predeterminados. Puedes verlo en la vista previa; solo se aplica al guardar.</string>
+    <string name="reset_action">Restablecer valores predeterminados</string>
+    <string name="reset_done">Restablecido. Aún sin guardar.</string>
     <string name="section_settings_file">Archivo de ajustes</string>
     <string name="settings_file_hint">El archivo contiene los ajustes de este widget y todos los lugares con sus coordenadas. Úsalo para pasar a un dispositivo nuevo o para llevar los ajustes a otro widget; no hay copia de seguridad del sistema.</string>
     <string name="settings_file_export">Exportar</string>
