@@ -1,0 +1,1 @@
+Beta: Das 24-Stunden-Zifferblatt und der eigene Mondzeiger sind jetzt Standard. Neu wählbar: die Bahnen von Sonne und Mond im Ring, mit einer Lücke um jeden Himmelskörper, und Striche bei den ungeraden Stunden des 24-Stunden-Zifferblatts. Ein Knopf in den Einstellungen setzt alles außer dem Ort auf Standard zurück.
