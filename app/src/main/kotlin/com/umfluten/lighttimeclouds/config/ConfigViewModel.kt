@@ -51,6 +51,9 @@ class ConfigViewModel(application: Application, private val widgetId: Int) : And
         _settings.value = _settings.value?.let(transform)
     }
 
+    /** Every setting back to its default except the place; kept only once saved. */
+    fun resetToDefaults() = update { WidgetSettings(widgetId = it.widgetId, place = it.place) }
+
     fun save(onSaved: () -> Unit) {
         val current = _settings.value ?: return
         viewModelScope.launch {

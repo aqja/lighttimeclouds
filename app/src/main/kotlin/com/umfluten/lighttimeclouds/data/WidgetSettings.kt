@@ -47,7 +47,7 @@ enum class TemperatureDisplay { NONE, AIR, APPARENT }
 data class WidgetSettings(
     val widgetId: Int,
     val place: Place = Place.DEFAULT,
-    val displayMode: DisplayMode = DisplayMode.TWELVE_HOUR,
+    val displayMode: DisplayMode = DisplayMode.TWENTY_FOUR_HOUR,
     val colorMode: ColorMode = ColorMode.AUTO,
     val tapAction: TapAction = TapAction.SYSTEM_CLOCK,
     val switchStrategyType: SwitchStrategyType = SwitchStrategyType.FIXED_TIMES,
@@ -82,7 +82,7 @@ data class WidgetSettings(
     val showSolarMarks: Boolean = true,
     val showSunriseSunsetMarks: Boolean = true,
     val showMoon: Boolean = true,
-    val moonStyle: MoonStyle = MoonStyle.ON_HOUR_HAND,
+    val moonStyle: MoonStyle = MoonStyle.SEPARATE_HAND,
     /** Letters on the moon path where the moon passes north, east, south and west. */
     val showMoonCompass: Boolean = true,
     /** Red tick at the next alarm (the only one Android exposes), if it falls into the shown time span. */

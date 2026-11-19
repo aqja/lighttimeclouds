@@ -27,7 +27,7 @@ class TemperatureLabelSpansTest {
         assertEquals("to", to.toInstant(), span.to)
     }
 
-    private val trailing = WidgetSettings(widgetId = 1, switchStrategyType = SwitchStrategyType.TRAILING)
+    private val trailing = WidgetSettings(widgetId = 1, displayMode = DisplayMode.TWELVE_HOUR, switchStrategyType = SwitchStrategyType.TRAILING)
 
     @Test
     fun `trailing window - the seam at the hand cuts the labels on either side of it`() {
@@ -41,14 +41,14 @@ class TemperatureLabelSpansTest {
 
     @Test
     fun `fixed switch times off the full hour cut the label at the window start`() {
-        val settings = WidgetSettings(widgetId = 1, switchTime1Minutes = 6 * 60 + 30, switchTime2Minutes = 18 * 60 + 30)
+        val settings = WidgetSettings(widgetId = 1, displayMode = DisplayMode.TWELVE_HOUR, switchTime1Minutes = 6 * 60 + 30, switchTime2Minutes = 18 * 60 + 30)
         // Window 06:30 - 18:30; the label at "6:30" starts exactly at the seam.
         assertSpan(span(settings, at(17, 9, 0), 195.0), mid = at(17, 6, 30), from = at(17, 6, 30), to = at(17, 7, 0))
     }
 
     @Test
     fun `without a seam inside a segment the label covers the whole span between the numerals`() {
-        val fixed = WidgetSettings(widgetId = 1)
+        val fixed = WidgetSettings(widgetId = 1, displayMode = DisplayMode.TWELVE_HOUR)
         assertSpan(span(fixed, at(17, 14, 20), 45.0), mid = at(17, 13, 30), from = at(17, 13, 0), to = at(17, 14, 0))
         val fullDay = WidgetSettings(widgetId = 1, displayMode = DisplayMode.TWENTY_FOUR_HOUR)
         assertSpan(span(fullDay, at(17, 14, 20), 15.0), mid = at(17, 1, 0), from = at(17, 0, 0), to = at(17, 2, 0))

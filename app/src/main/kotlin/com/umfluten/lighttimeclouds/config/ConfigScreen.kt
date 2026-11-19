@@ -34,6 +34,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
@@ -390,6 +391,26 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
     }
 
     SettingsFileSection(widgetId, viewModel)
+    ResetSection(viewModel)
+}
+
+/** Puts every setting but the place back to its default, to be looked at in the preview and kept by saving. */
+@Composable
+private fun ResetSection(viewModel: ConfigViewModel) {
+    var done by remember { mutableStateOf(false) }
+    Section(stringResource(R.string.section_reset)) {
+        Hint(stringResource(R.string.reset_hint))
+        OutlinedButton(
+            onClick = {
+                viewModel.resetToDefaults()
+                done = true
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.reset_action))
+        }
+        if (done) Hint(stringResource(R.string.reset_done))
+    }
 }
 
 /**
