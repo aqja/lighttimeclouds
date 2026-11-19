@@ -260,6 +260,13 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             checked = settings.showMinuteTicks,
             onCheckedChange = { viewModel.update { s -> s.copy(showMinuteTicks = it) } },
         )
+        if (settings.displayMode == DisplayMode.TWENTY_FOUR_HOUR) {
+            SwitchRow(
+                label = stringResource(R.string.show_odd_hour_ticks),
+                checked = settings.showOddHourTicks,
+                onCheckedChange = { viewModel.update { s -> s.copy(showOddHourTicks = it) } },
+            )
+        }
         SwitchRow(
             label = stringResource(R.string.show_next_alarm),
             checked = settings.showNextAlarm,
