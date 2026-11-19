@@ -117,6 +117,25 @@ private fun Dial.drawTicksAndNumerals() {
     if (settings.showMinuteTicks) {
         drawMinuteTicks()
     }
+    if (settings.showOddHourTicks && settings.displayMode == DisplayMode.TWENTY_FOUR_HOUR) {
+        drawOddHourTicks()
+    }
+}
+
+/**
+ * Ticks at the odd hours of the 24-hour dial, between the numbered even ones: from the same outer
+ * edge as the other ticks, in length and width between an hour and a minute tick, like the
+ * half-hour ticks of a watch. The minute ticks lie 3° to either side.
+ */
+private fun Dial.drawOddHourTicks() {
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = chromeColor
+        strokeWidth = radius * 0.015f
+        strokeCap = Paint.Cap.ROUND
+    }
+    val outer = radius * layout.tickOuter
+    val inner = radius * (layout.hourTickInner + layout.minuteTickInner) / 2f
+    for (hour in 1 until 24 step 2) drawRadialLine(hour * 15.0, inner, outer, paint)
 }
 
 private fun Dial.numeralPaint(color: Int) = Paint(Paint.ANTI_ALIAS_FLAG).apply {

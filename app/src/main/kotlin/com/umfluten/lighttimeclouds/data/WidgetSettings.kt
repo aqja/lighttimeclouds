@@ -77,6 +77,8 @@ data class WidgetSettings(
     /** With [showMoonInRing]: the moon's altitude over the whole shown time span as a thin line in the ring. */
     val showMoonPathInRing: Boolean = false,
     val showMinuteTicks: Boolean = false,
+    /** On the 24-hour dial, which numbers only the even hours: a short tick at each odd hour. */
+    val showOddHourTicks: Boolean = false,
     val showSolarMarks: Boolean = true,
     val showSunriseSunsetMarks: Boolean = true,
     val showMoon: Boolean = true,

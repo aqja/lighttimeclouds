@@ -43,6 +43,7 @@
     <string name="show_sun_path_in_ring">Trayectoria del sol en el anillo</string>
     <string name="show_moon_path_in_ring">Trayectoria de la luna en el anillo</string>
     <string name="show_minute_ticks">Marcas de minutos</string>
+    <string name="show_odd_hour_ticks">Marcas en las horas impares</string>
     <string name="show_solar_marks">Mediodía y medianoche solares</string>
     <string name="show_sunrise_sunset_marks">Salida y puesta del sol</string>
     <string name="show_moon">Luna y su trayectoria</string>

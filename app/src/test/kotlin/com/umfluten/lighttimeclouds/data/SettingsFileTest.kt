@@ -33,6 +33,7 @@ class SettingsFileTest {
         showSunPathInRing = true,
         showMoonPathInRing = true,
         showMinuteTicks = true,
+        showOddHourTicks = true,
         showSolarMarks = false,
         showSunriseSunsetMarks = false,
         showMoon = false,

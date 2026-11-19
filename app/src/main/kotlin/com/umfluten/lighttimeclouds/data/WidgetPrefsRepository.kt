@@ -35,6 +35,7 @@ class WidgetPrefsRepository(private val context: Context) {
         val moonPathInRing = booleanPreferencesKey(prefix + "moon_path_in_ring")
         val weatherRingPosition = stringPreferencesKey(prefix + "weather_ring_position")
         val minuteTicks = booleanPreferencesKey(prefix + "minute_ticks")
+        val oddHourTicks = booleanPreferencesKey(prefix + "odd_hour_ticks")
         val solarMarks = booleanPreferencesKey(prefix + "solar_marks")
         val sunriseMarks = booleanPreferencesKey(prefix + "sunrise_marks")
         val showMoon = booleanPreferencesKey(prefix + "show_moon")
@@ -74,6 +75,7 @@ class WidgetPrefsRepository(private val context: Context) {
             showMoonPathInRing = prefs[k.moonPathInRing] ?: d.showMoonPathInRing,
             weatherRingPosition = prefs.enumOr(k.weatherRingPosition, d.weatherRingPosition),
             showMinuteTicks = prefs[k.minuteTicks] ?: d.showMinuteTicks,
+            showOddHourTicks = prefs[k.oddHourTicks] ?: d.showOddHourTicks,
             showSolarMarks = prefs[k.solarMarks] ?: d.showSolarMarks,
             showSunriseSunsetMarks = prefs[k.sunriseMarks] ?: d.showSunriseSunsetMarks,
             showMoon = prefs[k.showMoon] ?: d.showMoon,
@@ -108,6 +110,7 @@ class WidgetPrefsRepository(private val context: Context) {
             prefs[k.moonPathInRing] = settings.showMoonPathInRing
             prefs[k.weatherRingPosition] = settings.weatherRingPosition.name
             prefs[k.minuteTicks] = settings.showMinuteTicks
+            prefs[k.oddHourTicks] = settings.showOddHourTicks
             prefs[k.solarMarks] = settings.showSolarMarks
             prefs[k.sunriseMarks] = settings.showSunriseSunsetMarks
             prefs[k.showMoon] = settings.showMoon

@@ -433,6 +433,18 @@ class ClockFacePreviewTest {
             darkBackground = true,
         )
         render("dial", "12h_dark_no_weather", WidgetSettings(widgetId = 1, colorMode = ColorMode.DARK), null, darkBackground = true)
+        // Odd hours of the 24-hour dial as ticks, alone and next to the minute ticks.
+        val oddHours = WidgetSettings(widgetId = 1, colorMode = ColorMode.DARK, displayMode = DisplayMode.TWENTY_FOUR_HOUR, showOddHourTicks = true)
+        render("dial", "24h_dark_odd_hour_ticks", oddHours, null, darkBackground = true)
+        render("dial", "24h_dark_odd_hour_ticks_minuteticks", oddHours.copy(showMinuteTicks = true), null, darkBackground = true)
+        render("dial", "24h_light_odd_hour_ticks_minuteticks", oddHours.copy(colorMode = ColorMode.LIGHT, showMinuteTicks = true), null, darkBackground = false)
+        render(
+            "dial",
+            "24h_dark_temperature_odd_hour_ticks_minuteticks",
+            weatherSettings.copy(colorMode = ColorMode.DARK, displayMode = DisplayMode.TWENTY_FOUR_HOUR, showOddHourTicks = true, showMinuteTicks = true),
+            mixedForecast(),
+            darkBackground = true,
+        )
         render(
             "dial",
             "12h_dark_stale",
