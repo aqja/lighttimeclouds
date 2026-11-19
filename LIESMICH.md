@@ -8,7 +8,7 @@ Android-Homescreen-Widget: eine analoge Sonnen- und Monduhr, inspiriert von [sun
 
 ## Features
 
-- **Himmelsring:** der Himmel jeder Stunde des Tages um ein normales 12-Stunden-Zifferblatt (24 Stunden wählbar), vom Tag über Abendrot und blaue Stunde bis zur Nacht, physikalisch berechnet, wie das Auge ihn sieht
+- **Himmelsring:** der Himmel jeder Stunde des Tages um ein 24-Stunden-Zifferblatt (12 Stunden wählbar), vom Tag über Abendrot und blaue Stunde bis zur Nacht, physikalisch berechnet, wie das Auge ihn sieht
 - **Sonne und Mond** im Ring in ihrer echten Höhe, mit ihren Bahnen über den Tag, der Mond mit seiner Phase
 - **Wetter** (optional): Bewölkung, Regen und Schnee der nächsten Stunden als Ring, Temperaturen am Rand und das Wetter in wenigen Worten neben der Uhr
 - **Markierungen** für Sonnenaufgang, Sonnenuntergang, Sonnenmittag und den nächsten Wecker
