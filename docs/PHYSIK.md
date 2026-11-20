@@ -878,8 +878,9 @@ gesehene, mit Refraktion. Die optionalen Bahnen (die der Sonne weiß, die des Mo
 $h(t)$ des jeweiligen Körpers über den angezeigten Zeitraum. Unter dem Horizont verlassen sie das
 Band (begrenzt auf $u \ge -0{,}5$ und am Rand abgeschnitten), über $e_t$ laufen sie am Rand
 gegenüber dem Horizont entlang ($u = 1$), wo dann auch der Punkt des Körpers sitzt. Um die
-aktuelle Zeit lässt jede Bahn die halbe Breite ihres Körpers und auf beiden Seiten 5 Minuten frei,
-damit sie nicht durch ihn hindurchläuft.
+aktuelle Zeit lässt jede Bahn die halbe Breite ihres Körpers und auf beiden Seiten 5° des
+Zifferblatts frei (10 Minuten beim 12-Stunden-, 20 beim 24-Stunden-Zifferblatt), damit sie nicht
+durch ihn hindurchläuft; eine schmalere Lücke verschwindet im Schein der Sonne.
 
 Die Sonnenscheibe hat die Farbe des Sonnenlichts, das den Beobachter durch die Atmosphäre
 erreicht: das Spektrum oberhalb der Atmosphäre mal der Transmission $T(0,\,90° - h)$ (Abschnitt
