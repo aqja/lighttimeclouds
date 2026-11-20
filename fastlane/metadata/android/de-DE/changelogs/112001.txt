@@ -1,0 +1,1 @@
+Beta: Die Einstellungen sind jetzt Themen, die sich einzeln aufklappen, jedes mit einer Zusammenfassung des Eingestellten; Einstellungsdatei und Zurücksetzen stehen im Menü. Antippen öffnet standardmäßig beides: innerhalb der Ringe die Uhr-App, außerhalb diese App (ab Android 12). Gefühlte Temperaturen sind kursiv.
