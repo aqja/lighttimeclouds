@@ -479,8 +479,8 @@ private val LEGEND_SKY = Color(0xFF34507A)
 /** The share of the sky's height clouds of full cover take. */
 private const val CLOUD_SHARE = 0.4f
 private val CLOUD_FEW = Color(0xFFD5D9E0)
-private val CLOUD_OVERCAST = Color(0xFF454A53)
-private const val CLOUD_MIN_ALPHA = 0.7f
+private val CLOUD_OVERCAST = Color(0xFF737982)
+private const val CLOUD_MIN_ALPHA = 0.5f
 private const val CLOUD_MAX_ALPHA = 0.95f
 
 private val TYPICAL_RAIN = WeatherCondition(0.0, 1.0, 0.0, 80.0)
