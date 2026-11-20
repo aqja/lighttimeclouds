@@ -67,7 +67,7 @@ For manual testing: drag the widget onto the home screen and configure it via th
 
 ### Translations
 
-All UI texts are in `app/src/main/res/values/strings.xml` (English, also the fallback for all other languages) and `values-de/strings.xml` (German). For another language, copy `values-de/strings.xml` to `values-<language code>/` and translate it; `./gradlew :app:lintDebug` reports missing entries (`MissingTranslation`). The app formats dates, times and numbers itself to suit the language. From Android 13 on, the app language can be chosen in the system settings independently of the device language.
+All UI texts are in `app/src/main/res/values/strings.xml` (English, also the fallback for all other languages), the translations in `values-de/`, `values-es/` and `values-fr/`. For another language, copy one of the translations, e.g. `values-de/strings.xml`, to `values-<language code>/` and translate it; `./gradlew :app:lintDebug` reports missing entries (`MissingTranslation`). The app formats dates, times and numbers itself to suit the language. From Android 13 on, the app language can be chosen in the system settings independently of the device language.
 
 ## Credits
 

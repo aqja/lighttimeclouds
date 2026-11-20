@@ -16,6 +16,7 @@ import com.umfluten.lighttimeclouds.sky.MoonlitSky
 import com.umfluten.lighttimeclouds.sky.SkyGradientTable
 import com.umfluten.lighttimeclouds.sky.SkyProjection
 import java.time.Duration
+import java.time.Instant
 import kotlin.math.min
 
 /**
@@ -67,24 +68,14 @@ internal fun Dial.drawDayNightRing() {
     val skyPositions = FloatArray(SKY_STOPS) { k ->
         (ringInner + (ringOuter - ringInner) * k / (SKY_STOPS - 1)) / ringOuter
     }
-    val latitude = settings.place.latitude
-    val longitude = settings.place.longitude
     // The moon lights the sky it stands in; its phase hardly changes across the ring.
-    val moonFraction = if (settings.showMoonInRing) SunMoonCalculator.moonIllumination(now.toInstant()).fraction else null
+    val moonFraction = moonFractionFor(settings, now.toInstant())
     for (i in 0 until RING_SAMPLES) {
         val a0 = 360.0 * i / RING_SAMPLES
         val a1 = 360.0 * (i + 1) / RING_SAMPLES
         val mid = (a0 + a1) / 2.0
         val instant = resolveInstantForAngle(mid, settings, now)
-        val altitude = SunMoonCalculator.sunAltitudeDegrees(instant, latitude, longitude)
-        val top = settings.skyTopElevationDeg.toDouble()
-        // With the sun up, moonlight adds nothing the eye could see.
-        val sky = if (moonFraction != null && altitude < 0.0) {
-            val moonAltitude = SunMoonCalculator.moonAltitudeDegrees(instant, latitude, longitude)
-            moonlitSkyColors(altitude, moonAltitude, moonFraction, top)
-        } else {
-            skyColors(altitude, top)
-        }
+        val sky = skyColorsAt(instant, settings, moonFraction)
         val colors = if (settings.skyHorizon == SkyHorizon.OUTER) sky.reversedArray() else sky
         paint.shader = RadialGradient(cx, cy, ringOuter, colors, skyPositions, Shader.TileMode.CLAMP)
         canvas.drawArc(rect, (a0 - 90.0).toFloat(), (a1 - a0).toFloat() + 0.75f, false, paint)
@@ -102,6 +93,24 @@ private const val SKY_STOPS = 24
  */
 internal fun skyColors(altitudeDeg: Double, topElevationDeg: Double): IntArray =
     SkyGradientTable.colors(altitudeDeg, topElevationDeg, SKY_STOPS).map { it or OPAQUE }.toIntArray()
+
+/** The moon's lit share at [instant] if it lights the sky under [settings] ([WidgetSettings.showMoonInRing]), else null. */
+internal fun moonFractionFor(settings: WidgetSettings, instant: Instant): Double? =
+    if (settings.showMoonInRing) SunMoonCalculator.moonIllumination(instant).fraction else null
+
+/**
+ * The ring's sky at [instant], horizon first: [skyColors], also lit by the moon when [moonFraction]
+ * (from [moonFractionFor]) is given and the sun is down. Also used by the config app's weather chart.
+ */
+internal fun skyColorsAt(instant: Instant, settings: WidgetSettings, moonFraction: Double?): IntArray {
+    val place = settings.place
+    val altitude = SunMoonCalculator.sunAltitudeDegrees(instant, place.latitude, place.longitude)
+    val top = settings.skyTopElevationDeg.toDouble()
+    // With the sun up, moonlight adds nothing the eye could see.
+    if (moonFraction == null || altitude >= 0.0) return skyColors(altitude, top)
+    val moonAltitude = SunMoonCalculator.moonAltitudeDegrees(instant, place.latitude, place.longitude)
+    return moonlitSkyColors(altitude, moonAltitude, moonFraction, top)
+}
 
 /** [skyColors] with the sky also lit by the moon at [moonAltitudeDeg], lit by the share [fraction] ([MoonlitSky]). */
 private fun moonlitSkyColors(sunAltitudeDeg: Double, moonAltitudeDeg: Double, fraction: Double, topElevationDeg: Double): IntArray =
@@ -146,7 +155,3 @@ internal fun Dial.drawSolarMarks() {
  * Used for sun marks and the moon hand/path, and by the config app's time list to match.
  */
 internal val MARK_COLOR = Color.rgb(100, 100, 100)
-
-/** A single color for a sun altitude under [settings], the sky about halfway up the band, for the config app's weather chart. */
-internal fun ringColor(altitudeDeg: Double, settings: WidgetSettings): Int =
-    skyColors(altitudeDeg, settings.skyTopElevationDeg.toDouble())[SKY_STOPS / 2]

@@ -67,7 +67,7 @@ Zum manuellen Testen: Widget auf den Homescreen ziehen, über das Launcher-Icon 
 
 ### Übersetzungen
 
-Alle UI-Texte liegen in `app/src/main/res/values/strings.xml` (Englisch, zugleich Fallback für alle anderen Sprachen) und `values-de/strings.xml` (Deutsch). Für eine weitere Sprache `values-de/strings.xml` nach `values-<Sprachcode>/` kopieren und übersetzen; `./gradlew :app:lintDebug` meldet fehlende Einträge (`MissingTranslation`). Datum, Uhrzeit und Zahlen formatiert die App selbst passend zur Sprache. Ab Android 13 lässt sich die App-Sprache in den Systemeinstellungen getrennt vom Gerät wählen.
+Alle UI-Texte liegen in `app/src/main/res/values/strings.xml` (Englisch, zugleich Fallback für alle anderen Sprachen), die Übersetzungen in `values-de/`, `values-es/` und `values-fr/`. Für eine weitere Sprache eine der Übersetzungen, z. B. `values-de/strings.xml`, nach `values-<Sprachcode>/` kopieren und übersetzen; `./gradlew :app:lintDebug` meldet fehlende Einträge (`MissingTranslation`). Datum, Uhrzeit und Zahlen formatiert die App selbst passend zur Sprache. Ab Android 13 lässt sich die App-Sprache in den Systemeinstellungen getrennt vom Gerät wählen.
 
 ## Credits
 
