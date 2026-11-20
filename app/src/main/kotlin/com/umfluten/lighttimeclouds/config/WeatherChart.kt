@@ -253,11 +253,13 @@ internal fun WeatherChart(
                         val meanWind = rows.map { x(it.time) to it.windSpeedKmh?.let { v -> (v / maxWind).toFloat() * windReach } }
                         // A gust is the strongest of its hour, so it stands in the middle of it.
                         val gusts = rows.map { x(it.time.plus(HALF_HOUR)) to it.windGustsKmh?.let { v -> (v / maxWind).toFloat() * windReach } }
-                        for (path in violinPaths(gusts, windCenter)) {
+                        for (path in violinPaths(reachingEdges(gusts, x(start), x(end)), windCenter, closed = false)) {
                             drawPath(path, HALO, style = Stroke(width = 2.5.dp.toPx()))
                             drawPath(path, WIND_COLOR, style = Stroke(width = 1.dp.toPx()))
                         }
-                        for (path in violinPaths(meanWind, windCenter)) drawPath(path, WIND_COLOR.copy(alpha = WIND_FILL_ALPHA))
+                        for (path in violinPaths(reachingEdges(meanWind, x(start), x(end)), windCenter)) {
+                            drawPath(path, WIND_COLOR.copy(alpha = WIND_FILL_ALPHA))
+                        }
 
                         // Scale of the precipitation bars, labeled on the right axis.
                         drawLine(
@@ -396,7 +398,7 @@ internal fun WeatherChart(
             val half = size.height / 2f
             val swatch = listOf(0f to half * 0.3f, size.width / 2f to half * 0.8f, size.width to half * 0.3f)
             for (path in violinPaths(swatch, half)) drawPath(path, WIND_COLOR.copy(alpha = WIND_FILL_ALPHA))
-            for (path in violinPaths(swatch.map { (x, w) -> x to w + 1.dp.toPx() }, half)) {
+            for (path in violinPaths(swatch.map { (x, w) -> x to w + 1.dp.toPx() }, half, closed = false)) {
                 drawPath(path, WIND_COLOR, style = Stroke(width = 1.dp.toPx()))
             }
         }
@@ -427,10 +429,23 @@ private fun cloudColor(cover: Float): Color =
 private data class AxisLabel(val layout: TextLayoutResult, val share: Float, val side: Float)
 
 /**
- * Closed outlines symmetric around [center]: through [points] of x and half width (null where a value
- * is missing, which breaks the outline), smoothed as a Catmull-Rom spline that never crosses [center].
+ * [points] of x and value, held level out to [left] and [right], so a series drawn between its hours
+ * spans the whole chart like the hourly bars do.
  */
-internal fun violinPaths(points: List<Pair<Float, Float?>>, center: Float): List<Path> {
+internal fun reachingEdges(points: List<Pair<Float, Float?>>, left: Float, right: Float): List<Pair<Float, Float?>> {
+    if (points.isEmpty()) return points
+    val head = if (points.first().first > left) listOf(left to points.first().second) else emptyList()
+    val tail = if (points.last().first < right) listOf(right to points.last().second) else emptyList()
+    return head + points + tail
+}
+
+/**
+ * Outlines symmetric around [center]: through [points] of x and half width (null where a value is
+ * missing, which breaks the outline), smoothed as a Catmull-Rom spline that never crosses [center].
+ * [closed] joins the upper and lower curve at both ends to a shape to fill; otherwise they stay two
+ * separate lines.
+ */
+internal fun violinPaths(points: List<Pair<Float, Float?>>, center: Float, closed: Boolean = true): List<Path> {
     val runs = mutableListOf<MutableList<Offset>>()
     var run: MutableList<Offset>? = null
     for ((x, half) in points) {
@@ -445,9 +460,9 @@ internal fun violinPaths(points: List<Pair<Float, Float?>>, center: Float): List
         Path().apply {
             moveTo(pts.first().x, center - pts.first().y)
             smoothThrough(pts) { center - it }
-            lineTo(pts.last().x, center + pts.last().y)
+            if (closed) lineTo(pts.last().x, center + pts.last().y) else moveTo(pts.last().x, center + pts.last().y)
             smoothThrough(pts.asReversed()) { center + it }
-            close()
+            if (closed) close()
         }
     }
 }
