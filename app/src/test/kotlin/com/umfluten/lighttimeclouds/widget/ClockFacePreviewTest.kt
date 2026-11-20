@@ -208,6 +208,7 @@ class ClockFacePreviewTest {
         render("bodies", "ring_bodies_12h_moon_by_day", plain, null, darkBackground = true, at = dayMoon)
         val paths = plain.copy(showSunPathInRing = true, showMoonPathInRing = true)
         render("bodies", "ring_bodies_12h_paths_by_day", paths, null, darkBackground = true, at = dayMoon)
+        render("bodies", "ring_bodies_24h_paths_by_day", paths.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR), null, darkBackground = true, at = dayMoon)
         render("bodies", "ring_bodies_24h_paths_full_moon_night", paths.copy(displayMode = DisplayMode.TWENTY_FOUR_HOUR), null, darkBackground = true, at = fullMoonNight)
         val duskCrescent = ZonedDateTime.of(2026, 11, 13, 17, 0, 0, 0, Place.DEFAULT.zone)
         render("bodies", "ring_bodies_12h_moon_crescent_dusk", plain.copy(skyTopElevationDeg = 15), null, darkBackground = true, at = duskCrescent)

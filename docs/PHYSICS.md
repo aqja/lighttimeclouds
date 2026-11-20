@@ -862,7 +862,8 @@ apparent one, with refraction. The optional paths (the Sun's white, the Moon's g
 each body over the shown time span. Below the horizon they leave the band (limited to $u \ge -0.5$
 and clipped at the edge); above $e_t$ they run along the edge opposite the horizon ($u = 1$), where
 the body's dot then sits. Around the current time each path leaves out the body's half width plus
-5 minutes on either side, so it does not run through the body.
+5° of the dial on either side (10 minutes on the 12-hour dial, 20 on the 24-hour dial), so it does
+not run through the body; a narrower gap disappears in the Sun's glow.
 
 The Sun's disc takes its color from the sunlight that reaches the observer through the
 atmosphere: the spectrum above the atmosphere times the transmittance $T(0,\,90° - h)$ (section

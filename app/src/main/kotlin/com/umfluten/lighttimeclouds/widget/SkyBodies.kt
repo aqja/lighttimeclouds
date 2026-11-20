@@ -154,7 +154,7 @@ private fun Dial.drawBodyAureole(sky: SkyBand, angleDeg: Double, altitudeDeg: Do
  * The courses of sun and moon over the whole shown time span as thin lines, per
  * [WidgetSettings.showSunPathInRing] and [WidgetSettings.showMoonPathInRing]: the sun's in white,
  * the moon's in [MARK_COLOR], each read like its body in the ring (see [drawSkyBodies]). Around
- * the current time each line leaves a gap of [PATH_GAP] on both sides of its body, so the line
+ * the current time each line leaves a gap of [PATH_GAP_DEG] on both sides of its body, so the line
  * does not run through it.
  */
 internal fun Dial.drawSkyPathsInRing() {
@@ -211,7 +211,7 @@ private fun Dial.drawSkyPath(
 /**
  * The wedge around the body at the current time that its path leaves out: the body's half width
  * as [drawSkyBodies] draws it (a dot at the far edge counted as two side by side, as sun and
- * moon may stand there together), plus [PATH_GAP] of time on either side. None while the body is
+ * moon may stand there together), plus [PATH_GAP_DEG] on either side. None while the body is
  * below the horizon, where it is not drawn.
  */
 private fun Dial.bodyGapWedge(
@@ -230,11 +230,7 @@ private fun Dial.bodyGapWedge(
         val r = sky.radiusFor(altitude)
         r to (semiDiameterDeg(instant) * pixelsPerDegree(r, instant, position)).toFloat()
     }
-    val degreesPerHour = when (settings.displayMode) {
-        DisplayMode.TWELVE_HOUR -> 30.0
-        DisplayMode.TWENTY_FOUR_HOUR -> 15.0
-    }
-    val half = Math.toDegrees((halfWidth / r).toDouble()) + PATH_GAP.toMinutes() / 60.0 * degreesPerHour
+    val half = Math.toDegrees((halfWidth / r).toDouble()) + PATH_GAP_DEG
     val angle = dialAngle(now, settings.displayMode)
     val far = radius * 2f
     return Path().apply {
@@ -245,8 +241,11 @@ private fun Dial.bodyGapWedge(
     }
 }
 
-/** Time the paths of sun and moon leave free on each side of their body. */
-private val PATH_GAP: Duration = Duration.ofMinutes(5)
+/**
+ * Dial degrees the paths of sun and moon leave free on each side of their body, the same on both
+ * dials: 10 minutes on the 12h dial, 20 on the 24h dial. Less is hidden by the sun's glow.
+ */
+private const val PATH_GAP_DEG = 5.0
 
 /** A filled circle: the dots of bodies beyond the far edge. */
 private fun drawSkyDot(canvas: Canvas, x: Float, y: Float, r: Float, color: Int) {
