@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.data.SettingsFile
@@ -30,6 +31,7 @@ internal enum class SettingsDialog { NONE, SETTINGS_FILE, RESET }
 @Composable
 internal fun SettingsMenu(onOpen: (SettingsDialog) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
     Box {
         IconButton(onClick = { expanded = true }) {
             Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.more_options))
@@ -49,9 +51,23 @@ internal fun SettingsMenu(onOpen: (SettingsDialog) -> Unit) {
                     onOpen(SettingsDialog.RESET)
                 },
             )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.tip_action)) },
+                onClick = {
+                    expanded = false
+                    try {
+                        uriHandler.openUri(TIP_URL)
+                    } catch (_: IllegalArgumentException) {
+                        // No browser installed: nothing can show the page.
+                    }
+                },
+            )
         }
     }
 }
+
+/** The tip page on Liberapay; a plain link, so the app loads nothing from there itself. */
+private const val TIP_URL = "https://liberapay.com/aqja/donate"
 
 /** Starts the system's file dialogs for exporting and importing the settings file. */
 internal class SettingsFileActions(val export: () -> Unit, val import: () -> Unit)

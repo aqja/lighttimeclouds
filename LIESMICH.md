@@ -79,6 +79,12 @@ Die Wetterdaten stammen von [Open-Meteo.com](https://open-meteo.com/) (Lizenz CC
 
 Alle Formeln, Konstanten und Vereinfachungen der Astronomie, des Himmelsmodells und der Wetterauswertung, mit Quellen, beschreibt [`docs/PHYSIK.md`](docs/PHYSIK.md) (englisch: [`docs/PHYSICS.md`](docs/PHYSICS.md)); wie aus dem Licht des Himmels die Farben werden, die das Auge sieht, [`docs/PHYSIOLOGIE.md`](docs/PHYSIOLOGIE.md) (englisch: [`docs/PHYSIOLOGY.md`](docs/PHYSIOLOGY.md)).
 
+## Unterstützen
+
+LightTimeClouds ist und bleibt kostenlos, es gibt nichts freizuschalten. Wenn dir die App gefällt und du etwas zurückgeben möchtest, kannst du auf Liberapay ein Trinkgeld geben. Fehlerberichte, Ideen und Übersetzungen sind genauso willkommen.
+
+[![Donate using Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/aqja/donate)
+
 ## Lizenz
 
 LightTimeClouds steht unter der [MIT-Lizenz](LICENSE.md). Portierte oder übernommene Teile fremder Projekte (Horizon, Precomputed Atmospheric Scattering) behalten ihre eigenen Lizenzen, siehe [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
