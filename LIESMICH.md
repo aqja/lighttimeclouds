@@ -63,6 +63,13 @@ uv run tools/reference_ephemeris.py # Referenzwerte aus JPL DE440s für die Test
 
 Beide laden ihre Rohdaten (IMCCE-Reihen, ~32 MB Ephemeride) in `~/.cache/lighttimeclouds/`, nicht ins Repo.
 
+`tools/store_screenshots.py` nimmt die sechs Store-Screenshots je Sprache auf einem laufenden Emulator auf (Berlin kurz vor Sonnenuntergang, Demo-Statusleiste, eine Vorhersage für alle Sprachen) und legt sie unter `fastlane/` ab. Es braucht einen Launcher, auf dem das Widget einmal platziert ist; die Einzelheiten stehen im Skript:
+
+```sh
+./gradlew :app:assembleRelease
+uv run tools/store_screenshots.py --apk app/build/outputs/apk/release/app-release.apk --fetch
+```
+
 Zum manuellen Testen: Widget auf den Homescreen ziehen, über das Launcher-Icon „LightTimeClouds“ konfigurieren; Logs per `adb logcat`.
 
 ### Übersetzungen

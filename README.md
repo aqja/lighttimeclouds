@@ -63,6 +63,13 @@ uv run tools/reference_ephemeris.py # reference values from JPL DE440s for the t
 
 Both download their raw data (IMCCE series, ~32 MB ephemeris) to `~/.cache/lighttimeclouds/`, not into the repository.
 
+`tools/store_screenshots.py` takes the six store screenshots per language on a running emulator (Berlin shortly before sunset, demo status bar, one forecast for all languages) and writes them to `fastlane/`. It needs a launcher with the widget placed once; the details are in the script:
+
+```sh
+./gradlew :app:assembleRelease
+uv run tools/store_screenshots.py --apk app/build/outputs/apk/release/app-release.apk --fetch
+```
+
 For manual testing: drag the widget onto the home screen and configure it via the "LightTimeClouds" launcher icon; logs via `adb logcat`.
 
 ### Translations
