@@ -54,7 +54,7 @@ import java.time.ZoneOffset
  * widgets using it right away.
  */
 @Composable
-internal fun LocationSection(settings: WidgetSettings, viewModel: ConfigViewModel) {
+internal fun LocationSection(settings: WidgetSettings, viewModel: ConfigViewModel, expanded: Boolean, onToggle: () -> Unit) {
     val places by viewModel.places.collectAsState()
     val placesInUse by viewModel.placesInUse.collectAsState()
     var showPicker by remember { mutableStateOf(false) }
@@ -65,7 +65,7 @@ internal fun LocationSection(settings: WidgetSettings, viewModel: ConfigViewMode
     fun canDelete(place: Place) = places.size > 1 && !isInUse(place)
     val formats = rememberUiFormats()
 
-    Section(stringResource(R.string.section_location)) {
+    Section(stringResource(R.string.section_location), summary = settings.place.name, expanded = expanded, onToggle = onToggle) {
         ListItem(
             headlineContent = { Text(settings.place.name) },
             supportingContent = { Text(placeDetails(settings.place, formats)) },

@@ -38,6 +38,7 @@
     <string name="sky_horizon_outer">Extérieur</string>
     <string name="sky_top_elevation_label">Ciel dans l’anneau jusqu’à</string>
     <string name="sky_top_elevation_value">%1$d° au-dessus de l’horizon</string>
+    <string name="summary_sun">Soleil</string>
     <string name="show_sun_in_ring">Soleil dans l’anneau</string>
     <string name="show_moon_in_ring">Lune dans l’anneau</string>
     <string name="bodies_in_ring_hint">À l’heure actuelle, aussi loin du bord de l’horizon qu’ils sont hauts au-dessus de l’horizon. Sous l’horizon ou plus haut que représenté : un petit point sur ce bord.</string>
@@ -89,6 +90,7 @@
     <string name="ring_end_fade_hint">Estompe l’anneau jour/nuit sur son dernier tronçon, pour que la fin de la période affichée ne soit pas confondue avec le moment qui suit son début. Jamais avant l’heure actuelle.</string>
 
     <!-- Color mode and tap action -->
+    <string name="section_general">Général</string>
     <string name="section_color_mode">Mode de couleur</string>
     <string name="color_mode_hint">Chiffres et aiguilles dans les couleurs système de votre fond d’écran, pour un arrière-plan clair ou sombre.</string>
     <string name="color_mode_auto">Automatique</string>
@@ -100,9 +102,11 @@
     <string name="tap_action_own_app">Cette appli</string>
     <string name="tap_action_split">Les deux</string>
     <string name="tap_action_split_hint">Un appui à l’intérieur des anneaux ouvre l’application d’horloge, à l’extérieur cette application.</string>
+    <string name="summary_tap">Appui : %1$s</string>
 
     <!-- Settings file -->
-    <string name="section_reset">Valeurs par défaut</string>
+    <string name="reset_confirm">Réinitialiser</string>
+    <string name="more_options">Plus d’options</string>
     <string name="reset_hint">Remet tous les paramètres de ce widget, sauf le lieu, à leur valeur par défaut. Vous pouvez le voir dans l’aperçu ; seul l’enregistrement l’applique.</string>
     <string name="reset_action">Rétablir les valeurs par défaut</string>
     <string name="reset_done">Rétabli. Pas encore enregistré.</string>

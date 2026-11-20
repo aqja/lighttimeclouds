@@ -1,6 +1,9 @@
 package com.umfluten.lighttimeclouds.config
 
 import android.os.Build
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,8 +13,11 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material3.Card
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -34,13 +40,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.collapse
+import androidx.compose.ui.semantics.expand
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.umfluten.lighttimeclouds.R
 import java.time.ZoneId
@@ -61,13 +72,15 @@ internal fun ConfigTheme(content: @Composable () -> Unit) {
     MaterialTheme(colorScheme = colorScheme, content = content)
 }
 
-/** App bar with the app name and [subtitle], optional [tabs] below it, and an optional [bottomBar]. */
+/** App bar with the app name, [subtitle] and [actions], optional [tabs] below it, an optional [bottomBar] and [snackbarHost]. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ConfigScaffold(
     subtitle: String?,
     tabs: @Composable () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {},
+    snackbarHost: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -88,24 +101,60 @@ internal fun ConfigScaffold(
                             }
                         }
                     },
+                    actions = actions,
                     scrollBehavior = scrollBehavior,
                 )
                 tabs()
             }
         },
         bottomBar = bottomBar,
+        snackbarHost = snackbarHost,
         content = content,
     )
 }
 
-/** A titled card grouping related settings. */
+/**
+ * A settings topic that opens when its title is tapped. Closed, it shows its title and a [summary]
+ * of what is set, so every topic fits on one screen; topics are separated by a line.
+ */
 @Composable
-internal fun Section(title: String, content: @Composable () -> Unit) {
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            content()
+internal fun Section(title: String, summary: String, expanded: Boolean, onToggle: () -> Unit, content: @Composable () -> Unit) {
+    Column(Modifier.fillMaxWidth()) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable(role = Role.Button, onClick = onToggle)
+                .semantics {
+                    if (expanded) {
+                        collapse { onToggle(); true }
+                    } else {
+                        expand { onToggle(); true }
+                    }
+                }
+                .padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                if (!expanded && summary.isNotEmpty()) {
+                    Text(
+                        summary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            val turn by animateFloatAsState(if (expanded) 180f else 0f, label = "section arrow")
+            Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, modifier = Modifier.rotate(turn))
         }
+        AnimatedVisibility(expanded) {
+            Column(Modifier.padding(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                content()
+            }
+        }
+        HorizontalDivider()
     }
 }
 
