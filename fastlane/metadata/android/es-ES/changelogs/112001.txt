@@ -1,0 +1,1 @@
+Beta: los ajustes son ahora temas que se abren de uno en uno, cada uno con un resumen de lo configurado; el archivo de ajustes y el restablecimiento están en el menú. Tocar el widget abre ambas apps por defecto: la app de reloj dentro de los anillos, esta app fuera (desde Android 12). Las temperaturas aparentes van en cursiva.

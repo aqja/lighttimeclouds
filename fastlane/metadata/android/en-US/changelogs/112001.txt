@@ -1,0 +1,1 @@
+Beta: the settings are now topics that open one at a time, each with a summary of what is set; the settings file and the reset moved to the menu. Tapping the widget opens both apps by default: the clock app inside the rings, this app outside them (from Android 12). Feels-like temperatures are set in italics.
