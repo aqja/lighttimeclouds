@@ -373,6 +373,21 @@
     <string name="weather_column_apparent">Feels like</string>
     <string name="weather_column_clouds">Clouds</string>
     <string name="weather_column_precipitation">Precipitation</string>
+    <!-- Mean wind at the hour, its strongest gust in the hour, and the eight compass points (from N clockwise) the wind comes from. -->
+    <string name="weather_column_wind">Wind</string>
+    <string name="weather_speed">%1$d km/h</string>
+    <string name="weather_speed_unit">km/h</string>
+    <string name="weather_gusts">gusts %1$d</string>
+    <string-array name="compass_points">
+        <item>N</item>
+        <item>NE</item>
+        <item>E</item>
+        <item>SE</item>
+        <item>S</item>
+        <item>SW</item>
+        <item>W</item>
+        <item>NW</item>
+    </string-array>
     <string name="percent">%1$d%%</string>
     <string name="weather_probability">%1$d%% chance</string>
     <string name="weather_amount">%1$s mm</string>

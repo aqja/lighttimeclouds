@@ -4,8 +4,8 @@ import java.time.Duration
 import java.time.Instant
 
 /**
- * One hourly step as Open-Meteo reports it: [cloudCoverPercent] and the temperatures are instant
- * values at [time]; [precipitationMm] (rain, showers and snow as water), [snowfallCm],
+ * One hourly step as Open-Meteo reports it: [cloudCoverPercent], the temperatures and the mean wind
+ * ([windSpeedKmh], from [windDirectionDeg], clockwise from north) are instant values at [time]; [precipitationMm] (rain, showers and snow as water), [snowfallCm],
  * [precipitationProbabilityPercent] (chance of more than 0.1 mm) and [windGustsKmh] (the strongest
  * gust) refer to the hour *before* [time]. The optional values are null where the model has none.
  */
@@ -18,6 +18,8 @@ data class HourlyWeather(
     val temperatureC: Double? = null,
     val apparentTemperatureC: Double? = null,
     val windGustsKmh: Double? = null,
+    val windSpeedKmh: Double? = null,
+    val windDirectionDeg: Double? = null,
 )
 
 /** Which temperature the dial labels show. */
