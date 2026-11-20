@@ -64,6 +64,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.data.ColorMode
 import com.umfluten.lighttimeclouds.data.DisplayMode
+import com.umfluten.lighttimeclouds.data.LabelPosition
 import com.umfluten.lighttimeclouds.data.MoonStyle
 import com.umfluten.lighttimeclouds.data.SkyHorizon
 import com.umfluten.lighttimeclouds.data.SummaryPosition
@@ -269,7 +270,9 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
         )
     }
 
-    // One topic is open at a time, so the list stays short enough to see every topic.
+    // One topic is open at a time, so the list stays short enough to see every topic. They are
+    // ordered by impact: what the widget needs and how it reacts, then the weather, which changes the
+    // most, then the dial from the outside in.
     var open by rememberSaveable { mutableStateOf<Int?>(null) }
     fun isOpen(title: Int) = open == title
     fun toggle(title: Int) {
@@ -278,46 +281,90 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
 
     LocationSection(settings, viewModel, expanded = isOpen(R.string.section_location), onToggle = { toggle(R.string.section_location) })
 
+    val tapAction = TapActionResolver.effective(settings.tapAction)
     Section(
-        stringResource(R.string.section_dial),
+        stringResource(R.string.section_general),
         summary = summaryOf(
-            stringResource(if (settings.displayMode == DisplayMode.TWELVE_HOUR) R.string.display_mode_12h else R.string.display_mode_24h),
             stringResource(
-                when (settings.switchStrategyType) {
-                    SwitchStrategyType.FIXED_TIMES -> R.string.switch_fixed_times
-                    SwitchStrategyType.TRAILING -> R.string.switch_trailing
+                when (settings.colorMode) {
+                    ColorMode.AUTO -> R.string.color_mode_auto
+                    ColorMode.LIGHT -> R.string.color_mode_light
+                    ColorMode.DARK -> R.string.color_mode_dark
                 },
             ),
+            stringResource(
+                R.string.summary_tap,
+                stringResource(
+                    when (tapAction) {
+                        TapAction.SYSTEM_CLOCK -> R.string.tap_action_system_clock
+                        TapAction.OWN_APP -> R.string.tap_action_own_app
+                        TapAction.SPLIT -> R.string.tap_action_split
+                    },
+                ),
+            ),
         ),
-        expanded = isOpen(R.string.section_dial),
-        onToggle = { toggle(R.string.section_dial) },
+        expanded = isOpen(R.string.section_general),
+        onToggle = { toggle(R.string.section_general) },
     ) {
+        FieldLabel(stringResource(R.string.section_color_mode))
         SegmentedChoice(
-            options = listOf(DisplayMode.TWELVE_HOUR to R.string.display_mode_12h, DisplayMode.TWENTY_FOUR_HOUR to R.string.display_mode_24h),
-            selected = settings.displayMode,
-            onSelect = { viewModel.update { s -> s.copy(displayMode = it) } },
+            options = listOf(
+                ColorMode.AUTO to R.string.color_mode_auto,
+                ColorMode.LIGHT to R.string.color_mode_light,
+                ColorMode.DARK to R.string.color_mode_dark,
+            ),
+            selected = settings.colorMode,
+            onSelect = { viewModel.update { s -> s.copy(colorMode = it) } },
         )
-        RingSwitchSetting(settings, viewModel)
-        SwitchRow(
-            label = stringResource(R.string.show_minute_ticks),
-            checked = settings.showMinuteTicks,
-            onCheckedChange = { viewModel.update { s -> s.copy(showMinuteTicks = it) } },
+        Hint(stringResource(if (settings.colorMode == ColorMode.AUTO) R.string.color_mode_auto_hint else R.string.color_mode_hint))
+        FieldLabel(stringResource(R.string.label_position_label))
+        SegmentedChoice(
+            options = listOf(
+                LabelPosition.NONE to R.string.label_position_none,
+                LabelPosition.ABOVE to R.string.label_position_above,
+                LabelPosition.BELOW to R.string.label_position_below,
+            ),
+            selected = settings.labelPosition,
+            onSelect = { viewModel.update { s -> s.copy(labelPosition = it) } },
         )
-        if (settings.displayMode == DisplayMode.TWENTY_FOUR_HOUR) {
-            SwitchRow(
-                label = stringResource(R.string.show_odd_hour_ticks),
-                checked = settings.showOddHourTicks,
-                onCheckedChange = { viewModel.update { s -> s.copy(showOddHourTicks = it) } },
+        FieldLabel(stringResource(R.string.section_tap_action))
+        SegmentedChoice(
+            options = buildList {
+                add(TapAction.SYSTEM_CLOCK to R.string.tap_action_system_clock)
+                add(TapAction.OWN_APP to R.string.tap_action_own_app)
+                if (TapActionResolver.splitAvailable) add(TapAction.SPLIT to R.string.tap_action_split)
+            },
+            selected = tapAction,
+            onSelect = { viewModel.update { s -> s.copy(tapAction = it) } },
+        )
+        if (tapAction == TapAction.SPLIT) {
+            Hint(stringResource(R.string.tap_action_split_hint))
+        }
+    }
+
+    Section(
+        stringResource(R.string.section_weather),
+        summary = if (!settings.showWeather) {
+            stringResource(R.string.label_position_none)
+        } else {
+            summaryOf(
+                stringResource(
+                    when (settings.weatherRingPosition) {
+                        WeatherRingPosition.INSIDE -> R.string.weather_ring_inside
+                        WeatherRingPosition.OUTSIDE -> R.string.weather_ring_outside
+                    },
+                ),
+                when (settings.temperatureDisplay) {
+                    TemperatureDisplay.NONE -> null
+                    TemperatureDisplay.AIR -> stringResource(R.string.temperature_air)
+                    TemperatureDisplay.APPARENT -> stringResource(R.string.temperature_apparent)
+                },
             )
-        }
-        SwitchRow(
-            label = stringResource(R.string.show_next_alarm),
-            checked = settings.showNextAlarm,
-            onCheckedChange = { viewModel.update { s -> s.copy(showNextAlarm = it) } },
-        )
-        if (settings.showNextAlarm) {
-            Hint(stringResource(R.string.next_alarm_hint))
-        }
+        },
+        expanded = isOpen(R.string.section_weather),
+        onToggle = { toggle(R.string.section_weather) },
+    ) {
+        WeatherSetting(settings, viewModel)
     }
 
     Section(
@@ -378,6 +425,48 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
     }
 
     Section(
+        stringResource(R.string.section_dial),
+        summary = summaryOf(
+            stringResource(if (settings.displayMode == DisplayMode.TWELVE_HOUR) R.string.display_mode_12h else R.string.display_mode_24h),
+            stringResource(
+                when (settings.switchStrategyType) {
+                    SwitchStrategyType.FIXED_TIMES -> R.string.switch_fixed_times
+                    SwitchStrategyType.TRAILING -> R.string.switch_trailing
+                },
+            ),
+        ),
+        expanded = isOpen(R.string.section_dial),
+        onToggle = { toggle(R.string.section_dial) },
+    ) {
+        SegmentedChoice(
+            options = listOf(DisplayMode.TWELVE_HOUR to R.string.display_mode_12h, DisplayMode.TWENTY_FOUR_HOUR to R.string.display_mode_24h),
+            selected = settings.displayMode,
+            onSelect = { viewModel.update { s -> s.copy(displayMode = it) } },
+        )
+        RingSwitchSetting(settings, viewModel)
+        SwitchRow(
+            label = stringResource(R.string.show_minute_ticks),
+            checked = settings.showMinuteTicks,
+            onCheckedChange = { viewModel.update { s -> s.copy(showMinuteTicks = it) } },
+        )
+        if (settings.displayMode == DisplayMode.TWENTY_FOUR_HOUR) {
+            SwitchRow(
+                label = stringResource(R.string.show_odd_hour_ticks),
+                checked = settings.showOddHourTicks,
+                onCheckedChange = { viewModel.update { s -> s.copy(showOddHourTicks = it) } },
+            )
+        }
+        SwitchRow(
+            label = stringResource(R.string.show_next_alarm),
+            checked = settings.showNextAlarm,
+            onCheckedChange = { viewModel.update { s -> s.copy(showNextAlarm = it) } },
+        )
+        if (settings.showNextAlarm) {
+            Hint(stringResource(R.string.next_alarm_hint))
+        }
+    }
+
+    Section(
         stringResource(R.string.section_moon),
         summary = stringResource(
             when {
@@ -413,82 +502,6 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
                 checked = settings.showMoonCompass,
                 onCheckedChange = { viewModel.update { s -> s.copy(showMoonCompass = it) } },
             )
-        }
-    }
-
-    Section(
-        stringResource(R.string.section_weather),
-        summary = if (!settings.showWeather) {
-            stringResource(R.string.label_position_none)
-        } else {
-            summaryOf(
-                stringResource(
-                    when (settings.weatherRingPosition) {
-                        WeatherRingPosition.INSIDE -> R.string.weather_ring_inside
-                        WeatherRingPosition.OUTSIDE -> R.string.weather_ring_outside
-                    },
-                ),
-                when (settings.temperatureDisplay) {
-                    TemperatureDisplay.NONE -> null
-                    TemperatureDisplay.AIR -> stringResource(R.string.temperature_air)
-                    TemperatureDisplay.APPARENT -> stringResource(R.string.temperature_apparent)
-                },
-            )
-        },
-        expanded = isOpen(R.string.section_weather),
-        onToggle = { toggle(R.string.section_weather) },
-    ) {
-        WeatherSetting(settings, viewModel)
-    }
-
-    val tapAction = TapActionResolver.effective(settings.tapAction)
-    Section(
-        stringResource(R.string.section_general),
-        summary = summaryOf(
-            stringResource(
-                when (settings.colorMode) {
-                    ColorMode.AUTO -> R.string.color_mode_auto
-                    ColorMode.LIGHT -> R.string.color_mode_light
-                    ColorMode.DARK -> R.string.color_mode_dark
-                },
-            ),
-            stringResource(
-                R.string.summary_tap,
-                stringResource(
-                    when (tapAction) {
-                        TapAction.SYSTEM_CLOCK -> R.string.tap_action_system_clock
-                        TapAction.OWN_APP -> R.string.tap_action_own_app
-                        TapAction.SPLIT -> R.string.tap_action_split
-                    },
-                ),
-            ),
-        ),
-        expanded = isOpen(R.string.section_general),
-        onToggle = { toggle(R.string.section_general) },
-    ) {
-        FieldLabel(stringResource(R.string.section_color_mode))
-        SegmentedChoice(
-            options = listOf(
-                ColorMode.AUTO to R.string.color_mode_auto,
-                ColorMode.LIGHT to R.string.color_mode_light,
-                ColorMode.DARK to R.string.color_mode_dark,
-            ),
-            selected = settings.colorMode,
-            onSelect = { viewModel.update { s -> s.copy(colorMode = it) } },
-        )
-        Hint(stringResource(if (settings.colorMode == ColorMode.AUTO) R.string.color_mode_auto_hint else R.string.color_mode_hint))
-        FieldLabel(stringResource(R.string.section_tap_action))
-        SegmentedChoice(
-            options = buildList {
-                add(TapAction.SYSTEM_CLOCK to R.string.tap_action_system_clock)
-                add(TapAction.OWN_APP to R.string.tap_action_own_app)
-                if (TapActionResolver.splitAvailable) add(TapAction.SPLIT to R.string.tap_action_split)
-            },
-            selected = tapAction,
-            onSelect = { viewModel.update { s -> s.copy(tapAction = it) } },
-        )
-        if (tapAction == TapAction.SPLIT) {
-            Hint(stringResource(R.string.tap_action_split_hint))
         }
     }
 }

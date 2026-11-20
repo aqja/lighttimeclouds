@@ -11,7 +11,6 @@
     <string name="action_change">Change</string>
     <string name="action_edit">Edit</string>
     <string name="action_delete">Delete</string>
-    <string name="action_close">Close</string>
 
     <!-- Widget picker and editor -->
     <string name="picker_subtitle">Which widget do you want to edit?</string>
@@ -130,7 +129,6 @@
     <string name="label_position_below">Bottom</string>
     <string name="place_delete_title">Delete place?</string>
     <string name="place_delete_text">“%1$s” will be removed from the saved places.</string>
-    <string name="places_title">Saved places</string>
     <string name="place_in_use">In use</string>
     <string name="place_new">New place</string>
     <string name="place_edit">Edit place</string>

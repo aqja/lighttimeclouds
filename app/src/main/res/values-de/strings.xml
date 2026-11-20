@@ -10,7 +10,6 @@
     <string name="action_change">Ändern</string>
     <string name="action_edit">Bearbeiten</string>
     <string name="action_delete">Löschen</string>
-    <string name="action_close">Schließen</string>
 
     <!-- Widget picker and editor -->
     <string name="picker_subtitle">Welches Widget möchtest du bearbeiten?</string>
@@ -129,7 +128,6 @@
     <string name="label_position_below">Unten</string>
     <string name="place_delete_title">Ort löschen?</string>
     <string name="place_delete_text">„%1$s“ wird aus der Liste der gespeicherten Orte entfernt.</string>
-    <string name="places_title">Gespeicherte Orte</string>
     <string name="place_in_use">Wird verwendet</string>
     <string name="place_new">Neuer Ort</string>
     <string name="place_edit">Ort bearbeiten</string>

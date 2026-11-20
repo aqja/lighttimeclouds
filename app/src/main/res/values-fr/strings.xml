@@ -11,7 +11,6 @@
     <string name="action_change">Changer</string>
     <string name="action_edit">Modifier</string>
     <string name="action_delete">Supprimer</string>
-    <string name="action_close">Fermer</string>
 
     <!-- Widget picker and editor -->
     <string name="picker_subtitle">Quel widget voulez-vous modifier ?</string>
@@ -131,7 +130,6 @@
     <string name="label_position_below">En bas</string>
     <string name="place_delete_title">Supprimer le lieu ?</string>
     <string name="place_delete_text">« %1$s » sera retiré des lieux enregistrés.</string>
-    <string name="places_title">Lieux enregistrés</string>
     <string name="place_in_use">Utilisé</string>
     <string name="place_new">Nouveau lieu</string>
     <string name="place_edit">Modifier le lieu</string>
