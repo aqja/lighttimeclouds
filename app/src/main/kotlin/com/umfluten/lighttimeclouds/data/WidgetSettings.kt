@@ -49,7 +49,7 @@ data class WidgetSettings(
     val place: Place = Place.DEFAULT,
     val displayMode: DisplayMode = DisplayMode.TWENTY_FOUR_HOUR,
     val colorMode: ColorMode = ColorMode.AUTO,
-    val tapAction: TapAction = TapAction.SYSTEM_CLOCK,
+    val tapAction: TapAction = TapAction.SPLIT,
     val switchStrategyType: SwitchStrategyType = SwitchStrategyType.FIXED_TIMES,
     val switchTime1Minutes: Int = 6 * 60,
     val switchTime2Minutes: Int = 18 * 60,

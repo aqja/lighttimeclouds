@@ -39,6 +39,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.umfluten.lighttimeclouds.R
@@ -143,10 +144,11 @@ internal fun RowScope.LabeledValue(
     weight: Float = 1f,
     color: Color = Color.Unspecified,
     fontWeight: FontWeight? = null,
+    fontStyle: FontStyle? = null,
 ) {
     Column(Modifier.weight(weight)) {
         Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.bodyLarge, color = color, fontWeight = fontWeight)
+        Text(value, style = MaterialTheme.typography.bodyLarge, color = color, fontWeight = fontWeight, fontStyle = fontStyle)
         Text(note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

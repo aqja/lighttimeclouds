@@ -2,6 +2,7 @@ package com.umfluten.lighttimeclouds.widget
 
 import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.Typeface
 import com.umfluten.lighttimeclouds.data.DisplayMode
 import com.umfluten.lighttimeclouds.data.TemperatureDisplay
 import com.umfluten.lighttimeclouds.data.WidgetSettings
@@ -43,9 +44,11 @@ internal sealed class TemperaturePlacement(val textSize: Float) {
     class Outside(val edge: Float, textSize: Float) : TemperaturePlacement(textSize)
 }
 
-internal fun temperaturePaint(textSize: Float) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+/** Apparent temperatures are set in italics, so they are not taken for the thermometer's. */
+internal fun temperaturePaint(textSize: Float, kind: TemperatureKind) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
     this.textSize = textSize
     textAlign = Paint.Align.CENTER
+    if (kind == TemperatureKind.APPARENT) typeface = Typeface.create(Typeface.DEFAULT, Typeface.ITALIC)
 }
 
 /** Height of the digits, used to center labels with and without minus sign alike. */
@@ -93,7 +96,7 @@ internal fun temperatureLabelSpans(settings: WidgetSettings, now: ZonedDateTime)
 internal fun Dial.drawTemperatures(forecast: WeatherForecast, kind: TemperatureKind, placement: TemperaturePlacement) {
     val freshness = forecast.freshnessAlpha(now.toInstant())
     if (freshness <= 0f) return
-    val paint = temperaturePaint(placement.textSize)
+    val paint = temperaturePaint(placement.textSize, kind)
     val halfHeight = digitHeight(paint) / 2f
     for (span in temperatureLabelSpans(settings, now)) {
         if (!span.to.isAfter(span.from)) continue
