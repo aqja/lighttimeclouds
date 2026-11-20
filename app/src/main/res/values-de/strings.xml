@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="widget_content_description">Sonnen- und Monduhr</string>
     <string name="widget_open_clock">Uhr-App öffnen</string>
 
@@ -107,6 +107,7 @@
     <string name="more_options">Weitere Optionen</string>
     <string name="reset_hint">Setzt alle Einstellungen dieses Widgets außer dem Ort auf die Standardwerte zurück. Ansehen kannst du das in der Vorschau; erst Speichern übernimmt es.</string>
     <string name="reset_action">Auf Standard zurücksetzen</string>
+    <string name="section_manage_settings">Sichern und zurücksetzen</string>
     <string name="reset_done">Zurückgesetzt. Noch nicht gespeichert.</string>
     <string name="section_settings_file">Einstellungsdatei</string>
     <string name="settings_file_hint">Die Datei enthält die Einstellungen dieses Widgets und alle Orte mit ihren Koordinaten. Damit ziehst du auf ein neues Gerät um oder überträgst die Einstellungen auf ein anderes Widget; ein Backup über das System gibt es nicht.</string>
@@ -414,4 +415,14 @@
     <string name="civil_dusk">Ende bürgerliche Dämmerung</string>
     <string name="nautical_dusk">Ende nautische Dämmerung</string>
     <string name="astronomical_dusk">Ende astronomische Dämmerung</string>
+
+    <!-- App menu and about dialog -->
+    <string name="menu_docs">Doku und Quellcode</string>
+    <string name="menu_about">Über</string>
+    <string name="menu_support">Unterstützen</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_text">Analoge Sonnen- und Monduhr für den Startbildschirm. Frei und quelloffen unter der MIT-Lizenz, © 2026 aqja. Ohne Werbung, ohne Tracking.</string>
+    <!-- "2000-82B" is part of the theory's name, not a range. -->
+    <string name="about_credits" tools:ignore="TypographyDashes">Sonne und Mond nach den Theorien ELP 2000-82B und VSOP87 (IMCCE, Pariser Sternwarte), Himmelsfarben nach Horizon (MIT-Lizenz). %1$s.</string>
+    <string name="about_licenses">Lizenzen</string>
 </resources>

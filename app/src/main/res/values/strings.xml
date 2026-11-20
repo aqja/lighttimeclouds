@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">LightTimeClouds</string>
     <string name="widget_content_description">Sun and moon clock</string>
     <string name="widget_open_clock">Open clock app</string>
@@ -108,6 +108,7 @@
     <string name="more_options">More options</string>
     <string name="reset_hint">Sets every setting of this widget except the place back to its default. Look at it in the preview; only saving keeps it.</string>
     <string name="reset_action">Reset to defaults</string>
+    <string name="section_manage_settings">Back up and reset</string>
     <string name="reset_done">Reset. Not saved yet.</string>
     <string name="section_settings_file">Settings file</string>
     <string name="settings_file_hint">The file holds this widget\'s settings and all places with their coordinates. Use it to move to a new device or to carry the settings over to another widget; there is no system backup.</string>
@@ -435,4 +436,14 @@
     <string name="civil_dusk">Civil dusk</string>
     <string name="nautical_dusk">Nautical dusk</string>
     <string name="astronomical_dusk">Astronomical dusk</string>
+
+    <!-- App menu and about dialog -->
+    <string name="menu_docs">Documentation and source code</string>
+    <string name="menu_about">About</string>
+    <string name="menu_support">Support</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_text">Analog sun and moon clock for the home screen. Free and open source under the MIT License, © 2026 aqja. No ads, no tracking.</string>
+    <!-- "2000-82B" is part of the theory's name, not a range. -->
+    <string name="about_credits" tools:ignore="TypographyDashes">Sun and moon after the theories ELP 2000-82B and VSOP87 (IMCCE, Paris Observatory), sky colors after Horizon (MIT License). %1$s.</string>
+    <string name="about_licenses">Licenses</string>
 </resources>

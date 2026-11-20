@@ -79,6 +79,12 @@ Weather data from [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0 license).
 
 All formulas, constants and simplifications of the astronomy, the sky model and the weather evaluation, with sources, are described in [`docs/PHYSICS.md`](docs/PHYSICS.md) (German: [`docs/PHYSIK.md`](docs/PHYSIK.md)); how the sky's light is turned into the colors the eye sees, in [`docs/PHYSIOLOGY.md`](docs/PHYSIOLOGY.md) (German: [`docs/PHYSIOLOGIE.md`](docs/PHYSIOLOGIE.md)).
 
+## Support
+
+LightTimeClouds is free and stays free, with nothing to unlock. If you like it and want to give something back, you can leave a tip on Liberapay. Bug reports, ideas and translations are just as welcome.
+
+[![Donate using Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/aqja/donate)
+
 ## License
 
 LightTimeClouds is licensed under the [MIT License](LICENSE.md). Ported or adopted parts of other projects (Horizon, Precomputed Atmospheric Scattering) keep their own licenses, see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

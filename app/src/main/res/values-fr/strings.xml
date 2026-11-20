@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- French typography: a narrow no-break space before ; ? ! and %, a no-break space before : and inside « ». -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="widget_content_description">Horloge solaire et lunaire</string>
     <string name="widget_open_clock">Ouvrir l’application d’horloge</string>
 
@@ -108,6 +108,7 @@
     <string name="more_options">Plus d’options</string>
     <string name="reset_hint">Remet tous les paramètres de ce widget, sauf le lieu, à leur valeur par défaut. Vous pouvez le voir dans l’aperçu ; seul l’enregistrement l’applique.</string>
     <string name="reset_action">Rétablir les valeurs par défaut</string>
+    <string name="section_manage_settings">Sauvegarder et réinitialiser</string>
     <string name="reset_done">Rétabli. Pas encore enregistré.</string>
     <string name="section_settings_file">Fichier de paramètres</string>
     <string name="settings_file_hint">Le fichier contient les paramètres de ce widget et tous les lieux avec leurs coordonnées. Il permet de passer à un nouvel appareil ou de reprendre les paramètres dans un autre widget ; il n’y a pas de sauvegarde par le système.</string>
@@ -420,4 +421,14 @@
     <string name="civil_dusk">Crépuscule civil</string>
     <string name="nautical_dusk">Crépuscule nautique</string>
     <string name="astronomical_dusk">Crépuscule astronomique</string>
+
+    <!-- App menu and about dialog -->
+    <string name="menu_docs">Documentation et code source</string>
+    <string name="menu_about">À propos</string>
+    <string name="menu_support">Soutenir</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_text">Horloge analogique du soleil et de la lune pour l’écran d’accueil. Libre et open source sous licence MIT, © 2026 aqja. Sans publicité ni pistage.</string>
+    <!-- "2000-82B" is part of the theory's name, not a range. -->
+    <string name="about_credits" tools:ignore="TypographyDashes">Soleil et lune d’après les théories ELP 2000-82B et VSOP87 (IMCCE, Observatoire de Paris), couleurs du ciel d’après Horizon (licence MIT). %1$s.</string>
+    <string name="about_licenses">Licences</string>
 </resources>
