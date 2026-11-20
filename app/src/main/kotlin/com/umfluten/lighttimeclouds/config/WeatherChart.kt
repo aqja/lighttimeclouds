@@ -33,6 +33,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -93,7 +94,7 @@ internal fun WeatherChart(
     val end = rows.last().time.plus(HOUR)
     val measurer = rememberTextMeasurer()
     val labelStyle = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
-    val skyLabelStyle = MaterialTheme.typography.labelSmall.copy(color = SKY_INK.copy(alpha = 0.8f))
+    val skyLabelStyle = MaterialTheme.typography.labelSmall.copy(color = SKY_INK.copy(alpha = 0.85f), shadow = Shadow(HALO.copy(alpha = 0.8f), blurRadius = 4f))
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     val trackColor = MaterialTheme.colorScheme.surfaceVariant
     val thumbColor = MaterialTheme.colorScheme.primary
@@ -165,7 +166,6 @@ internal fun WeatherChart(
             .drawWithCache {
                 val left = gutter
                 val skyBottom = SKY_HEIGHT.toPx()
-                val columnWidth = SKY_SAMPLE.seconds / (WINDOW.seconds / (size.width - left))
                 // Vertical gradients do not depend on x, so each sample's brushes serve wherever it is drawn.
                 val skyBrushes = sky.map { Brush.verticalGradient(it.sky, 0f, skyBottom) }
                 val cloudBrushes = sky.map { cloudBrush(it, skyBottom) }
@@ -184,11 +184,11 @@ internal fun WeatherChart(
                     clipRect(left, 0f, size.width, skyBottom) {
                         sky.forEachIndexed { i, sample ->
                             if (sample.time !in visible) return@forEachIndexed
-                            val topLeft = Offset(x(sample.time), 0f)
-                            // A hair wider, so no seam shows between neighbors.
-                            val columnSize = Size(columnWidth + 1f, skyBottom)
-                            drawRect(skyBrushes[i], topLeft, columnSize)
-                            drawRect(cloudBrushes[i], topLeft, columnSize)
+                            // Edges on whole pixels, so neighboring translucent clouds neither overlap nor leave gaps.
+                            val x0 = x(sample.time).roundToInt().toFloat()
+                            val x1 = x(sample.time.plus(SKY_SAMPLE)).roundToInt().toFloat()
+                            drawRect(skyBrushes[i], Offset(x0, 0f), Size(x1 - x0, skyBottom))
+                            drawRect(cloudBrushes[i], Offset(x0, 0f), Size(x1 - x0, skyBottom))
                         }
 
                         // Precipitation rises from the horizon, a full panel being [maxPrecipitation].
@@ -247,11 +247,13 @@ internal fun WeatherChart(
 
                         val hour = rows[selected]
                         val hourStart = x(hour.time)
-                        drawRect(
-                            SKY_INK.copy(alpha = SELECTED_HOUR_ALPHA),
-                            topLeft = Offset(hourStart, 0f),
-                            size = Size(x(hour.time.plus(HOUR)) - hourStart, skyBottom),
-                        )
+                        val hourEnd = x(hour.time.plus(HOUR))
+                        drawRect(SKY_INK.copy(alpha = SELECTED_HOUR_ALPHA), Offset(hourStart, 0f), Size(hourEnd - hourStart, skyBottom))
+                        // Edges on a halo, so the hour also stands out where the sky is bright.
+                        for (edge in listOf(hourStart, hourEnd)) {
+                            drawLine(HALO, Offset(edge, 0f), Offset(edge, skyBottom), strokeWidth = 2.5.dp.toPx())
+                            drawLine(SKY_INK.copy(alpha = 0.8f), Offset(edge, 0f), Offset(edge, skyBottom), strokeWidth = 1.dp.toPx())
+                        }
 
                         temperatureLine(rows.map { it.time to it.apparentTemperatureC }, ::x, ::y, APPARENT_COLOR, dashed = true)
                         temperatureLine(rows.map { it.time to it.temperatureC }, ::x, ::y, AIR_COLOR, dashed = false)
@@ -482,7 +484,7 @@ private val AXIS_TICK = 5.dp
 private val AXIS_ROW = 16.dp
 private val TRACK = 3.dp
 private val CHART_HEIGHT = SKY_HEIGHT + AXIS_TICK + 1.dp + AXIS_ROW * 2 + 6.dp + TRACK
-private val SKY_SAMPLE: Duration = Duration.ofMinutes(10)
+private val SKY_SAMPLE: Duration = Duration.ofMinutes(5)
 private val SELECTED_POINT = 4.dp
 private const val SELECTED_HOUR_ALPHA = 0.22f
 private const val MIN_TEMPERATURE_SPAN = 10.0
