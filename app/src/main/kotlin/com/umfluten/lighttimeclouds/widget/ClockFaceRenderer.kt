@@ -152,8 +152,8 @@ private fun Dial.numeralPaint(color: Int) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
 internal fun Dial.numeralsInnerEdge(angleDeg: Double): Float =
     radius * layout.numeralRadius - labelExtent(numeralPaint(Color.BLACK), "00", angleDeg)
 
-/** Signal red, clearly apart from the chrome and the weather colors on light and dark backgrounds. */
-private val ALARM_COLOR = Color.rgb(225, 45, 45)
+/** Signal red, clearly apart from the chrome on light and dark backgrounds; the same as the highest rain warning. */
+private const val ALARM_COLOR = SkyPalette.SIGNAL_RED
 
 /** Stroke of the hour ticks; the alarm tick uses the same, only in [ALARM_COLOR]. */
 private fun Dial.hourTickPaint(color: Int) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
