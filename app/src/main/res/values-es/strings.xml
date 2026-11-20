@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="widget_content_description">Reloj de sol y luna</string>
     <string name="widget_open_clock">Abrir la app de reloj</string>
 
@@ -107,7 +107,7 @@
     <string name="more_options">Más opciones</string>
     <string name="reset_hint">Restablece todos los ajustes de este widget, salvo el lugar, a sus valores predeterminados. Puedes verlo en la vista previa; solo se aplica al guardar.</string>
     <string name="reset_action">Restablecer valores predeterminados</string>
-    <string name="tip_action">Dejar una propina</string>
+    <string name="section_manage_settings">Ajustes</string>
     <string name="reset_done">Restablecido. Aún sin guardar.</string>
     <string name="section_settings_file">Archivo de ajustes</string>
     <string name="settings_file_hint">El archivo contiene los ajustes de este widget y todos los lugares con sus coordenadas. Úsalo para pasar a un dispositivo nuevo o para llevar los ajustes a otro widget; no hay copia de seguridad del sistema.</string>
@@ -420,4 +420,14 @@
     <string name="civil_dusk">Anochecer civil</string>
     <string name="nautical_dusk">Anochecer náutico</string>
     <string name="astronomical_dusk">Anochecer astronómico</string>
+
+    <!-- App menu and about dialog -->
+    <string name="menu_docs">Documentación y código fuente</string>
+    <string name="menu_about">Acerca de</string>
+    <string name="menu_support">Apoyar</string>
+    <string name="about_version">Versión %1$s</string>
+    <string name="about_text">Reloj analógico de sol y luna para la pantalla de inicio. Libre y de código abierto bajo la licencia MIT, © 2026 aqja. Sin anuncios ni rastreo.</string>
+    <!-- "2000-82B" is part of the theory's name, not a range. -->
+    <string name="about_credits" tools:ignore="TypographyDashes">Sol y luna según las teorías ELP 2000-82B y VSOP87 (IMCCE, Observatorio de París), colores del cielo según Horizon (licencia MIT). %1$s.</string>
+    <string name="about_licenses">Licencias</string>
 </resources>

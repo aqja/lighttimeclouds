@@ -115,7 +115,7 @@ private fun WidgetPickerScreen(widgetIds: List<Int>, onPicked: (Int) -> Unit) {
     LaunchedEffect(widgetIds) {
         settingsById = widgetIds.associateWith { ClockWidgetProvider.effectiveSettings(context, it) }
     }
-    ConfigScaffold(subtitle = stringResource(R.string.picker_subtitle)) { padding ->
+    ConfigScaffold(subtitle = stringResource(R.string.picker_subtitle), actions = { AppMenu() }) { padding ->
         LazyColumn(contentPadding = padding) {
             items(widgetIds) { id ->
                 val settings = settingsById[id]
@@ -180,21 +180,19 @@ private fun WidgetEditorScreen(widgetId: Int, startOnSettings: Boolean, onDone: 
     }
     val resetDone = stringResource(R.string.reset_done)
     val settingsFile = rememberSettingsFileActions(widgetId, viewModel, ::report)
-    var dialog by rememberSaveable { mutableStateOf(SettingsDialog.NONE) }
-    when (dialog) {
-        SettingsDialog.NONE -> Unit
-        SettingsDialog.SETTINGS_FILE -> SettingsFileDialog(settingsFile, onDismiss = { dialog = SettingsDialog.NONE })
-        SettingsDialog.RESET -> ResetDialog(
+    var confirmReset by rememberSaveable { mutableStateOf(false) }
+    if (confirmReset) {
+        ResetDialog(
             onReset = {
                 viewModel.resetToDefaults()
                 report(resetDone)
             },
-            onDismiss = { dialog = SettingsDialog.NONE },
+            onDismiss = { confirmReset = false },
         )
     }
     ConfigScaffold(
         subtitle = subtitle,
-        actions = { if (currentTab == R.string.tab_settings) SettingsMenu(onOpen = { dialog = it }) },
+        actions = { AppMenu() },
         snackbarHost = { SnackbarHost(snackbar) },
         tabs = {
             PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {
@@ -252,7 +250,7 @@ private fun WidgetEditorScreen(widgetId: Int, startOnSettings: Boolean, onDone: 
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                 ) {
-                    SettingsContent(widgetId, settings, viewModel)
+                    SettingsContent(widgetId, settings, viewModel, settingsFile, onReset = { confirmReset = true })
                 }
             }
         }
@@ -260,7 +258,13 @@ private fun WidgetEditorScreen(widgetId: Int, startOnSettings: Boolean, onDone: 
 }
 
 @Composable
-private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: ConfigViewModel) {
+private fun SettingsContent(
+    widgetId: Int,
+    settings: WidgetSettings,
+    viewModel: ConfigViewModel,
+    settingsFile: SettingsFileActions,
+    onReset: () -> Unit,
+) {
     if (widgetId == WidgetSettings.DEFAULT_WIDGET_ID) {
         Text(
             stringResource(R.string.template_hint),
@@ -504,10 +508,17 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             )
         }
     }
+
+    ManageSettingsSection(
+        settingsFile,
+        onReset,
+        expanded = isOpen(R.string.section_manage_settings),
+        onToggle = { toggle(R.string.section_manage_settings) },
+    )
 }
 
 /** The non-null [parts] of a closed topic's summary, joined with a middle dot. */
-private fun summaryOf(vararg parts: String?): String = parts.filterNotNull().joinToString(" · ")
+internal fun summaryOf(vararg parts: String?): String = parts.filterNotNull().joinToString(" · ")
 
 /**
  * Weather ring switch. Some systems let the user withhold network access per app, so switching the
