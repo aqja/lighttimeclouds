@@ -33,7 +33,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -93,7 +92,6 @@ internal fun WeatherChart(
     val end = rows.last().time.plus(HOUR)
     val measurer = rememberTextMeasurer()
     val labelStyle = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
-    val skyLabelStyle = MaterialTheme.typography.labelSmall.copy(color = SKY_INK.copy(alpha = 0.85f), shadow = Shadow(HALO.copy(alpha = 0.8f), blurRadius = 4f))
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     val trackColor = MaterialTheme.colorScheme.surfaceVariant
     val thumbColor = MaterialTheme.colorScheme.primary
@@ -102,6 +100,8 @@ internal fun WeatherChart(
     val (tMin, tMax, tStep) = temperatureScale(temperatures)
     val maxPrecipitation = ceil(maxOf(MIN_PRECIPITATION_SCALE_MM, rows.maxOf { it.precipitation.precipitationMm }))
     val precipitationScaleLabel = stringResource(R.string.weather_amount, maxPrecipitation.toInt().toString())
+    val fullCoverLabel = stringResource(R.string.percent, 100)
+    val halfCoverLabel = stringResource(R.string.percent, 50)
     val sky = remember(start, end, settings) { skySamples(start, end, settings) }
 
     // The window's left edge in epoch seconds, kept by time so it survives a new forecast; NaN until
@@ -114,6 +114,7 @@ internal fun WeatherChart(
         (if (chosenWindowStart.isNaN()) defaultStart else chosenWindowStart).coerceIn(firstStart, lastStart)
 
     val gutter = with(LocalDensity.current) { GUTTER.toPx() }
+    val rightGutter = with(LocalDensity.current) { RIGHT_GUTTER.toPx() }
     var plotWidth by remember { mutableFloatStateOf(1f) }
     val scrollState = rememberScrollableState { delta ->
         val perPx = WINDOW.seconds / plotWidth
@@ -139,11 +140,12 @@ internal fun WeatherChart(
             .fillMaxWidth()
             .height(CHART_HEIGHT)
             .padding(horizontal = 16.dp)
-            .onSizeChanged { plotWidth = (it.width - gutter).coerceAtLeast(1f) }
+            .onSizeChanged { plotWidth = (it.width - gutter - rightGutter).coerceAtLeast(1f) }
             .scrollable(scrollState, Orientation.Horizontal)
-            .pointerInput(rows, gutter) {
+            .pointerInput(rows, gutter, rightGutter) {
                 detectTapGestures { tap ->
-                    if (tap.x < gutter || tap.y > SKY_HEIGHT.toPx() + AXIS_TICK.toPx()) return@detectTapGestures
+                    val outside = tap.x < gutter || tap.x > size.width - rightGutter || tap.y > SKY_HEIGHT.toPx() + AXIS_TICK.toPx()
+                    if (outside) return@detectTapGestures
                     val at = windowStart() + (tap.x - gutter) / plotWidth * WINDOW.seconds
                     currentOnSelect(hourIndexAt(rows, Instant.ofEpochMilli((at * 1000).toLong())))
                 }
@@ -167,10 +169,16 @@ internal fun WeatherChart(
                 val skyBottom = SKY_HEIGHT.toPx()
                 // Vertical gradients do not depend on x, so each sample's brushes serve wherever it is drawn.
                 val skyBrushes = sky.map { Brush.verticalGradient(it.sky, 0f, skyBottom) }
-                val precipitationLabel = measurer.measure(precipitationScaleLabel, skyLabelStyle)
+                // Right axis: depth of the clouds by cover, height of the precipitation bars.
+                val rightLabels = listOf(
+                    measurer.measure(halfCoverLabel, labelStyle) to CLOUD_SHARE / 2f,
+                    measurer.measure(fullCoverLabel, labelStyle) to CLOUD_SHARE,
+                    measurer.measure(precipitationScaleLabel, labelStyle) to 1f - PRECIPITATION_SHARE,
+                )
                 onDrawBehind {
+                    val right = size.width - rightGutter
                     val from = windowStart()
-                    val perPx = WINDOW.seconds / (size.width - left)
+                    val perPx = WINDOW.seconds / (right - left)
                     fun x(instant: Instant): Float = (left + (seconds(instant) - from) / perPx).toFloat()
                     val tempTop = TEMPERATURE_MARGIN.toPx()
                     val tempBottom = skyBottom - TEMPERATURE_MARGIN.toPx()
@@ -179,7 +187,7 @@ internal fun WeatherChart(
                     val visible = Instant.ofEpochSecond(from.toLong() - SKY_SAMPLE.seconds)..
                         Instant.ofEpochSecond((from + WINDOW.seconds).toLong() + HOUR.seconds)
 
-                    clipRect(left, 0f, size.width, skyBottom) {
+                    clipRect(left, 0f, right, skyBottom) {
                         sky.forEachIndexed { i, sample ->
                             if (sample.time !in visible) return@forEachIndexed
                             val x0 = x(sample.time).roundToInt().toFloat()
@@ -221,25 +229,18 @@ internal fun WeatherChart(
                                 strokeWidth = 1.5.dp.toPx(),
                             )
                         }
-                        // Scale of the precipitation bars, fixed at the right edge.
+                        // Scale of the precipitation bars, labeled on the right axis.
                         drawLine(
                             SKY_INK.copy(alpha = 0.35f),
-                            Offset(left, precipitationTop), Offset(size.width, precipitationTop),
+                            Offset(left, precipitationTop), Offset(right, precipitationTop),
                             strokeWidth = 1f,
                             pathEffect = PathEffect.dashPathEffect(floatArrayOf(2.dp.toPx(), 3.dp.toPx())),
-                        )
-                        drawText(
-                            precipitationLabel,
-                            topLeft = Offset(
-                                size.width - precipitationLabel.size.width - 4.dp.toPx(),
-                                precipitationTop - precipitationLabel.size.height,
-                            ),
                         )
 
                         // Temperature grid.
                         var grid = tMin
                         while (grid <= tMax + 1e-6) {
-                            drawLine(SKY_INK.copy(alpha = 0.18f), Offset(left, y(grid)), Offset(size.width, y(grid)), strokeWidth = 1f)
+                            drawLine(SKY_INK.copy(alpha = 0.18f), Offset(left, y(grid)), Offset(right, y(grid)), strokeWidth = 1f)
                             grid += tStep
                         }
 
@@ -280,6 +281,12 @@ internal fun WeatherChart(
                         }
                     }
 
+                    for ((label, share) in rightLabels) {
+                        val ly = skyBottom * share
+                        drawLine(gridColor, Offset(right, ly), Offset(right + RIGHT_TICK.toPx(), ly), strokeWidth = 1.5f)
+                        drawText(label, topLeft = Offset(right + RIGHT_TICK.toPx() + 2.dp.toPx(), ly - label.size.height / 2f))
+                    }
+
                     // Temperature labels in the gutter, which stays in place.
                     var grid = tMin
                     while (grid <= tMax + 1e-6) {
@@ -291,7 +298,7 @@ internal fun WeatherChart(
                     // Time axis: a tick per hour, longer every three; times every six hours, then the days.
                     val hourLabelsTop = skyBottom + AXIS_TICK.toPx() + 1.dp.toPx()
                     val dayLabelsTop = hourLabelsTop + AXIS_ROW.toPx()
-                    clipRect(left, skyBottom, size.width, size.height) {
+                    clipRect(left, skyBottom, right, size.height) {
                         var tick = from.toLong() / 3600 * 3600
                         while (tick <= from + WINDOW.seconds + 3600) {
                             val local = Instant.ofEpochSecond(tick).atZone(now.zone)
@@ -301,7 +308,7 @@ internal fun WeatherChart(
                             if (local.hour % 6 == 0) {
                                 val label = measurer.measure(formats.timeOfDay(local.hour * 60), labelStyle)
                                 val lx = tx - label.size.width / 2f
-                                if (lx >= left && lx + label.size.width <= size.width) {
+                                if (lx >= left && lx + label.size.width <= right) {
                                     drawText(label, topLeft = Offset(lx, hourLabelsTop))
                                 }
                             }
@@ -330,7 +337,7 @@ internal fun WeatherChart(
 
                     // Where the window lies in the whole forecast.
                     val trackTop = size.height - TRACK.toPx()
-                    val trackWidth = size.width - left
+                    val trackWidth = right - left
                     val span = seconds(end) - firstStart
                     val radius = CornerRadius(TRACK.toPx() / 2f)
                     drawRoundRect(trackColor, Offset(left, trackTop), Size(trackWidth, TRACK.toPx()), radius)
@@ -452,6 +459,8 @@ private val WINDOW: Duration = Duration.ofHours(24)
 private val LEAD: Duration = Duration.ofHours(2)
 
 private val GUTTER = 36.dp
+private val RIGHT_GUTTER = 36.dp
+private val RIGHT_TICK = 3.dp
 private val SKY_HEIGHT = 210.dp
 private val TEMPERATURE_MARGIN = 14.dp
 private val AXIS_TICK = 5.dp
@@ -481,6 +490,6 @@ private const val CLOUD_SHARE = 0.4f
 private val CLOUD_FEW = Color(0xFFF5F7FA)
 private val CLOUD_OVERCAST = Color(0xFF737982)
 private const val CLOUD_MIN_ALPHA = 0.5f
-private const val CLOUD_MAX_ALPHA = 0.95f
+private const val CLOUD_MAX_ALPHA = 0.8f
 
 private val TYPICAL_RAIN = WeatherCondition(0.0, 1.0, 0.0, 80.0)
