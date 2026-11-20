@@ -10,7 +10,6 @@
     <string name="action_change">Cambiar</string>
     <string name="action_edit">Editar</string>
     <string name="action_delete">Eliminar</string>
-    <string name="action_close">Cerrar</string>
 
     <!-- Widget picker and editor -->
     <string name="picker_subtitle">¿Qué widget quieres editar?</string>
@@ -130,7 +129,6 @@
     <string name="label_position_below">Abajo</string>
     <string name="place_delete_title">¿Eliminar el lugar?</string>
     <string name="place_delete_text">«%1$s» se eliminará de los lugares guardados.</string>
-    <string name="places_title">Lugares guardados</string>
     <string name="place_in_use">En uso</string>
     <string name="place_new">Lugar nuevo</string>
     <string name="place_edit">Editar lugar</string>

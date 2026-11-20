@@ -6,10 +6,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -32,13 +35,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.umfluten.lighttimeclouds.R
-import com.umfluten.lighttimeclouds.data.LabelPosition
 import com.umfluten.lighttimeclouds.data.Place
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.data.roundCoordinate
@@ -47,17 +51,15 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 
 /**
- * Shows the widget's place and where its name appears in the widget; "Change" opens the list of
- * saved places, from which places can also be created, edited or deleted. Places are only ever
- * deleted from that list on purpose, never as a side effect of removing a widget. Choosing a place
- * is part of the widget settings (saved with "Save"); saving a place's details applies to all
- * widgets using it right away.
+ * The saved places to choose the widget's place from, with buttons to edit or delete each and to
+ * add a new one. Places are only ever deleted from this list on purpose, never as a side effect of
+ * removing a widget. Choosing a place is part of the widget settings (saved with "Save"); saving a
+ * place's details applies to all widgets using it right away.
  */
 @Composable
 internal fun LocationSection(settings: WidgetSettings, viewModel: ConfigViewModel, expanded: Boolean, onToggle: () -> Unit) {
     val places by viewModel.places.collectAsState()
     val placesInUse by viewModel.placesInUse.collectAsState()
-    var showPicker by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<Place?>(null) }
     var deleting by remember { mutableStateOf<Place?>(null) }
     // A place in use by a saved widget, the template, or this (unsaved) selection must stay, as must the last one.
@@ -66,40 +68,23 @@ internal fun LocationSection(settings: WidgetSettings, viewModel: ConfigViewMode
     val formats = rememberUiFormats()
 
     Section(stringResource(R.string.section_location), summary = settings.place.name, expanded = expanded, onToggle = onToggle) {
-        ListItem(
-            headlineContent = { Text(settings.place.name) },
-            supportingContent = { Text(placeDetails(settings.place, formats)) },
-            trailingContent = { TextButton(onClick = { showPicker = true }) { Text(stringResource(R.string.action_change)) } },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        )
-        FieldLabel(stringResource(R.string.label_position_label))
-        SegmentedChoice(
-            options = listOf(
-                LabelPosition.NONE to R.string.label_position_none,
-                LabelPosition.ABOVE to R.string.label_position_above,
-                LabelPosition.BELOW to R.string.label_position_below,
-            ),
-            selected = settings.labelPosition,
-            onSelect = { viewModel.update { s -> s.copy(labelPosition = it) } },
-        )
+        Column(Modifier.selectableGroup()) {
+            for (place in places) {
+                PlaceRow(
+                    place = place,
+                    details = placeDetails(place, formats),
+                    selected = place.id == settings.place.id,
+                    inUse = isInUse(place),
+                    canDelete = canDelete(place),
+                    onSelect = { viewModel.update { it.copy(place = place) } },
+                    onEdit = { editing = place },
+                    onDelete = { deleting = place },
+                )
+            }
+        }
+        TextButton(onClick = { editing = Place.new() }) { Text(stringResource(R.string.place_new)) }
     }
 
-    if (showPicker) {
-        PlacePickerDialog(
-            places = places,
-            selectedId = settings.place.id,
-            onSelect = { place ->
-                viewModel.update { it.copy(place = place) }
-                showPicker = false
-            },
-            isInUse = ::isInUse,
-            canDelete = ::canDelete,
-            onEdit = { editing = it },
-            onDelete = { deleting = it },
-            onNew = { editing = Place.new() },
-            onDismiss = { showPicker = false },
-        )
-    }
     deleting?.let { place ->
         AlertDialog(
             onDismissRequest = { deleting = null },
@@ -122,60 +107,48 @@ internal fun LocationSection(settings: WidgetSettings, viewModel: ConfigViewMode
             onSave = {
                 viewModel.savePlace(it)
                 editing = null
-                showPicker = false
             },
             onDismiss = { editing = null },
         )
     }
 }
 
+/** One saved place to choose with its radio button, and buttons to edit or delete it. */
 @Composable
-private fun PlacePickerDialog(
-    places: List<Place>,
-    selectedId: String,
-    onSelect: (Place) -> Unit,
-    isInUse: (Place) -> Boolean,
-    canDelete: (Place) -> Boolean,
-    onEdit: (Place) -> Unit,
-    onDelete: (Place) -> Unit,
-    onNew: () -> Unit,
-    onDismiss: () -> Unit,
+private fun PlaceRow(
+    place: Place,
+    details: String,
+    selected: Boolean,
+    inUse: Boolean,
+    canDelete: Boolean,
+    onSelect: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
 ) {
-    val formats = rememberUiFormats()
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.places_title)) },
-        text = {
-            LazyColumn(Modifier.heightIn(max = 400.dp)) {
-                items(places, key = { it.id }) { place ->
-                    ListItem(
-                        leadingContent = { RadioButton(selected = place.id == selectedId, onClick = null) },
-                        headlineContent = { Text(place.name) },
-                        supportingContent = {
-                            Column {
-                                Text(placeDetails(place, formats))
-                                if (isInUse(place)) Text(stringResource(R.string.place_in_use), style = MaterialTheme.typography.labelSmall)
-                            }
-                        },
-                        trailingContent = {
-                            Row {
-                                IconButton(onClick = { onEdit(place) }) {
-                                    Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.action_edit))
-                                }
-                                IconButton(onClick = { onDelete(place) }, enabled = canDelete(place)) {
-                                    Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.action_delete))
-                                }
-                            }
-                        },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        modifier = Modifier.clickable { onSelect(place) },
-                    )
-                }
-            }
-        },
-        confirmButton = { TextButton(onClick = onNew) { Text(stringResource(R.string.place_new)) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close)) } },
-    )
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onSelect)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Column(
+            Modifier
+                .weight(1f)
+                .padding(start = 16.dp),
+        ) {
+            Text(place.name, style = MaterialTheme.typography.bodyLarge)
+            Text(details, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (inUse) Text(stringResource(R.string.place_in_use), style = MaterialTheme.typography.labelSmall)
+        }
+        IconButton(onClick = onEdit) {
+            Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.action_edit))
+        }
+        IconButton(onClick = onDelete, enabled = canDelete) {
+            Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.action_delete))
+        }
+    }
 }
 
 @Composable
