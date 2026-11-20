@@ -38,6 +38,7 @@
     <string name="sky_horizon_outer">Outside</string>
     <string name="sky_top_elevation_label">Sky in the ring up to</string>
     <string name="sky_top_elevation_value">%1$d° above the horizon</string>
+    <string name="summary_sun">Sun</string>
     <string name="show_sun_in_ring">Sun in the ring</string>
     <string name="show_moon_in_ring">Moon in the ring</string>
     <string name="bodies_in_ring_hint">At the current time, as far from the horizon edge as it stands above the horizon. Below the horizon or higher than shown: a small dot at that edge.</string>
@@ -89,6 +90,7 @@
     <string name="ring_end_fade_hint">Lets the day/night ring fade out over its last stretch, so that the end of the shown span is not mistaken for the time right after its start. Never before the current time.</string>
 
     <!-- Color mode and tap action -->
+    <string name="section_general">General</string>
     <string name="section_color_mode">Color mode</string>
     <string name="color_mode_hint">Numerals and hands in your wallpaper\'s system colors, for a light or dark background.</string>
     <string name="color_mode_auto">Automatic</string>
@@ -100,9 +102,11 @@
     <string name="tap_action_own_app">This app</string>
     <string name="tap_action_split">Both</string>
     <string name="tap_action_split_hint">Tapping inside the rings opens the clock app, tapping outside them this app.</string>
+    <string name="summary_tap">Tap: %1$s</string>
 
     <!-- Settings file -->
-    <string name="section_reset">Defaults</string>
+    <string name="reset_confirm">Reset</string>
+    <string name="more_options">More options</string>
     <string name="reset_hint">Sets every setting of this widget except the place back to its default. Look at it in the preview; only saving keeps it.</string>
     <string name="reset_action">Reset to defaults</string>
     <string name="reset_done">Reset. Not saved yet.</string>

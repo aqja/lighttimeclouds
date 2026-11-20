@@ -37,6 +37,7 @@
     <string name="sky_horizon_outer">Fuera</string>
     <string name="sky_top_elevation_label">Cielo en el anillo hasta</string>
     <string name="sky_top_elevation_value">%1$d° sobre el horizonte</string>
+    <string name="summary_sun">Sol</string>
     <string name="show_sun_in_ring">Sol en el anillo</string>
     <string name="show_moon_in_ring">Luna en el anillo</string>
     <string name="bodies_in_ring_hint">A la hora actual, tan lejos del borde del horizonte como alto estén sobre el horizonte. Por debajo del horizonte o más altos de lo representado: un pequeño punto en ese borde.</string>
@@ -88,6 +89,7 @@
     <string name="ring_end_fade_hint">Difumina el anillo de día y noche en su último tramo, para que el final del periodo mostrado no se confunda con el momento justo después de su inicio. Nunca antes de la hora actual.</string>
 
     <!-- Color mode and tap action -->
+    <string name="section_general">General</string>
     <string name="section_color_mode">Modo de color</string>
     <string name="color_mode_hint">Números y agujas en los colores del sistema de tu fondo de pantalla, para un fondo claro u oscuro.</string>
     <string name="color_mode_auto">Automático</string>
@@ -99,9 +101,11 @@
     <string name="tap_action_own_app">Esta app</string>
     <string name="tap_action_split">Ambas</string>
     <string name="tap_action_split_hint">Al tocar dentro de los anillos se abre la app de reloj; fuera de ellos, esta app.</string>
+    <string name="summary_tap">Tocar: %1$s</string>
 
     <!-- Settings file -->
-    <string name="section_reset">Valores predeterminados</string>
+    <string name="reset_confirm">Restablecer</string>
+    <string name="more_options">Más opciones</string>
     <string name="reset_hint">Restablece todos los ajustes de este widget, salvo el lugar, a sus valores predeterminados. Puedes verlo en la vista previa; solo se aplica al guardar.</string>
     <string name="reset_action">Restablecer valores predeterminados</string>
     <string name="reset_done">Restablecido. Aún sin guardar.</string>

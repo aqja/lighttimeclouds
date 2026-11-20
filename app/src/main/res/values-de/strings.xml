@@ -37,6 +37,7 @@
     <string name="sky_horizon_outer">Außen</string>
     <string name="sky_top_elevation_label">Himmel im Ring bis</string>
     <string name="sky_top_elevation_value">%1$d° über dem Horizont</string>
+    <string name="summary_sun">Sonne</string>
     <string name="show_sun_in_ring">Sonne im Ring</string>
     <string name="show_moon_in_ring">Mond im Ring</string>
     <string name="bodies_in_ring_hint">Zur aktuellen Uhrzeit, so weit vom Horizontrand entfernt, wie sie über dem Horizont stehen. Unter dem Horizont oder höher als dargestellt: ein kleiner Punkt am jeweiligen Rand.</string>
@@ -88,6 +89,7 @@
     <string name="ring_end_fade_hint">Lässt den Tag/Nacht-Ring auf seinem letzten Stück durchsichtig auslaufen, damit das Ende der gezeigten Zeitspanne nicht mit der Zeit direkt nach ihrem Anfang verwechselt wird. Nie vor der aktuellen Uhrzeit.</string>
 
     <!-- Color mode and tap action -->
+    <string name="section_general">Allgemein</string>
     <string name="section_color_mode">Farbmodus</string>
     <string name="color_mode_hint">Ziffern und Zeiger in den Systemfarben deines Hintergrundbilds, für einen hellen oder dunklen Hintergrund.</string>
     <string name="color_mode_auto">Automatisch</string>
@@ -99,9 +101,11 @@
     <string name="tap_action_own_app">Diese App</string>
     <string name="tap_action_split">Beide</string>
     <string name="tap_action_split_hint">Antippen innerhalb der Ringe öffnet die Uhr-App, außerhalb diese App.</string>
+    <string name="summary_tap">Antippen: %1$s</string>
 
     <!-- Settings file -->
-    <string name="section_reset">Standardwerte</string>
+    <string name="reset_confirm">Zurücksetzen</string>
+    <string name="more_options">Weitere Optionen</string>
     <string name="reset_hint">Setzt alle Einstellungen dieses Widgets außer dem Ort auf die Standardwerte zurück. Ansehen kannst du das in der Vorschau; erst Speichern übernimmt es.</string>
     <string name="reset_action">Auf Standard zurücksetzen</string>
     <string name="reset_done">Zurückgesetzt. Noch nicht gespeichert.</string>

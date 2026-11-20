@@ -34,8 +34,9 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -50,6 +51,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -171,8 +173,28 @@ private fun WidgetEditorScreen(widgetId: Int, startOnSettings: Boolean, onDone: 
     }
     val currentTab = tabs.getOrNull(pagerState.currentPage)
     val scope = rememberCoroutineScope()
+    val snackbar = remember { SnackbarHostState() }
+    fun report(message: String) {
+        scope.launch { snackbar.showSnackbar(message) }
+    }
+    val resetDone = stringResource(R.string.reset_done)
+    val settingsFile = rememberSettingsFileActions(widgetId, viewModel, ::report)
+    var dialog by rememberSaveable { mutableStateOf(SettingsDialog.NONE) }
+    when (dialog) {
+        SettingsDialog.NONE -> Unit
+        SettingsDialog.SETTINGS_FILE -> SettingsFileDialog(settingsFile, onDismiss = { dialog = SettingsDialog.NONE })
+        SettingsDialog.RESET -> ResetDialog(
+            onReset = {
+                viewModel.resetToDefaults()
+                report(resetDone)
+            },
+            onDismiss = { dialog = SettingsDialog.NONE },
+        )
+    }
     ConfigScaffold(
         subtitle = subtitle,
+        actions = { if (currentTab == R.string.tab_settings) SettingsMenu(onOpen = { dialog = it }) },
+        snackbarHost = { SnackbarHost(snackbar) },
         tabs = {
             PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {
                 tabs.forEachIndexed { index, title ->
@@ -227,8 +249,7 @@ private fun WidgetEditorScreen(widgetId: Int, startOnSettings: Boolean, onDone: 
                         .padding(padding)
                         .imePadding()
                         .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                 ) {
                     SettingsContent(widgetId, settings, viewModel)
                 }
@@ -244,12 +265,33 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             stringResource(R.string.template_hint),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 8.dp),
         )
     }
 
-    LocationSection(settings, viewModel)
+    // One topic is open at a time, so the list stays short enough to see every topic.
+    var open by rememberSaveable { mutableStateOf<Int?>(null) }
+    fun isOpen(title: Int) = open == title
+    fun toggle(title: Int) {
+        open = if (open == title) null else title
+    }
 
-    Section(stringResource(R.string.section_dial)) {
+    LocationSection(settings, viewModel, expanded = isOpen(R.string.section_location), onToggle = { toggle(R.string.section_location) })
+
+    Section(
+        stringResource(R.string.section_dial),
+        summary = summaryOf(
+            stringResource(if (settings.displayMode == DisplayMode.TWELVE_HOUR) R.string.display_mode_12h else R.string.display_mode_24h),
+            stringResource(
+                when (settings.switchStrategyType) {
+                    SwitchStrategyType.FIXED_TIMES -> R.string.switch_fixed_times
+                    SwitchStrategyType.TRAILING -> R.string.switch_trailing
+                },
+            ),
+        ),
+        expanded = isOpen(R.string.section_dial),
+        onToggle = { toggle(R.string.section_dial) },
+    ) {
         SegmentedChoice(
             options = listOf(DisplayMode.TWELVE_HOUR to R.string.display_mode_12h, DisplayMode.TWENTY_FOUR_HOUR to R.string.display_mode_24h),
             selected = settings.displayMode,
@@ -278,7 +320,16 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
         }
     }
 
-    Section(stringResource(R.string.section_ring)) {
+    Section(
+        stringResource(R.string.section_ring),
+        summary = summaryOf(
+            stringResource(R.string.summary_sun).takeIf { settings.showSunInRing },
+            stringResource(R.string.section_moon).takeIf { settings.showMoonInRing },
+            stringResource(R.string.sky_top_elevation_value, settings.skyTopElevationDeg),
+        ),
+        expanded = isOpen(R.string.section_ring),
+        onToggle = { toggle(R.string.section_ring) },
+    ) {
         SwitchRow(
             label = stringResource(R.string.show_sun_in_ring),
             checked = settings.showSunInRing,
@@ -326,7 +377,18 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
         RingEndFadeSetting(settings, viewModel)
     }
 
-    Section(stringResource(R.string.section_moon)) {
+    Section(
+        stringResource(R.string.section_moon),
+        summary = stringResource(
+            when {
+                !settings.showMoon -> R.string.label_position_none
+                settings.moonStyle == MoonStyle.ON_HOUR_HAND -> R.string.moon_style_on_hour_hand
+                else -> R.string.moon_style_separate_hand
+            },
+        ),
+        expanded = isOpen(R.string.section_moon),
+        onToggle = { toggle(R.string.section_moon) },
+    ) {
         SwitchRow(
             label = stringResource(R.string.show_moon),
             checked = settings.showMoon,
@@ -354,12 +416,57 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
         }
     }
 
-    Section(stringResource(R.string.section_weather)) {
+    Section(
+        stringResource(R.string.section_weather),
+        summary = if (!settings.showWeather) {
+            stringResource(R.string.label_position_none)
+        } else {
+            summaryOf(
+                stringResource(
+                    when (settings.weatherRingPosition) {
+                        WeatherRingPosition.INSIDE -> R.string.weather_ring_inside
+                        WeatherRingPosition.OUTSIDE -> R.string.weather_ring_outside
+                    },
+                ),
+                when (settings.temperatureDisplay) {
+                    TemperatureDisplay.NONE -> null
+                    TemperatureDisplay.AIR -> stringResource(R.string.temperature_air)
+                    TemperatureDisplay.APPARENT -> stringResource(R.string.temperature_apparent)
+                },
+            )
+        },
+        expanded = isOpen(R.string.section_weather),
+        onToggle = { toggle(R.string.section_weather) },
+    ) {
         WeatherSetting(settings, viewModel)
     }
 
-    Section(stringResource(R.string.section_color_mode)) {
-        Hint(stringResource(R.string.color_mode_hint))
+    val tapAction = TapActionResolver.effective(settings.tapAction)
+    Section(
+        stringResource(R.string.section_general),
+        summary = summaryOf(
+            stringResource(
+                when (settings.colorMode) {
+                    ColorMode.AUTO -> R.string.color_mode_auto
+                    ColorMode.LIGHT -> R.string.color_mode_light
+                    ColorMode.DARK -> R.string.color_mode_dark
+                },
+            ),
+            stringResource(
+                R.string.summary_tap,
+                stringResource(
+                    when (tapAction) {
+                        TapAction.SYSTEM_CLOCK -> R.string.tap_action_system_clock
+                        TapAction.OWN_APP -> R.string.tap_action_own_app
+                        TapAction.SPLIT -> R.string.tap_action_split
+                    },
+                ),
+            ),
+        ),
+        expanded = isOpen(R.string.section_general),
+        onToggle = { toggle(R.string.section_general) },
+    ) {
+        FieldLabel(stringResource(R.string.section_color_mode))
         SegmentedChoice(
             options = listOf(
                 ColorMode.AUTO to R.string.color_mode_auto,
@@ -369,13 +476,8 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             selected = settings.colorMode,
             onSelect = { viewModel.update { s -> s.copy(colorMode = it) } },
         )
-        if (settings.colorMode == ColorMode.AUTO) {
-            Hint(stringResource(R.string.color_mode_auto_hint))
-        }
-    }
-
-    Section(stringResource(R.string.section_tap_action)) {
-        val tapAction = TapActionResolver.effective(settings.tapAction)
+        Hint(stringResource(if (settings.colorMode == ColorMode.AUTO) R.string.color_mode_auto_hint else R.string.color_mode_hint))
+        FieldLabel(stringResource(R.string.section_tap_action))
         SegmentedChoice(
             options = buildList {
                 add(TapAction.SYSTEM_CLOCK to R.string.tap_action_system_clock)
@@ -389,29 +491,10 @@ private fun SettingsContent(widgetId: Int, settings: WidgetSettings, viewModel: 
             Hint(stringResource(R.string.tap_action_split_hint))
         }
     }
-
-    SettingsFileSection(widgetId, viewModel)
-    ResetSection(viewModel)
 }
 
-/** Puts every setting but the place back to its default, to be looked at in the preview and kept by saving. */
-@Composable
-private fun ResetSection(viewModel: ConfigViewModel) {
-    var done by remember { mutableStateOf(false) }
-    Section(stringResource(R.string.section_reset)) {
-        Hint(stringResource(R.string.reset_hint))
-        OutlinedButton(
-            onClick = {
-                viewModel.resetToDefaults()
-                done = true
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(R.string.reset_action))
-        }
-        if (done) Hint(stringResource(R.string.reset_done))
-    }
-}
+/** The non-null [parts] of a closed topic's summary, joined with a middle dot. */
+private fun summaryOf(vararg parts: String?): String = parts.filterNotNull().joinToString(" · ")
 
 /**
  * Weather ring switch. Some systems let the user withhold network access per app, so switching the
@@ -480,7 +563,9 @@ private fun WeatherSetting(settings: WidgetSettings, viewModel: ConfigViewModel)
         selected = settings.summaryPosition,
         onSelect = { viewModel.update { s -> s.copy(summaryPosition = it) } },
     )
-    Hint(stringResource(R.string.summary_position_hint))
+    if (settings.summaryPosition != SummaryPosition.NONE) {
+        Hint(stringResource(R.string.summary_position_hint))
+    }
     if (!networkAllowed) {
         Text(
             stringResource(R.string.no_network_access),
@@ -546,7 +631,9 @@ private fun RingEndFadeSetting(settings: WidgetSettings, viewModel: ConfigViewMo
         steps = WidgetSettings.MAX_RING_END_FADE_DEG / RING_END_FADE_STEP - 1,
         onChange = { viewModel.update { s -> s.copy(ringEndFadeDeg = it.roundToInt()) } },
     )
-    Hint(stringResource(R.string.ring_end_fade_hint))
+    if (fade > 0) {
+        Hint(stringResource(R.string.ring_end_fade_hint))
+    }
 }
 
 /** Shows a switch time; tapping it opens a time picker dialog in the device's 12/24-hour format. */
