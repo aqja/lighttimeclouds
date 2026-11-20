@@ -563,7 +563,7 @@ private const val WIND_SHARE = 1f / 6f
 
 /** The wind's scale spans at least this much, so a breeze does not look like a gale. */
 private const val MIN_WIND_SCALE_KMH = 40.0
-private val WIND_COLOR = Color(0xFFA6EDD5)
+private val WIND_COLOR = Color(0xFFD7B0E8)
 private const val WIND_FILL_ALPHA = 0.6f
 
 /** The precipitation bars span at least this much, so a drizzle does not fill the panel. */
