@@ -7,6 +7,7 @@
 <li>Marks for solar noon and midnight, sunrise and sunset, and optionally the next alarm.</li>
 <li>Saved places with their own time zone: several widgets make a world clock. Places can be shared from Organic Maps, OsmAnd and other map apps.</li>
 <li>"Times" tab in the app with all sun events of the day, moon phase, moonrise and moonset.</li>
+<li>"Weather" tab with the forecast drawn into the sky of every hour: clouds, wind, rain and snow, air and apparent temperature, 24 hours at a time to swipe through, and the details of each hour at a tap.</li>
 <li>Light, dark or automatic color mode, numerals and hands in your Material You colors. Freely resizable, several widgets with their own settings.</li>
 </ul>
 

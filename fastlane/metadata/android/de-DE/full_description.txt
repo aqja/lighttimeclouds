@@ -7,6 +7,7 @@
 <li>Markierungen für Sonnenmittag und -mitternacht, Sonnenauf- und -untergang sowie optional den nächsten Wecker.</li>
 <li>Gespeicherte Orte mit eigener Zeitzone: Mehrere Widgets ergeben eine Weltuhr. Orte lassen sich aus Organic Maps, OsmAnd und anderen Karten-Apps teilen.</li>
 <li>Tab „Zeiten“ in der App mit allen Sonnenereignissen des Tages, Mondphase, Mondauf- und -untergang.</li>
+<li>Tab „Wetter“ mit der Vorhersage im Himmel jeder Stunde: Wolken, Wind, Regen und Schnee, Luft- und gefühlte Temperatur, 24 Stunden auf einmal zum Weiterwischen, die Details jeder Stunde auf Antippen.</li>
 <li>Farbmodus hell, dunkel oder automatisch, Ziffern und Zeiger in deinen Material-You-Farben. Frei skalierbar, mehrere Widgets mit eigenen Einstellungen.</li>
 </ul>
 

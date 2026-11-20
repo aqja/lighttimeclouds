@@ -7,6 +7,7 @@
 <li>Marcas para el mediodía y la medianoche solares, la salida y la puesta del sol y, opcionalmente, la próxima alarma.</li>
 <li>Lugares guardados con su propia zona horaria: con varios widgets se obtiene un reloj mundial. Los lugares se pueden compartir desde Organic Maps, OsmAnd y otras apps de mapas.</li>
 <li>Pestaña «Horas» en la app con todos los eventos solares del día, la fase lunar y la salida y puesta de la luna.</li>
+<li>Pestaña «Tiempo» con el pronóstico dibujado en el cielo de cada hora: nubes, viento, lluvia y nieve, temperatura del aire y aparente, 24 horas a la vez para deslizar, y los detalles de cada hora con un toque.</li>
 <li>Modo de color claro, oscuro o automático, con números y agujas en tus colores de Material You. Tamaño libre y varios widgets con ajustes propios.</li>
 </ul>
 
