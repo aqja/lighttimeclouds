@@ -373,7 +373,7 @@ private fun skySamples(start: Instant, end: Instant, settings: WidgetSettings): 
     }.toList()
 }
 
-/** Clouds of [cover] (0–1): light grey and see-through when few, dark grey and nearly opaque when overcast. */
+/** Clouds of [cover] (0–1): nearly white and see-through when few, dark grey and nearly opaque when overcast. */
 private fun cloudColor(cover: Float): Color =
     lerp(CLOUD_FEW, CLOUD_OVERCAST, cover).copy(alpha = CLOUD_MIN_ALPHA + (CLOUD_MAX_ALPHA - CLOUD_MIN_ALPHA) * cover)
 
@@ -478,7 +478,7 @@ private val LEGEND_SKY = Color(0xFF34507A)
 
 /** The share of the sky's height clouds of full cover take. */
 private const val CLOUD_SHARE = 0.4f
-private val CLOUD_FEW = Color(0xFFD5D9E0)
+private val CLOUD_FEW = Color(0xFFF5F7FA)
 private val CLOUD_OVERCAST = Color(0xFF737982)
 private const val CLOUD_MIN_ALPHA = 0.5f
 private const val CLOUD_MAX_ALPHA = 0.95f
