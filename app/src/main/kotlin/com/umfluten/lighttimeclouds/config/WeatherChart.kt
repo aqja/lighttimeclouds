@@ -55,7 +55,6 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import com.umfluten.lighttimeclouds.R
-import com.umfluten.lighttimeclouds.astro.SunMoonCalculator
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.weather.WeatherCondition
 import com.umfluten.lighttimeclouds.widget.formatTemperature
@@ -72,8 +71,8 @@ import kotlin.math.roundToInt
 
 /**
  * The forecast drawn into the sky it describes: the background is the ring's sky over time, horizon
- * at the bottom, clouds hang from its top, precipitation rises from the horizon, and air and
- * apparent temperature run across it as two lines. The chart shows [WINDOW] at a time; swiping
+ * at the bottom; clouds hang from its top and precipitation rises from the horizon, an hour per bar;
+ * air and apparent temperature run across it as two lines. The chart shows [WINDOW] at a time; swiping
  * sideways moves it through the forecast, starting a little before [now], which a line marks.
  * The hour at index [selected] is highlighted; tapping another hands its index to [onSelect].
  * A screen reader gets the chart as a slider over the hours, which says [spokenHour] for the
@@ -103,7 +102,7 @@ internal fun WeatherChart(
     val (tMin, tMax, tStep) = temperatureScale(temperatures)
     val maxPrecipitation = ceil(maxOf(MIN_PRECIPITATION_SCALE_MM, rows.maxOf { it.precipitation.precipitationMm }))
     val precipitationScaleLabel = stringResource(R.string.weather_amount, maxPrecipitation.toInt().toString())
-    val sky = remember(start, end, settings) { skySamples(rows, start, end, settings) }
+    val sky = remember(start, end, settings) { skySamples(start, end, settings) }
 
     // The window's left edge in epoch seconds, kept by time so it survives a new forecast; NaN until
     // the user moves it, and the window starts shortly before now.
@@ -168,7 +167,6 @@ internal fun WeatherChart(
                 val skyBottom = SKY_HEIGHT.toPx()
                 // Vertical gradients do not depend on x, so each sample's brushes serve wherever it is drawn.
                 val skyBrushes = sky.map { Brush.verticalGradient(it.sky, 0f, skyBottom) }
-                val cloudBrushes = sky.map { cloudBrush(it, skyBottom) }
                 val precipitationLabel = measurer.measure(precipitationScaleLabel, skyLabelStyle)
                 onDrawBehind {
                     val from = windowStart()
@@ -184,11 +182,24 @@ internal fun WeatherChart(
                     clipRect(left, 0f, size.width, skyBottom) {
                         sky.forEachIndexed { i, sample ->
                             if (sample.time !in visible) return@forEachIndexed
-                            // Edges on whole pixels, so neighboring translucent clouds neither overlap nor leave gaps.
                             val x0 = x(sample.time).roundToInt().toFloat()
                             val x1 = x(sample.time.plus(SKY_SAMPLE)).roundToInt().toFloat()
                             drawRect(skyBrushes[i], Offset(x0, 0f), Size(x1 - x0, skyBottom))
-                            drawRect(cloudBrushes[i], Offset(x0, 0f), Size(x1 - x0, skyBottom))
+                        }
+
+                        // Clouds hang from the top, an hour per bar: the more cover, the deeper and darker.
+                        for (row in rows) {
+                            if (row.time !in visible) continue
+                            val cover = (row.cloudCoverPercent / 100.0).coerceIn(0.0, 1.0).toFloat()
+                            if (cover < 0.01f) continue
+                            // Edges on whole pixels, so neighboring translucent bars neither overlap nor leave gaps.
+                            val x0 = x(row.time).roundToInt().toFloat()
+                            val x1 = x(row.time.plus(HOUR)).roundToInt().toFloat()
+                            val depth = skyBottom * CLOUD_SHARE * cover
+                            val color = cloudColor(cover)
+                            drawRect(color, Offset(x0, 0f), Size(x1 - x0, depth))
+                            // A firmer lower edge, like the precipitation's upper one.
+                            drawLine(color.copy(alpha = 1f), Offset(x0, depth), Offset(x1, depth), strokeWidth = 1.5.dp.toPx())
                         }
 
                         // Precipitation rises from the horizon, a full panel being [maxPrecipitation].
@@ -338,7 +349,7 @@ internal fun WeatherChart(
         LegendItem(stringResource(R.string.weather_column_air), labelStyle) { drawLegendLine(AIR_COLOR, dashed = false) }
         LegendItem(stringResource(R.string.weather_column_apparent), labelStyle) { drawLegendLine(APPARENT_COLOR, dashed = true) }
         LegendItem(stringResource(R.string.weather_column_clouds), labelStyle) {
-            drawRect(Brush.verticalGradient(listOf(CLOUD_DAY, CLOUD_DAY.copy(alpha = 0f))))
+            drawRect(cloudColor(0.8f), size = Size(size.width, size.height * 2f / 3f))
         }
         LegendItem(stringResource(R.string.weather_column_precipitation), labelStyle) {
             drawRect(Color(precipitationColor(TYPICAL_RAIN)), topLeft = Offset(0f, size.height / 3f))
@@ -351,57 +362,20 @@ internal fun WeatherChart(
 internal fun hourIndexAt(rows: List<HourRow>, instant: Instant): Int =
     rows.indexOfLast { !it.time.isAfter(instant) }.coerceAtLeast(0)
 
-/**
- * Cloud cover in percent at [instant], between the hourly values of [rows] (each at its full hour);
- * before the first and after the last the nearest value.
- */
-internal fun cloudCoverAt(rows: List<HourRow>, instant: Instant): Double {
-    val after = rows.indexOfFirst { it.time.isAfter(instant) }
-    if (after == 0) return rows.first().cloudCoverPercent
-    if (after < 0) return rows.last().cloudCoverPercent
-    val a = rows[after - 1]
-    val b = rows[after]
-    val share = Duration.between(a.time, instant).toMillis().toDouble() / Duration.between(a.time, b.time).toMillis()
-    return a.cloudCoverPercent + (b.cloudCoverPercent - a.cloudCoverPercent) * share
-}
+/** The sky from [time] for [SKY_SAMPLE], its colors top first. */
+private class SkySample(val time: Instant, val sky: List<Color>)
 
-/** The sky from [time] for [SKY_SAMPLE]: its colors top first, the sun's altitude and the cloud cover. */
-private class SkySample(val time: Instant, val sky: List<Color>, val sunAltitude: Double, val cloudCover: Double)
-
-private fun skySamples(rows: List<HourRow>, start: Instant, end: Instant, settings: WidgetSettings): List<SkySample> {
-    val place = settings.place
+private fun skySamples(start: Instant, end: Instant, settings: WidgetSettings): List<SkySample> {
     // The moon's phase hardly changes over the forecast.
     val moonFraction = moonFractionFor(settings, start)
     return generateSequence(start) { it.plus(SKY_SAMPLE) }.takeWhile { it.isBefore(end) }.map { t ->
-        val mid = t.plus(SKY_SAMPLE.dividedBy(2))
-        SkySample(
-            time = t,
-            sky = skyColorsAt(mid, settings, moonFraction).map(::Color).reversed(),
-            sunAltitude = SunMoonCalculator.sunAltitudeDegrees(mid, place.latitude, place.longitude),
-            cloudCover = cloudCoverAt(rows, mid),
-        )
+        SkySample(t, skyColorsAt(t.plus(SKY_SAMPLE.dividedBy(2)), settings, moonFraction).map(::Color).reversed())
     }.toList()
 }
 
-/**
- * Clouds hanging from the top of a sky [height] high: the more cover, the deeper and denser; light
- * grey by day, darker by night, so they stand out from either sky.
- */
-private fun cloudBrush(sample: SkySample, height: Float): Brush {
-    val cover = (sample.cloudCover / 100.0).coerceIn(0.0, 1.0).toFloat()
-    if (cover < 0.01f) return Brush.verticalGradient(listOf(Color.Transparent, Color.Transparent))
-    val daylight = ((sample.sunAltitude + 12.0) / 18.0).coerceIn(0.0, 1.0).toFloat()
-    val color = lerp(CLOUD_NIGHT, CLOUD_DAY, daylight)
-    val alpha = CLOUD_MIN_ALPHA + (CLOUD_MAX_ALPHA - CLOUD_MIN_ALPHA) * cover
-    val depth = height * (CLOUD_MIN_DEPTH + (CLOUD_MAX_DEPTH - CLOUD_MIN_DEPTH) * cover)
-    return Brush.verticalGradient(
-        0f to color.copy(alpha = alpha),
-        0.45f to color.copy(alpha = alpha * 0.75f),
-        1f to color.copy(alpha = 0f),
-        startY = 0f,
-        endY = depth,
-    )
-}
+/** Clouds of [cover] (0–1): light grey and see-through when few, dark grey and nearly opaque when overcast. */
+private fun cloudColor(cover: Float): Color =
+    lerp(CLOUD_FEW, CLOUD_OVERCAST, cover).copy(alpha = CLOUD_MIN_ALPHA + (CLOUD_MAX_ALPHA - CLOUD_MIN_ALPHA) * cover)
 
 /** Polyline through the hourly values, broken where a value is missing, on a dark halo so it reads on any sky. */
 private fun DrawScope.temperatureLine(
@@ -502,11 +476,11 @@ private val AIR_COLOR = Color.White
 private val APPARENT_COLOR = Color(0xFFFFD27A)
 private val LEGEND_SKY = Color(0xFF34507A)
 
-private val CLOUD_DAY = Color(0xFFEEF0F4)
-private val CLOUD_NIGHT = Color(0xFF5A606C)
-private const val CLOUD_MIN_ALPHA = 0.35f
-private const val CLOUD_MAX_ALPHA = 0.92f
-private const val CLOUD_MIN_DEPTH = 0.15f
-private const val CLOUD_MAX_DEPTH = 0.6f
+/** The share of the sky's height clouds of full cover take. */
+private const val CLOUD_SHARE = 0.4f
+private val CLOUD_FEW = Color(0xFFD5D9E0)
+private val CLOUD_OVERCAST = Color(0xFF454A53)
+private const val CLOUD_MIN_ALPHA = 0.7f
+private const val CLOUD_MAX_ALPHA = 0.95f
 
 private val TYPICAL_RAIN = WeatherCondition(0.0, 1.0, 0.0, 80.0)

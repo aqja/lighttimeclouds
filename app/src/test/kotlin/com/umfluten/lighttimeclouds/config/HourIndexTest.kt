@@ -15,10 +15,6 @@ class HourIndexTest {
         HourRow(start.plusSeconds(it * 3600), 5.0, 3.0, 50.0, WeatherCondition(50.0, 0.0, 0.0))
     }
 
-    private fun covers(vararg percent: Double) = percent.mapIndexed { i, cover ->
-        HourRow(start.plusSeconds(i * 3600L), 5.0, 3.0, cover, WeatherCondition(cover, 0.0, 0.0))
-    }
-
     @Test
     fun `a tapped time falls into the hour drawn there`() {
         val rows = hours(0, 1, 2, 3)
@@ -39,21 +35,5 @@ class HourIndexTest {
     fun `a gap in the forecast belongs to the hour before it`() {
         val rows = hours(0, 1, 5)
         assertEquals(1, hourIndexAt(rows, at(3.0)))
-    }
-
-    @Test
-    fun `cloud cover runs smoothly between the full hours`() {
-        val rows = covers(0.0, 100.0, 40.0)
-        assertEquals(0.0, cloudCoverAt(rows, at(0.0)), 1e-9)
-        assertEquals(25.0, cloudCoverAt(rows, at(0.25)), 1e-9)
-        assertEquals(100.0, cloudCoverAt(rows, at(1.0)), 1e-9)
-        assertEquals(70.0, cloudCoverAt(rows, at(1.5)), 1e-9)
-    }
-
-    @Test
-    fun `cloud cover outside the forecast keeps the nearest value`() {
-        val rows = covers(20.0, 60.0)
-        assertEquals(20.0, cloudCoverAt(rows, at(-1.0)), 1e-9)
-        assertEquals(60.0, cloudCoverAt(rows, at(1.5)), 1e-9)
     }
 }
