@@ -19,6 +19,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -135,8 +136,8 @@ private fun hourRows(forecast: WeatherForecast): List<HourRow> =
             )
         }
 
-/** One value of an hour, under its label. */
-private class HourValue(val label: String, val value: String, val note: String = "", val weight: Float = 1f)
+/** One value of an hour, under its label; [italic] for the apparent temperature, as on the dial. */
+private class HourValue(val label: String, val value: String, val note: String = "", val weight: Float = 1f, val italic: Boolean = false)
 
 @Composable
 private fun hourTitle(row: HourRow, zone: ZoneId, formats: UiFormats): String {
@@ -147,7 +148,11 @@ private fun hourTitle(row: HourRow, zone: ZoneId, formats: UiFormats): String {
 @Composable
 private fun hourValues(row: HourRow, formats: UiFormats): List<HourValue> = listOf(
     HourValue(stringResource(R.string.weather_column_air), row.temperatureC?.let(::formatTemperature) ?: NO_VALUE),
-    HourValue(stringResource(R.string.weather_column_apparent), row.apparentTemperatureC?.let(::formatTemperature) ?: NO_VALUE),
+    HourValue(
+        stringResource(R.string.weather_column_apparent),
+        row.apparentTemperatureC?.let(::formatTemperature) ?: NO_VALUE,
+        italic = true,
+    ),
     HourValue(stringResource(R.string.weather_column_clouds), stringResource(R.string.percent, row.cloudCoverPercent.roundToInt())),
     HourValue(
         stringResource(R.string.weather_column_precipitation),
@@ -177,7 +182,9 @@ private fun HourDetails(title: String, values: List<HourValue>, spoken: String) 
     ) {
         Text(title, style = MaterialTheme.typography.titleSmall)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            for (value in values) LabeledValue(value.label, value.value, value.note, value.weight)
+            for (value in values) {
+                LabeledValue(value.label, value.value, value.note, value.weight, fontStyle = FontStyle.Italic.takeIf { value.italic })
+            }
         }
     }
 }

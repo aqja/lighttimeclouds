@@ -88,8 +88,9 @@ private fun hasOutsideTemperatures(settings: WidgetSettings): Boolean =
 /** Radius (px) of the dial on a clock [size] px wide; everything but an outside temperature scale is drawn within it. */
 internal fun dialRadius(size: Int, settings: WidgetSettings): Float {
     val fullRadius = fullDialRadius(size)
-    if (!hasOutsideTemperatures(settings)) return fullRadius
-    val paint = temperaturePaint(fullRadius * OUTSIDE_TEMPERATURE_SIZE)
+    val kind = temperatureKindFor(settings)
+    if (kind == null || settings.temperaturePosition != TemperaturePosition.OUTSIDE) return fullRadius
+    val paint = temperaturePaint(fullRadius * OUTSIDE_TEMPERATURE_SIZE, kind)
     val gap = fullRadius * OUTSIDE_TEMPERATURE_GAP
     return size / 2f - gap - 2f * TEMPERATURE_ANGLES.maxOf { labelExtent(paint, OUTSIDE_TEMPERATURE_WIDEST, it) }
 }
