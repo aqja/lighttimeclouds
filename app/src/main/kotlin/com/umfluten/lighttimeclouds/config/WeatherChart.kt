@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import com.umfluten.lighttimeclouds.R
 import com.umfluten.lighttimeclouds.data.WidgetSettings
 import com.umfluten.lighttimeclouds.weather.WeatherCondition
+import com.umfluten.lighttimeclouds.widget.SkyPalette
 import com.umfluten.lighttimeclouds.widget.formatTemperature
 import com.umfluten.lighttimeclouds.widget.moonFractionFor
 import com.umfluten.lighttimeclouds.widget.precipitationColor
@@ -483,13 +484,13 @@ private fun DrawScope.temperatureLine(
         if (penDown) path.lineTo(x(time), y(value)) else path.moveTo(x(time), y(value))
         penDown = true
     }
-    val effect = if (dashed) PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx())) else null
+    val effect = if (dashed) PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 6.dp.toPx())) else null
     drawPath(path, HALO, style = Stroke(width = 4.dp.toPx(), pathEffect = effect, cap = StrokeCap.Round))
     drawPath(path, color, style = Stroke(width = 2.dp.toPx(), pathEffect = effect, cap = StrokeCap.Round))
 }
 
 private fun DrawScope.drawLegendLine(color: Color, dashed: Boolean, vertical: Boolean = false) {
-    val effect = if (dashed) PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx())) else null
+    val effect = if (dashed) PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())) else null
     if (vertical) {
         drawLine(color, Offset(size.width / 2f, 0f), Offset(size.width / 2f, size.height), strokeWidth = 2.dp.toPx())
     } else {
@@ -563,8 +564,8 @@ private const val WIND_SHARE = 1f / 6f
 
 /** The wind's scale spans at least this much, so a breeze does not look like a gale. */
 private const val MIN_WIND_SCALE_KMH = 40.0
-private val WIND_COLOR = Color(0xFFD7B0E8)
-private const val WIND_FILL_ALPHA = 0.6f
+private val WIND_COLOR = Color.White
+private const val WIND_FILL_ALPHA = 0.3f
 
 /** The precipitation bars span at least this much, so a drizzle does not fill the panel. */
 private const val MIN_PRECIPITATION_SCALE_MM = 2.0
@@ -572,14 +573,14 @@ private const val MIN_PRECIPITATION_SCALE_MM = 2.0
 /** Lines and marks on the sky, light on its dark halo. */
 private val SKY_INK = Color.White
 private val HALO = Color.Black.copy(alpha = 0.35f)
-private val AIR_COLOR = Color.White
-private val APPARENT_COLOR = Color(0xFFFFD27A)
+private val AIR_COLOR = Color(SkyPalette.GLOW_GOLD)
+private val APPARENT_COLOR = Color(SkyPalette.HORIZON_GOLD)
 private val LEGEND_SKY = Color(0xFF34507A)
 
 /** The share of the sky's height clouds of full cover take. */
 private const val CLOUD_SHARE = 1f / 3f
-private val CLOUD_FEW = Color(0xFFF5F7FA)
-private val CLOUD_OVERCAST = Color(0xFF737982)
+private val CLOUD_FEW = Color(SkyPalette.CLOUD_WHITE)
+private val CLOUD_OVERCAST = Color(SkyPalette.CLOUD_GREY)
 private const val CLOUD_MIN_ALPHA = 0.5f
 private const val CLOUD_MAX_ALPHA = 0.8f
 

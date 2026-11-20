@@ -93,18 +93,18 @@ private fun drawColorRuns(canvas: Canvas, rect: RectF, paint: Paint, colors: Int
     }
 }
 
-private val CLOUD_ON_DARK = Color.rgb(205, 208, 215)
-private val CLOUD_ON_LIGHT = Color.rgb(110, 115, 125)
+private const val CLOUD_ON_DARK = SkyPalette.CLOUD_SILVER
+private const val CLOUD_ON_LIGHT = SkyPalette.CLOUD_GREY
 private const val CLOUD_MAX_ALPHA = 230
 
-private val RAIN_COLOR = Color.rgb(40, 110, 230)
-private val SNOW_COLOR = Color.rgb(140, 90, 230)
+private const val RAIN_COLOR = SkyPalette.RAIN_BLUE
+private const val SNOW_COLOR = SkyPalette.LAVENDER
 
 /** Rain colors per [HeavyRainWarning] level. */
 private val WARNING_COLORS = mapOf(
     HeavyRainWarning.MARKED to Color.rgb(245, 200, 0),
     HeavyRainWarning.SEVERE to Color.rgb(245, 125, 0),
-    HeavyRainWarning.EXTREME to Color.rgb(220, 25, 25),
+    HeavyRainWarning.EXTREME to SkyPalette.SIGNAL_RED,
 )
 
 private const val DOT_ROWS = 2
@@ -126,7 +126,7 @@ internal fun cloudColor(condition: WeatherCondition, dark: Boolean): Int {
 
 /**
  * Precipitation color, as opaque as it is likely: blue for rain, or its heavy rain warning
- * color; violet for snow; transparent if dry. Also used by the weather chart.
+ * color; lavender for snow; transparent if dry. Also used by the weather chart.
  */
 internal fun precipitationColor(condition: WeatherCondition): Int {
     if (!condition.hasPrecipitation) return Color.TRANSPARENT
