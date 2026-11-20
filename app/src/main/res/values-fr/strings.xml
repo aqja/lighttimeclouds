@@ -359,8 +359,22 @@
     <string name="weather_column_apparent">Ressentie</string>
     <string name="weather_column_clouds">Nuages</string>
     <string name="weather_column_precipitation">Précipitations</string>
+    <string name="weather_column_wind">Vent</string>
+    <string name="weather_speed">%1$d km/h</string>
+    <string name="weather_speed_unit">km/h</string>
+    <string name="weather_gusts">rafales %1$d</string>
+    <string-array name="compass_points">
+        <item>N</item>
+        <item>NE</item>
+        <item>E</item>
+        <item>SE</item>
+        <item>S</item>
+        <item>SO</item>
+        <item>O</item>
+        <item>NO</item>
+    </string-array>
     <string name="percent">%1$d %%</string>
-    <string name="weather_probability">%1$d %% de probabilité</string>
+    <string name="weather_probability">%1$d %% prob.</string>
     <string name="weather_amount">%1$s mm</string>
     <string name="weather_amount_snow">❄ %1$s mm</string>
     <string name="forecast_loaded">Prévisions chargées</string>

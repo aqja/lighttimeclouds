@@ -49,6 +49,7 @@ import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -70,8 +71,9 @@ import kotlin.math.roundToInt
 
 /**
  * The forecast drawn into the sky it describes: the background is the ring's sky over time, horizon
- * at the bottom; clouds hang from its top and precipitation rises from the horizon, an hour per bar;
- * air and apparent temperature run across it as two lines. The chart shows [WINDOW] at a time; swiping
+ * at the bottom. Its height holds three bands: clouds hang from the top and precipitation rises from
+ * the horizon, an hour per bar, and between them the wind spreads around the middle as a violin,
+ * mean wind filled, gusts outlined. Air and apparent temperature run across it all as two lines. The chart shows [WINDOW] at a time; swiping
  * sideways moves it through the forecast, starting a little before [now], which a line marks.
  * The hour at index [selected] is highlighted; tapping another hands its index to [onSelect].
  * A screen reader gets the chart as a slider over the hours, which says [spokenHour] for the
@@ -102,6 +104,10 @@ internal fun WeatherChart(
     val precipitationScaleLabel = stringResource(R.string.weather_amount, maxPrecipitation.toInt().toString())
     val fullCoverLabel = stringResource(R.string.percent, 100)
     val halfCoverLabel = stringResource(R.string.percent, 50)
+    val winds = rows.flatMap { listOfNotNull(it.windSpeedKmh, it.windGustsKmh) }
+    val maxWind = maxOf(MIN_WIND_SCALE_KMH, ceil((winds.maxOrNull() ?: 0.0) / 10.0) * 10.0)
+    val windScaleLabel = maxWind.toInt().toString()
+    val windUnitLabel = stringResource(R.string.weather_speed_unit)
     val sky = remember(start, end, settings) { skySamples(start, end, settings) }
 
     // The window's left edge in epoch seconds, kept by time so it survives a new forecast; NaN until
@@ -169,11 +175,16 @@ internal fun WeatherChart(
                 val skyBottom = SKY_HEIGHT.toPx()
                 // Vertical gradients do not depend on x, so each sample's brushes serve wherever it is drawn.
                 val skyBrushes = sky.map { Brush.verticalGradient(it.sky, 0f, skyBottom) }
-                // Right axis: depth of the clouds by cover, height of the precipitation bars.
+                // Right axis: depth of the clouds by cover, the wind's scale on either side of the middle
+                // with its unit there, height of the precipitation bars. Where two scales share a line,
+                // each label stands on the side of its band.
                 val rightLabels = listOf(
-                    measurer.measure(halfCoverLabel, labelStyle) to CLOUD_SHARE / 2f,
-                    measurer.measure(fullCoverLabel, labelStyle) to CLOUD_SHARE,
-                    measurer.measure(precipitationScaleLabel, labelStyle) to 1f - PRECIPITATION_SHARE,
+                    AxisLabel(measurer.measure(halfCoverLabel, labelStyle), CLOUD_SHARE / 2f, 0f),
+                    AxisLabel(measurer.measure(fullCoverLabel, labelStyle), CLOUD_SHARE, -1f),
+                    AxisLabel(measurer.measure(windScaleLabel, labelStyle), WIND_CENTER - WIND_SHARE, 1f),
+                    AxisLabel(measurer.measure(windUnitLabel, labelStyle), WIND_CENTER, 0f),
+                    AxisLabel(measurer.measure(windScaleLabel, labelStyle), WIND_CENTER + WIND_SHARE, -1f),
+                    AxisLabel(measurer.measure(precipitationScaleLabel, labelStyle), 1f - PRECIPITATION_SHARE, 1f),
                 )
                 onDrawBehind {
                     val right = size.width - rightGutter
@@ -229,6 +240,24 @@ internal fun WeatherChart(
                                 strokeWidth = 1.5.dp.toPx(),
                             )
                         }
+                        // The wind around the middle: mean wind filled, gusts outlined, scaled to [maxWind].
+                        val windCenter = skyBottom * WIND_CENTER
+                        val windReach = skyBottom * WIND_SHARE
+                        drawLine(
+                            SKY_INK.copy(alpha = 0.3f),
+                            Offset(left, windCenter), Offset(right, windCenter),
+                            strokeWidth = 1f,
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(2.dp.toPx(), 3.dp.toPx())),
+                        )
+                        val meanWind = rows.map { x(it.time) to it.windSpeedKmh?.let { v -> (v / maxWind).toFloat() * windReach } }
+                        // A gust is the strongest of its hour, so it stands in the middle of it.
+                        val gusts = rows.map { x(it.time.plus(HALF_HOUR)) to it.windGustsKmh?.let { v -> (v / maxWind).toFloat() * windReach } }
+                        for (path in violinPaths(gusts, windCenter)) {
+                            drawPath(path, HALO, style = Stroke(width = 2.5.dp.toPx()))
+                            drawPath(path, WIND_COLOR, style = Stroke(width = 1.dp.toPx()))
+                        }
+                        for (path in violinPaths(meanWind, windCenter)) drawPath(path, WIND_COLOR.copy(alpha = WIND_FILL_ALPHA))
+
                         // Scale of the precipitation bars, labeled on the right axis.
                         drawLine(
                             SKY_INK.copy(alpha = 0.35f),
@@ -281,10 +310,11 @@ internal fun WeatherChart(
                         }
                     }
 
-                    for ((label, share) in rightLabels) {
+                    for ((label, share, side) in rightLabels) {
                         val ly = skyBottom * share
                         drawLine(gridColor, Offset(right, ly), Offset(right + RIGHT_TICK.toPx(), ly), strokeWidth = 1.5f)
-                        drawText(label, topLeft = Offset(right + RIGHT_TICK.toPx() + 2.dp.toPx(), ly - label.size.height / 2f))
+                        val top = ly - label.size.height / 2f + side * label.size.height / 2f
+                        drawText(label, topLeft = Offset(right + RIGHT_TICK.toPx() + 2.dp.toPx(), top))
                     }
 
                     // Temperature labels in the gutter, which stays in place.
@@ -361,6 +391,14 @@ internal fun WeatherChart(
         LegendItem(stringResource(R.string.weather_column_precipitation), labelStyle) {
             drawRect(Color(precipitationColor(TYPICAL_RAIN)), topLeft = Offset(0f, size.height / 3f))
         }
+        LegendItem(stringResource(R.string.weather_column_wind), labelStyle) {
+            val half = size.height / 2f
+            val swatch = listOf(0f to half * 0.3f, size.width / 2f to half * 0.8f, size.width to half * 0.3f)
+            for (path in violinPaths(swatch, half)) drawPath(path, WIND_COLOR.copy(alpha = WIND_FILL_ALPHA))
+            for (path in violinPaths(swatch.map { (x, w) -> x to w + 1.dp.toPx() }, half)) {
+                drawPath(path, WIND_COLOR, style = Stroke(width = 1.dp.toPx()))
+            }
+        }
         LegendItem(stringResource(R.string.weather_legend_now), labelStyle) { drawLegendLine(SKY_INK, dashed = false, vertical = true) }
     }
 }
@@ -383,6 +421,49 @@ private fun skySamples(start: Instant, end: Instant, settings: WidgetSettings): 
 /** Clouds of [cover] (0–1): nearly white and see-through when few, dark grey and nearly opaque when overcast. */
 private fun cloudColor(cover: Float): Color =
     lerp(CLOUD_FEW, CLOUD_OVERCAST, cover).copy(alpha = CLOUD_MIN_ALPHA + (CLOUD_MAX_ALPHA - CLOUD_MIN_ALPHA) * cover)
+
+/** A label on the right axis at [share] of the sky's height, centered on it ([side] 0), above (−1) or below (1). */
+private data class AxisLabel(val layout: TextLayoutResult, val share: Float, val side: Float)
+
+/**
+ * Closed outlines symmetric around [center]: through [points] of x and half width (null where a value
+ * is missing, which breaks the outline), smoothed as a Catmull-Rom spline that never crosses [center].
+ */
+internal fun violinPaths(points: List<Pair<Float, Float?>>, center: Float): List<Path> {
+    val runs = mutableListOf<MutableList<Offset>>()
+    var run: MutableList<Offset>? = null
+    for ((x, half) in points) {
+        if (half == null) {
+            run = null
+            continue
+        }
+        if (run == null) run = mutableListOf<Offset>().also(runs::add)
+        run += Offset(x, half)
+    }
+    return runs.map { pts ->
+        Path().apply {
+            moveTo(pts.first().x, center - pts.first().y)
+            smoothThrough(pts) { center - it }
+            lineTo(pts.last().x, center + pts.last().y)
+            smoothThrough(pts.asReversed()) { center + it }
+            close()
+        }
+    }
+}
+
+/** Continues the path from the first of [pts] through the rest, y given by [y] of each half width. */
+private fun Path.smoothThrough(pts: List<Offset>, y: (Float) -> Float) {
+    for (i in 0 until pts.lastIndex) {
+        val p0 = pts[maxOf(i - 1, 0)]
+        val p1 = pts[i]
+        val p2 = pts[i + 1]
+        val p3 = pts[minOf(i + 2, pts.lastIndex)]
+        // Control widths kept at zero or more, so the outline never swings across the middle.
+        val w1 = maxOf(0f, p1.y + (p2.y - p0.y) / 6f)
+        val w2 = maxOf(0f, p2.y - (p3.y - p1.y) / 6f)
+        cubicTo(p1.x + (p2.x - p0.x) / 6f, y(w1), p2.x - (p3.x - p1.x) / 6f, y(w2), p2.x, y(p2.y))
+    }
+}
 
 /** Polyline through the hourly values, broken where a value is missing, on a dark halo so it reads on any sky. */
 private fun DrawScope.temperatureLine(
@@ -451,6 +532,7 @@ private fun temperatureScale(values: List<Double>): Triple<Double, Double, Doubl
 private fun seconds(instant: Instant): Double = instant.epochSecond + instant.nano / 1e9
 
 private val HOUR: Duration = Duration.ofHours(1)
+private val HALF_HOUR: Duration = Duration.ofMinutes(30)
 
 /** The span the chart's width shows. */
 private val WINDOW: Duration = Duration.ofHours(24)
@@ -473,7 +555,16 @@ private const val SELECTED_HOUR_ALPHA = 0.22f
 private const val MIN_TEMPERATURE_SPAN = 10.0
 
 /** The share of the sky's height a full precipitation bar takes. */
-private const val PRECIPITATION_SHARE = 0.3f
+private const val PRECIPITATION_SHARE = 1f / 3f
+
+/** Where the wind's middle lies, as a share of the sky's height from the top, and how far it reaches either way. */
+private const val WIND_CENTER = 0.5f
+private const val WIND_SHARE = 1f / 6f
+
+/** The wind's scale spans at least this much, so a breeze does not look like a gale. */
+private const val MIN_WIND_SCALE_KMH = 40.0
+private val WIND_COLOR = Color(0xFFA6EDD5)
+private const val WIND_FILL_ALPHA = 0.6f
 
 /** The precipitation bars span at least this much, so a drizzle does not fill the panel. */
 private const val MIN_PRECIPITATION_SCALE_MM = 2.0
@@ -486,7 +577,7 @@ private val APPARENT_COLOR = Color(0xFFFFD27A)
 private val LEGEND_SKY = Color(0xFF34507A)
 
 /** The share of the sky's height clouds of full cover take. */
-private const val CLOUD_SHARE = 0.4f
+private const val CLOUD_SHARE = 1f / 3f
 private val CLOUD_FEW = Color(0xFFF5F7FA)
 private val CLOUD_OVERCAST = Color(0xFF737982)
 private const val CLOUD_MIN_ALPHA = 0.5f

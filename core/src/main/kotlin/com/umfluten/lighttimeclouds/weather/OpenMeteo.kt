@@ -23,20 +23,21 @@ import java.util.Locale
 object OpenMeteo {
 
     /**
-     * Hourly cloud cover, precipitation (amount, snow, probability), air/apparent temperature and
-     * wind gusts from 24 h back to 48 h ahead, timestamps as Unix seconds. That covers the 12 h window (which
+     * Hourly cloud cover, precipitation (amount, snow, probability), air/apparent temperature, mean
+     * wind (speed and direction) and wind gusts from 24 h back to 48 h ahead, timestamps as Unix seconds. That covers the 12 h window (which
      * can start up to 12 h before now) and the whole local day in 24 h mode even for a cache that
      * is half a day old. The coordinates leave the device rounded to three decimals, about 100 m:
      * the forecast models are far coarser, so more would only say more about the place.
      */
     fun forecastUrl(latitude: Double, longitude: Double): String =
         "https://api.open-meteo.com/v1/forecast?latitude=%.3f&longitude=%.3f".format(Locale.ROOT, latitude, longitude) +
-            "&hourly=cloud_cover,precipitation,snowfall,precipitation_probability,temperature_2m,apparent_temperature,wind_gusts_10m" +
+            "&hourly=cloud_cover,precipitation,snowfall,precipitation_probability,temperature_2m,apparent_temperature,wind_gusts_10m," +
+            "wind_speed_10m,wind_direction_10m" +
             "&timeformat=unixtime&past_hours=24&forecast_hours=48"
 
     /**
      * Parses a forecast response for the requested [latitude]/[longitude]. Hours missing cloud
-     * cover or precipitation are dropped; probability, temperatures and gusts may be null. Throws
+     * cover or precipitation are dropped; probability, temperatures and wind may be null. Throws
      * [IllegalArgumentException] for error responses or unexpected JSON.
      */
     fun parse(body: String, latitude: Double, longitude: Double, fetchedAt: Instant): WeatherForecast {
@@ -57,6 +58,8 @@ object OpenMeteo {
         val temperature = hourly["temperature_2m"] as? JsonArray
         val apparent = hourly["apparent_temperature"] as? JsonArray
         val gusts = hourly["wind_gusts_10m"] as? JsonArray
+        val windSpeed = hourly["wind_speed_10m"] as? JsonArray
+        val windDirection = hourly["wind_direction_10m"] as? JsonArray
         fun JsonArray?.at(i: Int): Double? = this?.getOrNull(i)?.jsonPrimitive?.doubleOrNull
         val hours = times.indices.mapNotNull { i ->
             HourlyWeather(
@@ -68,6 +71,8 @@ object OpenMeteo {
                 temperatureC = temperature.at(i),
                 apparentTemperatureC = apparent.at(i),
                 windGustsKmh = gusts.at(i),
+                windSpeedKmh = windSpeed.at(i),
+                windDirectionDeg = windDirection.at(i),
             )
         }.sortedBy { it.time }
         return WeatherForecast(latitude, longitude, fetchedAt, hours)
@@ -90,6 +95,8 @@ object OpenMeteo {
                         hour.temperatureC?.let { put("temperature", it) }
                         hour.apparentTemperatureC?.let { put("apparent_temperature", it) }
                         hour.windGustsKmh?.let { put("wind_gusts", it) }
+                        hour.windSpeedKmh?.let { put("wind_speed", it) }
+                        hour.windDirectionDeg?.let { put("wind_direction", it) }
                     },
                 )
             }
@@ -117,6 +124,8 @@ object OpenMeteo {
                     temperatureC = hour.optionalDouble("temperature"),
                     apparentTemperatureC = hour.optionalDouble("apparent_temperature"),
                     windGustsKmh = hour.optionalDouble("wind_gusts"),
+                    windSpeedKmh = hour.optionalDouble("wind_speed"),
+                    windDirectionDeg = hour.optionalDouble("wind_direction"),
                 )
             },
         )

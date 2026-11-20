@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -103,19 +104,25 @@ internal fun WeatherTab(settings: WidgetSettings, padding: PaddingValues) {
 
 private val HOUR: Duration = Duration.ofHours(1)
 
-/** One hour from [time] on: temperatures and cloud cover at [time], precipitation during the hour after it. */
+/**
+ * One hour from [time] on: temperatures, cloud cover and mean wind at [time], precipitation and the
+ * strongest gust during the hour after it.
+ */
 internal data class HourRow(
     val time: Instant,
     val temperatureC: Double?,
     val apparentTemperatureC: Double?,
     val cloudCoverPercent: Double,
     val precipitation: WeatherCondition,
+    val windSpeedKmh: Double? = null,
+    val windDirectionDeg: Double? = null,
+    val windGustsKmh: Double? = null,
 )
 
 /**
  * Pairs each step with the next one: Open-Meteo gives temperatures and cloud cover as values at the
- * full hour, but precipitation as the sum of the hour *before* it, so the hour from 14:00 to 15:00
- * takes its precipitation from the 15:00 step.
+ * full hour, but precipitation and gusts for the hour *before* it, so the hour from 14:00 to 15:00
+ * takes them from the 15:00 step.
  */
 private fun hourRows(forecast: WeatherForecast): List<HourRow> =
     forecast.hours.zipWithNext()
@@ -133,6 +140,9 @@ private fun hourRows(forecast: WeatherForecast): List<HourRow> =
                     precipitationProbabilityPercent = end.precipitationProbabilityPercent,
                     temperatureC = start.temperatureC,
                 ),
+                windSpeedKmh = start.windSpeedKmh,
+                windDirectionDeg = start.windDirectionDeg,
+                windGustsKmh = end.windGustsKmh,
             )
         }
 
@@ -147,10 +157,11 @@ private fun hourTitle(row: HourRow, zone: ZoneId, formats: UiFormats): String {
 
 @Composable
 private fun hourValues(row: HourRow, formats: UiFormats): List<HourValue> = listOf(
-    HourValue(stringResource(R.string.weather_column_air), row.temperatureC?.let(::formatTemperature) ?: NO_VALUE),
+    HourValue(stringResource(R.string.weather_column_air), row.temperatureC?.let(::formatTemperature) ?: NO_VALUE, weight = AIR_WEIGHT),
     HourValue(
         stringResource(R.string.weather_column_apparent),
         row.apparentTemperatureC?.let(::formatTemperature) ?: NO_VALUE,
+        weight = APPARENT_WEIGHT,
         italic = true,
     ),
     HourValue(stringResource(R.string.weather_column_clouds), stringResource(R.string.percent, row.cloudCoverPercent.roundToInt())),
@@ -161,7 +172,23 @@ private fun hourValues(row: HourRow, formats: UiFormats): List<HourValue> = list
             ?.let { stringResource(R.string.weather_probability, it.roundToInt()) }.orEmpty(),
         weight = PRECIPITATION_WEIGHT,
     ),
+    HourValue(
+        stringResource(R.string.weather_column_wind),
+        row.windSpeedKmh?.let { stringResource(R.string.weather_speed, it.roundToInt()) } ?: NO_VALUE,
+        note = listOfNotNull(
+            row.windDirectionDeg?.let { compassPoint(it) },
+            row.windGustsKmh?.let { stringResource(R.string.weather_gusts, it.roundToInt()) },
+        ).joinToString(", "),
+        weight = WIND_WEIGHT,
+    ),
 )
+
+/** The nearest of the eight compass points for a wind from [degrees], clockwise from north. */
+@Composable
+private fun compassPoint(degrees: Double): String {
+    val points = stringArrayResource(R.array.compass_points)
+    return points[Math.floorMod((degrees / 45.0).roundToInt(), points.size)]
+}
 
 /** [title] and [values] as one sentence for a screen reader, leaving out what has no value. */
 private fun spokenHour(title: String, values: List<HourValue>): String =
@@ -197,5 +224,10 @@ private fun precipitationText(condition: WeatherCondition, formats: UiFormats): 
     return stringResource(if (condition.isSnow) R.string.weather_amount_snow else R.string.weather_amount, amount)
 }
 
+// Widths of the five columns by what they hold: a short temperature, longer labels for the apparent
+// one in some languages, amounts with a note below for precipitation and wind.
+private const val AIR_WEIGHT = 0.8f
+private const val APPARENT_WEIGHT = 1.1f
 private const val PRECIPITATION_WEIGHT = 1.5f
+private const val WIND_WEIGHT = 1.4f
 private const val NO_VALUE = "–"
