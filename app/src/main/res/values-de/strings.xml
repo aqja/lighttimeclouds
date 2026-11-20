@@ -107,7 +107,7 @@
     <string name="more_options">Weitere Optionen</string>
     <string name="reset_hint">Setzt alle Einstellungen dieses Widgets außer dem Ort auf die Standardwerte zurück. Ansehen kannst du das in der Vorschau; erst Speichern übernimmt es.</string>
     <string name="reset_action">Auf Standard zurücksetzen</string>
-    <string name="section_manage_settings">Einstellungen</string>
+    <string name="section_manage_settings">Sichern und zurücksetzen</string>
     <string name="reset_done">Zurückgesetzt. Noch nicht gespeichert.</string>
     <string name="section_settings_file">Einstellungsdatei</string>
     <string name="settings_file_hint">Die Datei enthält die Einstellungen dieses Widgets und alle Orte mit ihren Koordinaten. Damit ziehst du auf ein neues Gerät um oder überträgst die Einstellungen auf ein anderes Widget; ein Backup über das System gibt es nicht.</string>

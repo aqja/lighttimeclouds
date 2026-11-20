@@ -57,7 +57,7 @@ internal fun rememberSettingsFileActions(widgetId: Int, viewModel: ConfigViewMod
 }
 
 /**
- * The last topic of the settings tab: export or import the settings file, or put the settings back
+ * The last topic of the settings tab, to back up and reset: export or import the settings file, or put the settings back
  * to their defaults, which [onReset] asks about first.
  */
 @Composable
