@@ -1,0 +1,24 @@
+# Checks dependencies once a month and bundles everything found into one
+# pull request per ecosystem. New releases must be at least 14 days old
+# before they are proposed. Security updates are not delayed by this.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 14
+    groups:
+      gradle:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 14
+    groups:
+      actions:
+        patterns: ["*"]
