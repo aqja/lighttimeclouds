@@ -405,6 +405,7 @@
     <string name="moon_phase_waning_gibbous">Gibosa menguante</string>
     <string name="moon_phase_last_quarter">Cuarto menguante</string>
     <string name="moon_phase_waning_crescent">Luna menguante</string>
+    <string name="moon_phases_hint">Luna nueva, cuartos y luna llena en su momento exacto; las fases intermedias, desde su inicio.</string>
 
     <string name="solar_midnight">Medianoche solar</string>
     <string name="astronomical_dawn">Alba astronómica</string>

@@ -421,6 +421,7 @@
     <string name="moon_phase_waning_gibbous">Waning gibbous</string>
     <string name="moon_phase_last_quarter">Last quarter</string>
     <string name="moon_phase_waning_crescent">Waning crescent</string>
+    <string name="moon_phases_hint">New moon, the quarters and full moon at their exact moment; the phases between them from when they begin.</string>
 
     <string name="solar_midnight">Solar midnight</string>
     <string name="astronomical_dawn">Astronomical dawn</string>

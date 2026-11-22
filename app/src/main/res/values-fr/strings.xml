@@ -406,6 +406,7 @@
     <string name="moon_phase_waning_gibbous">Gibbeuse décroissante</string>
     <string name="moon_phase_last_quarter">Dernier quartier</string>
     <string name="moon_phase_waning_crescent">Dernier croissant</string>
+    <string name="moon_phases_hint">Nouvelle lune, quartiers et pleine lune à l’instant exact ; les phases intermédiaires, dès leur début.</string>
 
     <string name="solar_midnight">Minuit solaire</string>
     <string name="astronomical_dawn">Aube astronomique</string>
