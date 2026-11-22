@@ -115,12 +115,13 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
                     .sortedBy { it.second }
             }
             Row(rowModifier.padding(top = 8.dp), horizontalArrangement = spacing) {
-                // The sooner first, time and date as for moonrise and moonset.
+                // The sooner first. Days or weeks ahead the day matters more than the time, so unlike
+                // moonrise and moonset the date leads.
                 nextPhases.forEach { (label, time) ->
                     LabeledValue(
                         label = stringResource(label),
-                        value = formats.timeOfDay(time.hour * 60 + time.minute),
-                        note = formats.date(time),
+                        value = formats.date(time),
+                        note = formats.timeOfDay(time.hour * 60 + time.minute),
                     )
                 }
             }
