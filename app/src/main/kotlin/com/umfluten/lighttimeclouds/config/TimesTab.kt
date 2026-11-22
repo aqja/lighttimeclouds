@@ -37,9 +37,10 @@ import java.time.Instant
 import java.time.ZonedDateTime
 
 /**
- * The moon's phase, rise and set side by side, below them the next full and new moon, then all sun
+ * The moon's phase, its rise and set, and the next full and new moon, one row each, then all sun
  * events of the current solar day, at the widget's (possibly not yet saved) place, in that place's
- * time zone. Dates only show where they change. Past events are dimmed, the next one is highlighted; refreshes every minute.
+ * time zone. Dates only show where they change. Past events are dimmed, the next one is
+ * highlighted; refreshes every minute.
  */
 @Composable
 internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
@@ -75,13 +76,17 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
         }
         item {
             val illumination = SunMoonCalculator.moonIllumination(now.toInstant())
-            Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Three rows of two columns at most: the phase, moonrise and moonset, the next full and new moon.
+            val rowModifier = Modifier.padding(horizontal = 16.dp)
+            val spacing = Arrangement.spacedBy(8.dp)
+            Row(rowModifier, horizontalArrangement = spacing) {
                 LabeledValue(
                     label = stringResource(R.string.moon_phase),
                     value = stringResource(moonPhaseLabel(SunMoonCalculator.moonPhaseOf(illumination.phase))),
                     note = stringResource(R.string.moon_illuminated, (illumination.fraction * 100).toInt()),
-                    weight = MOON_PHASE_WEIGHT,
                 )
+            }
+            Row(rowModifier.padding(top = 8.dp), horizontalArrangement = spacing) {
                 if (moonEvents.isEmpty()) {
                     val up = SunMoonCalculator.moonAltitudeDegrees(now.toInstant(), place.latitude, place.longitude) > 0
                     LabeledValue(
@@ -94,31 +99,30 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
                     val isNext = index == nextMoonIndex
                     LabeledValue(
                         label = stringResource(if (event.type == MoonEventType.MOONRISE) R.string.moonrise else R.string.moonset),
-                        // Without the zone, which the line above names, so three columns fit in any language.
+                        // Without the zone, which the heading names.
                         value = formats.timeOfDay(local.hour * 60 + local.minute),
-                        note = if (local.toLocalDate() != now.toLocalDate()) formats.date(local) else "",
+                        note = formats.date(local),
                         color = timelineColor(highlighted = isNext, past = event.instant.isBefore(now.toInstant())),
                         fontWeight = if (isNext) FontWeight.Bold else null,
                     )
                 }
+                // A lone moonrise or moonset keeps the width of one column.
+                if (moonEvents.size == 1) Spacer(Modifier.weight(1f))
             }
-            // The next full and new moon, the sooner first, below the phase and the rise/set columns.
             val nextPhases = remember(now) {
                 listOf(R.string.moon_phase_full to FULL_MOON, R.string.moon_phase_new to NEW_MOON)
                     .map { (label, phase) -> label to SunMoonCalculator.nextMoonPhase(now.toInstant(), phase).atZone(now.zone) }
                     .sortedBy { it.second }
             }
-            Row(Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                nextPhases.forEachIndexed { index, (label, time) ->
+            Row(rowModifier.padding(top = 8.dp), horizontalArrangement = spacing) {
+                // The sooner first, time and date as for moonrise and moonset.
+                nextPhases.forEach { (label, time) ->
                     LabeledValue(
                         label = stringResource(label),
-                        value = formats.date(time),
-                        note = formats.timeOfDay(time.hour * 60 + time.minute),
-                        weight = if (index == 0) MOON_PHASE_WEIGHT else 1f,
+                        value = formats.timeOfDay(time.hour * 60 + time.minute),
+                        note = formats.date(time),
                     )
                 }
-                // Keeps the columns in line with the row above.
-                Spacer(Modifier.weight(1f))
             }
             HorizontalDivider(Modifier.padding(top = 8.dp))
         }
@@ -153,7 +157,6 @@ private val SKY_SLICE_SHAPE = RoundedCornerShape(3.dp)
  */
 private const val SKY_SLICE_TOP_DEG = 30.0
 private val SKY_SLICE_SIZE = 24.dp
-private const val MOON_PHASE_WEIGHT = 1.4f
 private const val NEW_MOON = 0.0
 private const val FULL_MOON = 0.5
 
