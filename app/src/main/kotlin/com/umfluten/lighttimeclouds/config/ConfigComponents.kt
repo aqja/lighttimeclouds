@@ -123,14 +123,7 @@ internal fun Section(title: String, summary: String, expanded: Boolean, onToggle
         Row(
             Modifier
                 .fillMaxWidth()
-                .clickable(role = Role.Button, onClick = onToggle)
-                .semantics {
-                    if (expanded) {
-                        collapse { onToggle(); true }
-                    } else {
-                        expand { onToggle(); true }
-                    }
-                }
+                .expandable(expanded, onToggle)
                 .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -146,8 +139,7 @@ internal fun Section(title: String, summary: String, expanded: Boolean, onToggle
                     )
                 }
             }
-            val turn by animateFloatAsState(if (expanded) 180f else 0f, label = "section arrow")
-            Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, modifier = Modifier.rotate(turn))
+            ExpandArrow(expanded)
         }
         AnimatedVisibility(expanded) {
             Column(Modifier.padding(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -156,6 +148,24 @@ internal fun Section(title: String, summary: String, expanded: Boolean, onToggle
         }
         HorizontalDivider()
     }
+}
+
+/** Opens and closes on a tap, and tells accessibility services that it does. */
+internal fun Modifier.expandable(expanded: Boolean, onToggle: () -> Unit): Modifier = this
+    .clickable(role = Role.Button, onClick = onToggle)
+    .semantics {
+        if (expanded) {
+            collapse { onToggle(); true }
+        } else {
+            expand { onToggle(); true }
+        }
+    }
+
+/** The arrow of something [expandable]: down while closed, turning up as it opens. */
+@Composable
+internal fun ExpandArrow(expanded: Boolean) {
+    val turn by animateFloatAsState(if (expanded) 180f else 0f, label = "expand arrow")
+    Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, modifier = Modifier.rotate(turn))
 }
 
 /** Single-choice buttons; each option pairs a value with the string resource of its label. */

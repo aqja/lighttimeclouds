@@ -104,6 +104,20 @@ class SunMoonCalculatorTest {
         assertEquals(29.5, Duration.between(fullMoon, SunMoonCalculator.nextMoonPhase(fullMoon.plusSeconds(60), 0.5)).seconds / 86_400.0, 0.4)
     }
 
+    @Test
+    fun `upcoming moon phases name each phase once, in order, at its moment or beginning`() {
+        val start = ZonedDateTime.of(2026, 11, 22, 12, 0, 0, 0, ZoneOffset.UTC).toInstant()
+        val upcoming = SunMoonCalculator.upcomingMoonPhases(start)
+
+        assertEquals(SunMoonCalculator.MoonPhase.entries.toSet(), upcoming.map { it.first }.toSet())
+        assertEquals(upcoming.sortedBy { it.second }, upcoming)
+        assertTrue(upcoming.all { it.second.isAfter(start) && Duration.between(start, it.second).toDays() < 30 })
+        for ((phase, instant) in upcoming) {
+            // Just after its moment or beginning the phase carries its own name.
+            assertEquals(phase, SunMoonCalculator.moonPhaseOf(SunMoonCalculator.moonIllumination(instant.plusSeconds(60)).phase))
+        }
+    }
+
     /** The times themselves are checked against DE440s in [EphemerisReferenceTest]. */
     @Test
     fun `moonrise and moonset are horizon crossings in the right direction`() {

@@ -1,13 +1,16 @@
 package com.umfluten.lighttimeclouds.config
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,7 +20,12 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -37,7 +45,7 @@ import java.time.Instant
 import java.time.ZonedDateTime
 
 /**
- * The moon's phase, its rise and set, and the next full and new moon, one row each, then all sun
+ * The moon's phase, which opens to the dates of the coming cycle, its rise and set, then all sun
  * events of the current solar day, at the widget's (possibly not yet saved) place, in that place's
  * time zone. Dates only show where they change. Past events are dimmed, the next one is
  * highlighted; refreshes every minute.
@@ -76,15 +84,27 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
         }
         item {
             val illumination = SunMoonCalculator.moonIllumination(now.toInstant())
-            // Three rows of two columns at most: the phase, moonrise and moonset, the next full and new moon.
+            // The phase, which opens to the coming cycle, then moonrise and moonset.
             val rowModifier = Modifier.padding(horizontal = 16.dp)
             val spacing = Arrangement.spacedBy(8.dp)
-            Row(rowModifier, horizontalArrangement = spacing) {
+            var phasesOpen by rememberSaveable { mutableStateOf(false) }
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .expandable(phasesOpen) { phasesOpen = !phasesOpen }
+                    .then(rowModifier),
+                horizontalArrangement = spacing,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 LabeledValue(
                     label = stringResource(R.string.moon_phase),
                     value = stringResource(moonPhaseLabel(SunMoonCalculator.moonPhaseOf(illumination.phase))),
                     note = stringResource(R.string.moon_illuminated, (illumination.fraction * 100).toInt()),
                 )
+                ExpandArrow(phasesOpen)
+            }
+            AnimatedVisibility(phasesOpen) {
+                MoonPhaseList(now, formats, rowModifier)
             }
             Row(rowModifier.padding(top = 8.dp), horizontalArrangement = spacing) {
                 if (moonEvents.isEmpty()) {
@@ -108,22 +128,6 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
                 }
                 // A lone moonrise or moonset keeps the width of one column.
                 if (moonEvents.size == 1) Spacer(Modifier.weight(1f))
-            }
-            val nextPhases = remember(now) {
-                listOf(R.string.moon_phase_full to FULL_MOON, R.string.moon_phase_new to NEW_MOON)
-                    .map { (label, phase) -> label to SunMoonCalculator.nextMoonPhase(now.toInstant(), phase).atZone(now.zone) }
-                    .sortedBy { it.second }
-            }
-            Row(rowModifier.padding(top = 8.dp), horizontalArrangement = spacing) {
-                // The sooner first. Days or weeks ahead the day matters more than the time, so unlike
-                // moonrise and moonset the date leads.
-                nextPhases.forEach { (label, time) ->
-                    LabeledValue(
-                        label = stringResource(label),
-                        value = formats.date(time),
-                        note = formats.timeOfDay(time.hour * 60 + time.minute),
-                    )
-                }
             }
             HorizontalDivider(Modifier.padding(top = 8.dp))
         }
@@ -149,6 +153,30 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
     }
 }
 
+/**
+ * The eight phases at their next moment or beginning, in order of time, the date leading, since
+ * they lie days or weeks ahead.
+ */
+@Composable
+private fun MoonPhaseList(now: ZonedDateTime, formats: UiFormats, modifier: Modifier) {
+    val upcoming = remember(now) { SunMoonCalculator.upcomingMoonPhases(now.toInstant()) }
+    Column(modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        upcoming.forEach { (phase, instant) ->
+            val local = instant.atZone(now.zone)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(moonPhaseLabel(phase)), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                Text(formats.date(local), style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    formats.timeOfDay(local.hour * 60 + local.minute),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Hint(stringResource(R.string.moon_phases_hint))
+    }
+}
+
 /** Sun events: a square slice of the ring, so the horizon at its bottom edge stands out. */
 private val SKY_SLICE_SHAPE = RoundedCornerShape(3.dp)
 
@@ -158,8 +186,6 @@ private val SKY_SLICE_SHAPE = RoundedCornerShape(3.dp)
  */
 private const val SKY_SLICE_TOP_DEG = 30.0
 private val SKY_SLICE_SIZE = 24.dp
-private const val NEW_MOON = 0.0
-private const val FULL_MOON = 0.5
 
 /** One event line: [marker] (nothing while null), label, optional date, and time; dimmed if past, highlighted if next. */
 @Composable

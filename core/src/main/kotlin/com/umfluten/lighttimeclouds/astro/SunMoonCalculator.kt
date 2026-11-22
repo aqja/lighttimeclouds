@@ -231,6 +231,17 @@ object SunMoonCalculator {
     }
 
     /**
+     * Each of the eight named phases once, at its next occurrence after [after], in order of time.
+     * New moon, the quarters and full moon come at their exact moment, the four phases between
+     * them where [moonPhaseOf] begins to name them, 1/16 cycle after the phase before.
+     */
+    fun upcomingMoonPhases(after: Instant): List<Pair<MoonPhase, Instant>> =
+        MoonPhase.entries.map { phase ->
+            val between = phase.ordinal % 2 == 1
+            phase to nextMoonPhase(after, phase.ordinal / 8.0 - if (between) 1.0 / 16 else 0.0)
+        }.sortedBy { it.second }
+
+    /**
      * The first moonrise and moonset in the 24 hours after [start]: the upper limb on the horizon,
      * i.e. the center at −34′ (refraction) minus the Moon's apparent radius, geometrically. The
      * altitude is sampled every half hour and each crossing then pinned down to a second.
