@@ -212,6 +212,25 @@ object SunMoonCalculator {
     }
 
     /**
+     * The first moment after [after] at which the phase of [moonIllumination] reaches [phase]
+     * (0 = new moon, 0.5 = full moon), to within a second. Starts from the mean synodic month and
+     * corrects with it until the step falls below a second; the true month differs from the mean
+     * by less than a day, so a few steps suffice.
+     */
+    fun nextMoonPhase(after: Instant, phase: Double): Instant {
+        fun offset(t: Instant) = (moonIllumination(t).phase - phase + 0.5).mod(1.0) - 0.5
+        val ahead = (phase - moonIllumination(after).phase).mod(1.0)
+        var t = after.plusMillis((ahead * SYNODIC_MONTH_MILLIS).toLong())
+        for (i in 1..PHASE_ITERATIONS) {
+            val step = (offset(t) * SYNODIC_MONTH_MILLIS).toLong()
+            t = t.minusMillis(step)
+            if (abs(step) < 1000) break
+        }
+        // Right at the event the estimate can land on the one just passed; the next is a month on.
+        return if (t.isAfter(after)) t else nextMoonPhase(t.plus(Duration.ofDays(1)), phase)
+    }
+
+    /**
      * The first moonrise and moonset in the 24 hours after [start]: the upper limb on the horizon,
      * i.e. the center at −34′ (refraction) minus the Moon's apparent radius, geometrically. The
      * altitude is sampled every half hour and each crossing then pinned down to a second.
@@ -243,6 +262,10 @@ object SunMoonCalculator {
     private const val EARTH_RADIUS_KM = 6378.137
     private const val MOON_SAMPLES = 48
     private val MOON_SAMPLE_STEP: Duration = Duration.ofMinutes(30)
+
+    /** Mean synodic month, new moon to new moon (29.530589 days). */
+    private const val SYNODIC_MONTH_MILLIS = 29.530589 * 86_400_000.0
+    private const val PHASE_ITERATIONS = 12
 
     private val HALF_DAY: Duration = Duration.ofHours(12)
     private const val DAY_MILLIS = 86_400_000.0

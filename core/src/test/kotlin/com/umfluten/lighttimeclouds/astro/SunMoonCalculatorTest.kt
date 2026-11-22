@@ -5,9 +5,11 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import kotlin.math.abs
 
 class SunMoonCalculatorTest {
 
@@ -75,6 +77,31 @@ class SunMoonCalculatorTest {
         // Wraps around 0/24, so measure the distance to 0 on the circle.
         assertTrue("lag at new moon was $lagAtNew", minOf(lagAtNew, 24.0 - lagAtNew) < 1.0)
         assertEquals(12.0, SunMoonCalculator.moonLagHours(fullMoon), 1.0)
+    }
+
+    @Test
+    fun `next full and new moon match published times to within two minutes`() {
+        fun utc(y: Int, mo: Int, d: Int, h: Int, mi: Int) = ZonedDateTime.of(y, mo, d, h, mi, 0, 0, ZoneOffset.UTC).toInstant()
+        fun assertNear(expected: Instant, actual: Instant) =
+            assertTrue("expected $expected, was $actual", abs(Duration.between(expected, actual).seconds) <= 120)
+
+        val start = utc(2024, 1, 1, 0, 0)
+        assertNear(utc(2024, 1, 11, 11, 57), SunMoonCalculator.nextMoonPhase(start, 0.0))
+        assertNear(utc(2024, 1, 25, 17, 54), SunMoonCalculator.nextMoonPhase(start, 0.5))
+        // A total lunar and a partial solar eclipse.
+        assertNear(utc(2025, 3, 14, 6, 55), SunMoonCalculator.nextMoonPhase(utc(2025, 3, 1, 0, 0), 0.5))
+        assertNear(utc(2025, 3, 29, 10, 58), SunMoonCalculator.nextMoonPhase(utc(2025, 3, 15, 0, 0), 0.0))
+    }
+
+    @Test
+    fun `next moon phase lies strictly after the start, even right at the event`() {
+        val fullMoon = SunMoonCalculator.nextMoonPhase(ZonedDateTime.of(2024, 1, 20, 0, 0, 0, 0, ZoneOffset.UTC).toInstant(), 0.5)
+        for (start in listOf(fullMoon.minusSeconds(1), fullMoon, fullMoon.plusSeconds(1))) {
+            val next = SunMoonCalculator.nextMoonPhase(start, 0.5)
+            assertTrue("$next after $start", next.isAfter(start))
+            assertTrue(Duration.between(start, next).toDays() <= 30)
+        }
+        assertEquals(29.5, Duration.between(fullMoon, SunMoonCalculator.nextMoonPhase(fullMoon.plusSeconds(60), 0.5)).seconds / 86_400.0, 0.4)
     }
 
     /** The times themselves are checked against DE440s in [EphemerisReferenceTest]. */

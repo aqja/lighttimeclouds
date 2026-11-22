@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -36,9 +37,9 @@ import java.time.Instant
 import java.time.ZonedDateTime
 
 /**
- * The moon's phase, rise and set side by side, below them all sun events of the current solar day,
- * at the widget's (possibly not yet saved) place, in that place's time zone. Dates only show where
- * they change. Past events are dimmed, the next one is highlighted; refreshes every minute.
+ * The moon's phase, rise and set side by side, below them the next full and new moon, then all sun
+ * events of the current solar day, at the widget's (possibly not yet saved) place, in that place's
+ * time zone. Dates only show where they change. Past events are dimmed, the next one is highlighted; refreshes every minute.
  */
 @Composable
 internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
@@ -101,6 +102,24 @@ internal fun TimesTab(settings: WidgetSettings, padding: PaddingValues) {
                     )
                 }
             }
+            // The next full and new moon, the sooner first, below the phase and the rise/set columns.
+            val nextPhases = remember(now) {
+                listOf(R.string.moon_phase_full to FULL_MOON, R.string.moon_phase_new to NEW_MOON)
+                    .map { (label, phase) -> label to SunMoonCalculator.nextMoonPhase(now.toInstant(), phase).atZone(now.zone) }
+                    .sortedBy { it.second }
+            }
+            Row(Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                nextPhases.forEachIndexed { index, (label, time) ->
+                    LabeledValue(
+                        label = stringResource(label),
+                        value = formats.date(time),
+                        note = formats.timeOfDay(time.hour * 60 + time.minute),
+                        weight = if (index == 0) MOON_PHASE_WEIGHT else 1f,
+                    )
+                }
+                // Keeps the columns in line with the row above.
+                Spacer(Modifier.weight(1f))
+            }
             HorizontalDivider(Modifier.padding(top = 8.dp))
         }
         items(events.size) { index ->
@@ -135,6 +154,8 @@ private val SKY_SLICE_SHAPE = RoundedCornerShape(3.dp)
 private const val SKY_SLICE_TOP_DEG = 30.0
 private val SKY_SLICE_SIZE = 24.dp
 private const val MOON_PHASE_WEIGHT = 1.4f
+private const val NEW_MOON = 0.0
+private const val FULL_MOON = 0.5
 
 /** One event line: [marker] (nothing while null), label, optional date, and time; dimmed if past, highlighted if next. */
 @Composable
