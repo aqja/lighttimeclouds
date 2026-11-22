@@ -1,0 +1,1 @@
+Bêta : dans l’onglet « Horaires », la phase de la lune se déplie sur le prochain cycle : nouvelle lune, quartiers et pleine lune avec date et heure, les phases intermédiaires dès leur début ; lever et coucher de la lune, chacun avec sa date. Dans l’onglet « Météo », le violon du vent va jusqu’aux deux bords du graphique, les rafales en contour ouvert. Nouvelles captures d’écran.

@@ -23,8 +23,8 @@ android {
         // The version is the release date: (year - 2026).month.day-n, n counting that day's
         // releases. versionCode is (year - 2026) * 1000000 + month * 10000 + day * 100 + n, so it
         // keeps rising. Both stay literals, as F-Droid reads them from this file.
-        versionCode = 112002
-        versionName = "0.11.20-2"
+        versionCode = 112201
+        versionName = "0.11.22-1"
     }
 
     signingConfigs {
