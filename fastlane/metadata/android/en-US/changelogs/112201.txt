@@ -1,0 +1,1 @@
+Beta: in the “Times” tab the moon phase opens to the coming cycle: new moon, quarters and full moon with date and time, the phases between them from when they begin; moonrise and moonset each with their date. In the “Weather” tab the wind violin now runs to both edges of the chart, with an open outline for the gusts. New store screenshots.

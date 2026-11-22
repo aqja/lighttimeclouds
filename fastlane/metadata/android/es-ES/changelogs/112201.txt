@@ -1,0 +1,1 @@
+Beta: en la pestaña «Horas», la fase lunar se despliega con el próximo ciclo: luna nueva, cuartos y luna llena con fecha y hora, y las fases intermedias desde su inicio; salida y puesta de la luna, cada una con su fecha. En la pestaña «Tiempo», el violín del viento llega a ambos bordes del gráfico, con las rachas como contorno abierto. Nuevas capturas en la tienda.
