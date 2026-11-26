@@ -45,6 +45,7 @@
     <string name="show_moon_path_in_ring">Moon path in the ring</string>
     <string name="show_minute_ticks">Minute ticks</string>
     <string name="show_odd_hour_ticks">Ticks at odd hours</string>
+    <string name="noon_at_top">Noon at the top</string>
     <string name="show_solar_marks">Solar noon and midnight</string>
     <string name="show_sunrise_sunset_marks">Sunrise and sunset</string>
     <string name="show_moon">Moon and its path</string>

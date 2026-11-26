@@ -61,6 +61,7 @@ object SettingsFile {
                 put("showMoonPathInRing", settings.showMoonPathInRing)
                 put("showMinuteTicks", settings.showMinuteTicks)
                 put("showOddHourTicks", settings.showOddHourTicks)
+                put("noonAtTop", settings.noonAtTop)
                 put("showSolarMarks", settings.showSolarMarks)
                 put("showSunriseSunsetMarks", settings.showSunriseSunsetMarks)
                 put("showMoon", settings.showMoon)
@@ -116,6 +117,7 @@ object SettingsFile {
             showMoonPathInRing = s.boolean("showMoonPathInRing") ?: d.showMoonPathInRing,
             showMinuteTicks = s.boolean("showMinuteTicks") ?: d.showMinuteTicks,
             showOddHourTicks = s.boolean("showOddHourTicks") ?: d.showOddHourTicks,
+            noonAtTop = s.boolean("noonAtTop") ?: d.noonAtTop,
             showSolarMarks = s.boolean("showSolarMarks") ?: d.showSolarMarks,
             showSunriseSunsetMarks = s.boolean("showSunriseSunsetMarks") ?: d.showSunriseSunsetMarks,
             showMoon = s.boolean("showMoon") ?: d.showMoon,

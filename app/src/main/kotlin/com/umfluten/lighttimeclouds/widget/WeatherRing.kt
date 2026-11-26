@@ -1,6 +1,5 @@
 package com.umfluten.lighttimeclouds.widget
 
-import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
@@ -48,7 +47,7 @@ internal fun Dial.drawWeatherRing(forecast: WeatherForecast) {
         strokeWidth = radius * (bands.weatherOuter - bands.weatherInner)
         strokeCap = Paint.Cap.BUTT
     }
-    drawColorRuns(canvas, rect, paint, clouds)
+    drawColorRuns(rect, paint, clouds)
     drawPrecipitationDots(radius * bands.weatherInner, radius * bands.weatherOuter, precipitation, dotSizes)
 }
 
@@ -70,7 +69,7 @@ private fun Dial.drawPrecipitationDots(inner: Float, outer: Float, colors: IntAr
             val sample = (fraction * RING_SAMPLES).toInt() % RING_SAMPLES
             if (Color.alpha(colors[sample]) == 0 || sizes[sample] <= 0f) continue
             paint.color = colors[sample]
-            val angle = 2 * PI * fraction - PI / 2
+            val angle = Math.toRadians(canvasAngle(360.0 * fraction))
             canvas.drawCircle(cx + r * cos(angle).toFloat(), cy + r * sin(angle).toFloat(), spacing * sizes[sample], paint)
         }
     }
@@ -80,14 +79,14 @@ private fun Dial.drawPrecipitationDots(inner: Float, outer: Float, colors: IntAr
  * One arc per run of equal color in [colors] (one entry per ring sample): unlike the opaque
  * day/night ring, overlapping translucent arcs would show darker seams.
  */
-private fun drawColorRuns(canvas: Canvas, rect: RectF, paint: Paint, colors: IntArray) {
+private fun Dial.drawColorRuns(rect: RectF, paint: Paint, colors: IntArray) {
     var runStart = 0
     for (i in 1..colors.size) {
         if (i < colors.size && colors[i] == colors[runStart]) continue
         if (Color.alpha(colors[runStart]) > 0) {
             paint.color = colors[runStart]
-            val start = 360f * runStart / colors.size
-            canvas.drawArc(rect, start - 90f, 360f * (i - runStart) / colors.size, false, paint)
+            val start = 360.0 * runStart / colors.size
+            canvas.drawArc(rect, canvasAngle(start).toFloat(), 360f * (i - runStart) / colors.size, false, paint)
         }
         runStart = i
     }

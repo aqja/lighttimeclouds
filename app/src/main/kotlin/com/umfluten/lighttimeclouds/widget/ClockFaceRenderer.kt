@@ -179,7 +179,7 @@ private fun Dial.drawMinuteTicks() {
     val inner = radius * layout.minuteTickInner
     for (minute in 0 until 60) {
         if (minute % 5 == 0) continue
-        drawRadialLine(minute * 6.0, inner, outer, paint)
+        drawScreenRadialLine(minute * 6.0, inner, outer, paint)
     }
 }
 
@@ -203,7 +203,7 @@ private fun Dial.drawHands() {
     if (settings.showMoon && settings.moonStyle == MoonStyle.ON_HOUR_HAND) {
         drawMoonOnHourHand(handTime)
     }
-    drawRadialLine(minuteAngle, 0f, radius * layout.minuteHand, minutePaint)
+    drawScreenRadialLine(minuteAngle, 0f, radius * layout.minuteHand, minutePaint)
 }
 
 private fun Dial.drawCenterPin() {
