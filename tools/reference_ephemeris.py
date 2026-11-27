@@ -131,7 +131,9 @@ def main() -> None:
                 for t, upper in zip(*almanac.find_discrete(start, end, almanac.meridian_transits(eph, sun, topos))):
                     out.writerow([place, "sun", "noon" if upper else "midnight", "", iso(t)])
 
-                for t, up in zip(*almanac.find_discrete(start, end, AboveHorizon(earth, observer, moon, step_days=0.02))):
+                for t, up in zip(
+                    *almanac.find_discrete(start, end, AboveHorizon(earth, observer, moon, step_days=0.02))
+                ):
                     out.writerow([place, "moon", "rise" if up else "set", "", iso(t)])
     print(f"wrote {OUTPUT}/geocentric.csv, topocentric.csv, events.csv")
 
