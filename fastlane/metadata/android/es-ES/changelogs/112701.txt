@@ -1,0 +1,1 @@
+Beta: en la pestaña «Horas», los nuevos eventos lunares muestran el próximo perigeo y apogeo, la superluna y la microluna, los eclipses de Luna y de Sol visibles desde el lugar (con la luna de sangre) y las paradas lunares. La esfera de 24 horas puede girar media vuelta con «Mediodía arriba»: el mediodía arriba y la medianoche abajo, como el sol en el cielo.
