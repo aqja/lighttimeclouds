@@ -407,6 +407,27 @@
     <string name="moon_phase_last_quarter">Dernier quartier</string>
     <string name="moon_phase_waning_crescent">Dernier croissant</string>
     <string name="moon_phases_hint">Nouvelle lune, quartiers et pleine lune à l’instant exact ; les phases intermédiaires, dès leur début.</string>
+    <string name="moon_events">Événements lunaires</string>
+    <string name="perigee">Périgée</string>
+    <string name="apogee">Apogée</string>
+    <string name="supermoon">Super lune</string>
+    <string name="micromoon">Mini lune</string>
+    <string name="lunar_eclipse_total">Éclipse totale de Lune (lune de sang)</string>
+    <string name="lunar_eclipse_partial">Éclipse partielle de Lune</string>
+    <string name="lunar_eclipse_penumbral">Éclipse pénombrale de Lune</string>
+    <string name="solar_eclipse_total">Éclipse totale de Soleil</string>
+    <string name="solar_eclipse_annular">Éclipse annulaire de Soleil</string>
+    <string name="solar_eclipse_partial">Éclipse partielle de Soleil</string>
+    <string name="standstill_major">Arrêt lunaire majeur</string>
+    <string name="standstill_minor">Arrêt lunaire mineur</string>
+    <string name="eclipse_totality">totalité %1$s–%2$s</string>
+    <string name="eclipse_annularity">anneau %1$s–%2$s</string>
+    <string name="lunar_eclipse_in_umbra">%1$d %% dans l’ombre</string>
+    <string name="solar_eclipse_covered">couvert à %1$d %%</string>
+    <string name="moon_partly_below_horizon">Lune en partie sous l’horizon</string>
+    <string name="sun_partly_below_horizon">Soleil en partie sous l’horizon</string>
+    <string name="standstill_heights">hauteur maximale de la Lune de %1$s à %2$s</string>
+    <string name="moon_events_hint">Chacun à sa prochaine date. Super lune et mini lune : pleine lune à au moins 90 % du chemin vers le périgée ou l’apogée (selon Nolle). Éclipses seulement si elles sont visibles ici ; les éclipses pénombrales de Lune, à peine perceptibles, sont omises. Lors d’un arrêt lunaire, l’écart mensuel des hauteurs de la Lune est le plus grand (majeur) ou le plus petit (mineur), pendant environ un an autour de la date.</string>
 
     <string name="solar_midnight">Minuit solaire</string>
     <string name="astronomical_dawn">Aube astronomique</string>

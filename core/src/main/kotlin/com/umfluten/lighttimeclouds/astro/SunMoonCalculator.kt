@@ -247,11 +247,7 @@ object SunMoonCalculator {
      * altitude is sampled every half hour and each crossing then pinned down to a second.
      */
     fun moonTimes(start: Instant, latitude: Double, longitude: Double): MoonTimes {
-        fun margin(t: Instant): Double {
-            val (position, distance) = moonGeometric(Ephemeris.Epoch(t), latitude, longitude)
-            val horizon = -MOONRISE_REFRACTION - moonSemiDiameter(distance)
-            return position.altitudeRad - horizon
-        }
+        fun margin(t: Instant): Double = moonRiseMargin(t, latitude, longitude)
         var rise: Instant? = null
         var set: Instant? = null
         var previous = start
@@ -266,6 +262,15 @@ object SunMoonCalculator {
             previousMargin = m
         }
         return MoonTimes(rise, set)
+    }
+
+    /**
+     * How far (rad) the Moon's upper limb stands above the horizon as one sees it, with refraction:
+     * its center's geometric altitude above −34′ minus its apparent radius. Positive while it is up.
+     */
+    internal fun moonRiseMargin(instant: Instant, latitude: Double, longitude: Double): Double {
+        val (position, distance) = moonGeometric(Ephemeris.Epoch(instant), latitude, longitude)
+        return position.altitudeRad + MOONRISE_REFRACTION + moonSemiDiameter(distance)
     }
 
     private const val MOONRISE_REFRACTION = 34.0 / 60.0 * DEG
@@ -285,7 +290,7 @@ object SunMoonCalculator {
      * The moment between [a] and [b] where [f] changes sign, given [fa] and [fb] of opposite sign:
      * regula falsi with the Illinois modification, to within half a second.
      */
-    private fun crossing(a: Instant, b: Instant, fa: Double, fb: Double, f: (Instant) -> Double): Instant {
+    internal fun crossing(a: Instant, b: Instant, fa: Double, fb: Double, f: (Instant) -> Double): Instant {
         var low = a.toEpochMilli().toDouble()
         var high = b.toEpochMilli().toDouble()
         var fLow = fa
