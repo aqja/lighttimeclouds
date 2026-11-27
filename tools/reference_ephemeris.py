@@ -156,7 +156,9 @@ def main() -> None:
                 ):
                     out.writerow([place, "moon", "rise" if up else "set", "", iso(t)])
     write_moon_events(ts, eph)
-    print(f"wrote {OUTPUT}/geocentric.csv, topocentric.csv, events.csv, apsides.csv, lunar_eclipses.csv, solar_eclipses.csv")
+    print(
+        f"wrote {OUTPUT}/geocentric.csv, topocentric.csv, events.csv, apsides.csv, lunar_eclipses.csv, solar_eclipses.csv"
+    )
 
 
 def bisect(f, a: float, b: float, steps: int = 40) -> float:
@@ -240,34 +242,59 @@ def write_moon_events(ts, eph) -> None:
 
     with open(OUTPUT / "lunar_eclipses.csv", "w", newline="") as f:
         out = csv.writer(f)
-        out.writerow(["greatest", "kind", "umbral_magnitude", "penumbral_magnitude", "p1", "u1", "u2", "u3", "u4", "p4"])
+        out.writerow(
+            ["greatest", "kind", "umbral_magnitude", "penumbral_magnitude", "p1", "u1", "u2", "u3", "u4", "p4"]
+        )
         times, _, _ = eclipselib.lunar_eclipses(start, end, eph)
         for candidate in times:
             greatest = golden_minimum(lambda jd: lunar(jd)[0], candidate.tt - HOUR, candidate.tt + HOUR)
             separation, penumbra, umbra, moon_radius = lunar(greatest)
             if separation >= penumbra + moon_radius:
                 continue
-            kind = "total" if separation < umbra - moon_radius else "partial" if separation < umbra + moon_radius else "penumbral"
+            kind = (
+                "total"
+                if separation < umbra - moon_radius
+                else "partial"
+                if separation < umbra + moon_radius
+                else "penumbral"
+            )
 
             def contacts(margin, greatest=greatest):
                 if margin(greatest) >= 0:
                     return "", ""
-                return (iso(ts.tt_jd(bisect(margin, greatest - 5 * HOUR, greatest))),
-                        iso(ts.tt_jd(bisect(margin, greatest, greatest + 5 * HOUR))))
+                return (
+                    iso(ts.tt_jd(bisect(margin, greatest - 5 * HOUR, greatest))),
+                    iso(ts.tt_jd(bisect(margin, greatest, greatest + 5 * HOUR))),
+                )
 
             p1, p4 = contacts(lambda jd: (g := lunar(jd))[0] - g[1] - g[3])
             u1, u4 = contacts(lambda jd: (g := lunar(jd))[0] - g[2] - g[3])
             u2, u3 = contacts(lambda jd: (g := lunar(jd))[0] - g[2] + g[3])
-            out.writerow([
-                iso(ts.tt_jd(greatest)), kind,
-                f"{(umbra + moon_radius - separation) / (2 * moon_radius):.5f}",
-                f"{(penumbra + moon_radius - separation) / (2 * moon_radius):.5f}",
-                p1, u1, u2, u3, u4, p4,
-            ])
+            out.writerow(
+                [
+                    iso(ts.tt_jd(greatest)),
+                    kind,
+                    f"{(umbra + moon_radius - separation) / (2 * moon_radius):.5f}",
+                    f"{(penumbra + moon_radius - separation) / (2 * moon_radius):.5f}",
+                    p1,
+                    u1,
+                    u2,
+                    u3,
+                    u4,
+                    p4,
+                ]
+            )
 
     # Solar eclipses: the Moon's disc against the Sun's as seen from the place.
-    new_moons = [t for t, phase in zip(*almanac.find_discrete(ts.utc(ROTATION_YEARS[0], 1, 1),
-                 ts.utc(ROTATION_YEARS[1] + 1, 1, 1), almanac.moon_phases(eph))) if phase == 0]
+    new_moons = [
+        t
+        for t, phase in zip(
+            *almanac.find_discrete(
+                ts.utc(ROTATION_YEARS[0], 1, 1), ts.utc(ROTATION_YEARS[1] + 1, 1, 1), almanac.moon_phases(eph)
+            )
+        )
+        if phase == 0
+    ]
     with open(OUTPUT / "solar_eclipses.csv", "w", newline="") as f:
         out = csv.writer(f)
         out.writerow(["place", "greatest", "kind", "magnitude", "obscuration", "c1", "c2", "c3", "c4"])
@@ -278,8 +305,12 @@ def write_moon_events(ts, eph) -> None:
                 a = observer.at(ts.tt_jd(jd))
                 s, m = a.observe(sun).apparent(), a.observe(moon).apparent()
                 d_m = m.distance().km
-                return (s.separation_from(m).radians, np.arcsin(SUN_RADIUS_KM / s.distance().km),
-                        np.arcsin(MOON_K_OUTER * radius_km / d_m), np.arcsin(MOON_K_INNER * radius_km / d_m))
+                return (
+                    s.separation_from(m).radians,
+                    np.arcsin(SUN_RADIUS_KM / s.distance().km),
+                    np.arcsin(MOON_K_OUTER * radius_km / d_m),
+                    np.arcsin(MOON_K_INNER * radius_km / d_m),
+                )
 
             for new_moon in new_moons:
                 grid = new_moon.tt + np.arange(-6 * 60, 6 * 60 + 1, 5) / 1440.0
@@ -297,14 +328,23 @@ def write_moon_events(ts, eph) -> None:
                 c4 = bisect(lambda jd: (g := solar(jd))[0] - g[1] - g[2], greatest, greatest + 4 * HOUR)
                 inner = ["", ""]
                 if central:
-                    inner = [iso(ts.tt_jd(bisect(lambda jd: (g := solar(jd))[0] - abs(g[3] - g[1]), a, b)))
-                             for a, b in ((greatest - HOUR, greatest), (greatest, greatest + HOUR))]
-                out.writerow([
-                    place, iso(ts.tt_jd(greatest)), kind,
-                    f"{(sun_radius + moon_outer - separation) / (2 * sun_radius):.5f}",
-                    f"{obscuration(sun_radius, moon_outer, separation):.5f}",
-                    iso(ts.tt_jd(c1)), inner[0], inner[1], iso(ts.tt_jd(c4)),
-                ])
+                    inner = [
+                        iso(ts.tt_jd(bisect(lambda jd: (g := solar(jd))[0] - abs(g[3] - g[1]), a, b)))
+                        for a, b in ((greatest - HOUR, greatest), (greatest, greatest + HOUR))
+                    ]
+                out.writerow(
+                    [
+                        place,
+                        iso(ts.tt_jd(greatest)),
+                        kind,
+                        f"{(sun_radius + moon_outer - separation) / (2 * sun_radius):.5f}",
+                        f"{obscuration(sun_radius, moon_outer, separation):.5f}",
+                        iso(ts.tt_jd(c1)),
+                        inner[0],
+                        inner[1],
+                        iso(ts.tt_jd(c4)),
+                    ]
+                )
 
 
 if __name__ == "__main__":
