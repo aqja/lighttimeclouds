@@ -162,7 +162,9 @@ def load_elp() -> list[Term]:
                 else:
                     multipliers = ipla[7:11] + [0] + ipla[0:7] + [0]
                 amplitude = x * (A0 / ATH if coordinate == 2 else 1.0)
-                terms.append(Term(coordinate, power, amplitude, pha * DEG, multipliers, ("linear", multipliers, pha * DEG)))
+                terms.append(
+                    Term(coordinate, power, amplitude, pha * DEG, multipliers, ("linear", multipliers, pha * DEG))
+                )
             else:
                 f = fixed(line, [3] * 5 + [1, 9, 1, 9])
                 iz, ilu = int(f[0]), [int(x) for x in f[1:5]]
@@ -170,7 +172,9 @@ def load_elp() -> list[Term]:
                 power = 1 if (7 <= number <= 9 or 25 <= number <= 27) else 2 if number >= 34 else 0
                 multipliers = ilu + [iz] + [0] * 8
                 amplitude = x * (A0 / ATH if coordinate == 2 else 1.0)
-                terms.append(Term(coordinate, power, amplitude, pha * DEG, multipliers, ("linear", multipliers, pha * DEG)))
+                terms.append(
+                    Term(coordinate, power, amplitude, pha * DEG, multipliers, ("linear", multipliers, pha * DEG))
+                )
     return terms
 
 
@@ -228,7 +232,9 @@ def check_elp(terms: list[Term]) -> None:
     x = (1 - 2 * p * p) * x1 + 2 * p * q * x2 + p * ra * x3
     y = 2 * p * q * x1 + (1 - 2 * q * q) * x2 - q * ra * x3
     z = -p * ra * x1 + q * ra * x2 + (1 - 2 * p * p - 2 * q * q) * x3
-    worst = max(max(abs(a - b) for a, b in zip(row, expected)) for row, expected in zip(np.array([x, y, z]).T, table_h.values()))
+    worst = max(
+        max(abs(a - b) for a, b in zip(row, expected)) for row, expected in zip(np.array([x, y, z]).T, table_h.values())
+    )
     print(f"ELP 2000-82B against Table H: largest deviation {worst * 1000:.2f} m")
     assert worst < 0.002, "ELP evaluation does not reproduce the published check values"
 
@@ -281,7 +287,9 @@ def check_vsop(terms: list[VsopTerm]) -> None:
 # --- Truncation ---------------------------------------------------------------------------------
 
 
-def choose(impacts: np.ndarray, contributions, reference: np.ndarray, limit: float, scale: float) -> tuple[int, np.ndarray, float]:
+def choose(
+    impacts: np.ndarray, contributions, reference: np.ndarray, limit: float, scale: float
+) -> tuple[int, np.ndarray, float]:
     """Fewest terms, taken by decreasing impact, from which on the compact sum stays within limit."""
     order = np.argsort(-impacts)
     running = np.zeros_like(reference)
@@ -318,14 +326,22 @@ def main() -> None:
     selected_elp: list[Term] = []
     elp_report = []
     for coordinate, (limit, scale, unit) in enumerate(
-        [(MOON_LONGITUDE_ARCSEC, 1 / ARCSEC, '"'), (MOON_LATITUDE_ARCSEC, 1 / ARCSEC, '"'), (MOON_DISTANCE_KM, 1.0, " km")]
+        [
+            (MOON_LONGITUDE_ARCSEC, 1 / ARCSEC, '"'),
+            (MOON_LATITUDE_ARCSEC, 1 / ARCSEC, '"'),
+            (MOON_DISTANCE_KM, 1.0, " km"),
+        ]
     ):
         terms = [term for term in elp if term.coordinate == coordinate]
         impacts = np.array([abs(term.amplitude) * t_max**term.power for term in terms])
         factor = ARCSEC if coordinate < 2 else 1.0
-        count, chosen, error = choose(impacts, partial(scaled_term, terms, args, t, factor), exact[coordinate], limit, scale)
+        count, chosen, error = choose(
+            impacts, partial(scaled_term, terms, args, t, factor), exact[coordinate], limit, scale
+        )
         selected_elp += [terms[i] for i in chosen]
-        elp_report.append(f"{['longitude', 'latitude', 'distance'][coordinate]} {count} of {len(terms)} terms, up to {error:.2f}{unit}")
+        elp_report.append(
+            f"{['longitude', 'latitude', 'distance'][coordinate]} {count} of {len(terms)} terms, up to {error:.2f}{unit}"
+        )
         print("ELP", elp_report[-1])
 
     vsop_terms = load_vsop()
@@ -336,7 +352,11 @@ def main() -> None:
     selected_vsop: list[VsopTerm] = []
     vsop_report = []
     for coordinate, (limit, scale, unit) in enumerate(
-        [(EARTH_LONGITUDE_ARCSEC, 1 / ARCSEC, '"'), (EARTH_LATITUDE_ARCSEC, 1 / ARCSEC, '"'), (EARTH_DISTANCE_AU, 1.0, " au")]
+        [
+            (EARTH_LONGITUDE_ARCSEC, 1 / ARCSEC, '"'),
+            (EARTH_LATITUDE_ARCSEC, 1 / ARCSEC, '"'),
+            (EARTH_DISTANCE_AU, 1.0, " au"),
+        ]
     ):
         terms = [term for term in vsop_terms if term.coordinate == coordinate]
         impacts = np.array([abs(term.a) * tau_max**term.power for term in terms])
@@ -359,7 +379,9 @@ def kotlin(elp: list[Term], vsop_terms: list[VsopTerm], elp_report: list[str], v
     vsop_terms = sorted(vsop_terms, key=lambda term: (term.coordinate, term.power, -abs(term.a)))
 
     def rows(values: list[str], per_line: int) -> str:
-        return "\n".join("        " + ", ".join(values[i : i + per_line]) + "," for i in range(0, len(values), per_line))
+        return "\n".join(
+            "        " + ", ".join(values[i : i + per_line]) + "," for i in range(0, len(values), per_line)
+        )
 
     arguments = rows([number(c) for coefficients in ARGUMENTS for c in coefficients], 5)
     w1 = ", ".join(number(c) for c in W1)

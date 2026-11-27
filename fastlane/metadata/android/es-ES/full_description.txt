@@ -6,7 +6,7 @@
 <li><b>Anillo del tiempo opcional</b> (previsión de Open-Meteo): la nubosidad en gris y la precipitación en azul (la nieve en violeta), más oscura cuanto más cantidad y más opaca cuanto más probable. Temperatura del aire o sensación térmica como escala alrededor del borde o entre los números, y el tiempo en palabras junto al reloj o debajo («Un poco más fresco que ayer a esta hora. Probable lluvia débil a partir de última hora de la tarde.»).</li>
 <li>Marcas para el mediodía y la medianoche solares, la salida y la puesta del sol y, opcionalmente, la próxima alarma.</li>
 <li>Lugares guardados con su propia zona horaria: con varios widgets se obtiene un reloj mundial. Los lugares se pueden compartir desde Organic Maps, OsmAnd y otras apps de mapas.</li>
-<li>Pestaña «Horas» en la app con todos los eventos solares del día, la salida y puesta de la luna y la fase lunar, que se despliega con las fechas del próximo ciclo.</li>
+<li>Pestaña «Horas» en la app con todos los eventos solares del día, la salida y puesta de la luna la fase lunar, que se despliega con las fechas del próximo ciclo, y los próximos eventos lunares: perigeo y apogeo, superluna y microluna, eclipses de Luna y de Sol visibles desde el lugar, y las paradas lunares.</li>
 <li>Pestaña «Tiempo» con el pronóstico dibujado en el cielo de cada hora: nubes, viento, lluvia y nieve, temperatura del aire y aparente, 24 horas a la vez para deslizar, y los detalles de cada hora con un toque.</li>
 <li>Modo de color claro, oscuro o automático, con números y agujas en tus colores de Material You. Tamaño libre y varios widgets con ajustes propios.</li>
 </ul>
