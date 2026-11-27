@@ -449,6 +449,13 @@ class ClockFacePreviewTest {
         render("dial", "24h_dark_odd_hour_ticks", oddHours, null, darkBackground = true)
         render("dial", "24h_dark_odd_hour_ticks_minuteticks", oddHours.copy(showMinuteTicks = true), null, darkBackground = true)
         render("dial", "24h_light_odd_hour_ticks_minuteticks", oddHours.copy(colorMode = ColorMode.LIGHT, showMinuteTicks = true), null, darkBackground = false)
+        // Noon at the top: rings, numerals, hour hand, moon and outer temperatures turned half a turn; the minute hand is not.
+        val noonAtTop = WidgetSettings(
+            widgetId = 1, colorMode = ColorMode.DARK, displayMode = DisplayMode.TWENTY_FOUR_HOUR, noonAtTop = true, showOddHourTicks = true,
+            showMinuteTicks = true, showSunPathInRing = true, showMoonPathInRing = true, showNextAlarm = true, showWeather = true,
+        )
+        render("dial", "24h_noon_at_top", noonAtTop, mixedForecast(), darkBackground = true, alarm = now.plusHours(3))
+        render("dial", "24h_noon_at_top_moon_on_hand", noonAtTop.copy(moonStyle = MoonStyle.ON_HOUR_HAND, showWeather = false), null, darkBackground = true)
         render(
             "dial",
             "24h_dark_temperature_odd_hour_ticks_minuteticks",

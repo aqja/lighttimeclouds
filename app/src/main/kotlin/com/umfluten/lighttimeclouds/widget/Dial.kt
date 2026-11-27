@@ -118,16 +118,36 @@ internal fun Dial.ringBandPath(inset: Float = 0f) = Path().apply {
     addCircle(cx, cy, radius * bands.sunOuter - inset, Path.Direction.CW)
 }
 
-/** The point [r] px from the center at dial [angleDeg] (0 = top, clockwise). */
-internal fun Dial.pointOnDial(r: Float, angleDeg: Double): Pair<Float, Float> {
-    val rad = Math.toRadians(angleDeg - 90.0)
+/**
+ * Screen degrees (clockwise) by which the dial's time positions are turned: 180 with
+ * [WidgetSettings.noonAtTop] on the 24-hour dial, so that noon is at the top and midnight at the
+ * bottom; otherwise none. The minute hand and its ticks are not turned.
+ */
+internal fun dialRotationDeg(settings: WidgetSettings): Double =
+    if (settings.displayMode == DisplayMode.TWENTY_FOUR_HOUR && settings.noonAtTop) 180.0 else 0.0
+
+internal val Dial.rotationDeg: Double get() = dialRotationDeg(settings)
+
+/** Canvas angle (0 = 3 o'clock, clockwise, as for arcs and sweeps) of dial [angleDeg]. */
+internal fun Dial.canvasAngle(angleDeg: Double): Double = angleDeg + rotationDeg - 90.0
+
+/** The point [r] px from the center at dial [angleDeg] (0 = the start of the hour hand's turn, clockwise), turned by [rotationDeg]. */
+internal fun Dial.pointOnDial(r: Float, angleDeg: Double): Pair<Float, Float> = pointOnScreen(r, angleDeg + rotationDeg)
+
+/** The point [r] px from the center at [screenDeg] (0 = top, clockwise), whatever the dial's rotation: for the minute hand. */
+internal fun Dial.pointOnScreen(r: Float, screenDeg: Double): Pair<Float, Float> {
+    val rad = Math.toRadians(screenDeg - 90.0)
     return cx + (cos(rad) * r).toFloat() to cy + (sin(rad) * r).toFloat()
 }
 
 /** A line along dial [angleDeg] from [inner] to [outer] px from the center: ticks, marks and hands. */
-internal fun Dial.drawRadialLine(angleDeg: Double, inner: Float, outer: Float, paint: Paint) {
-    val (x0, y0) = pointOnDial(inner, angleDeg)
-    val (x1, y1) = pointOnDial(outer, angleDeg)
+internal fun Dial.drawRadialLine(angleDeg: Double, inner: Float, outer: Float, paint: Paint) =
+    drawScreenRadialLine(angleDeg + rotationDeg, inner, outer, paint)
+
+/** Like [drawRadialLine], at [screenDeg] (0 = top) whatever the dial's rotation: minute hand and minute ticks. */
+internal fun Dial.drawScreenRadialLine(screenDeg: Double, inner: Float, outer: Float, paint: Paint) {
+    val (x0, y0) = pointOnScreen(inner, screenDeg)
+    val (x1, y1) = pointOnScreen(outer, screenDeg)
     canvas.drawLine(x0, y0, x1, y1, paint)
 }
 
@@ -165,10 +185,10 @@ internal fun shownWindow(settings: WidgetSettings, now: ZonedDateTime): Pair<Ins
     return mapper.windowStart(now).toInstant() to mapper.windowEnd(now).toInstant()
 }
 
-/** Dial angle (0..360, 0 = top) at which [time] appears on the dial. */
+/** Dial angle (0..360, 0 = the start of the hour hand's turn, see [pointOnDial]) at which [time] appears on the dial. */
 internal fun dialAngle(time: ZonedDateTime, mode: DisplayMode): Double = dialAngle(time.toLocalDateTime(), mode)
 
-/** Dial angle (0..360, 0 = top) at which the wall-clock [time] appears on the dial. */
+/** Dial angle (0..360, 0 = the start of the hour hand's turn) at which the wall-clock [time] appears on the dial. */
 internal fun dialAngle(time: LocalDateTime, mode: DisplayMode): Double {
     val hours = time.hour + time.minute / 60.0 + time.second / 3600.0
     return when (mode) {

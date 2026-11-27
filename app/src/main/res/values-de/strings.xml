@@ -44,6 +44,7 @@
     <string name="show_moon_path_in_ring">Mondbahn im Ring</string>
     <string name="show_minute_ticks">Minutenstriche</string>
     <string name="show_odd_hour_ticks">Striche bei ungeraden Stunden</string>
+    <string name="noon_at_top">12 Uhr oben</string>
     <string name="show_solar_marks">Sonnenmittag und -mitternacht</string>
     <string name="show_sunrise_sunset_marks">Sonnenauf- und -untergang</string>
     <string name="show_moon">Mond mit Bahn</string>

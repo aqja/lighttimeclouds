@@ -109,7 +109,7 @@ internal fun Dial.drawSkyBodies() {
             val pxPerDegree = pixelsPerDegree(r, instant, SunMoonCalculator::moonPosition)
             val discRadius = (SunMoonCalculator.moonSemiDiameterDegrees(instant) * pxPerDegree).toFloat()
             val limb = SunMoonCalculator.moonBrightLimbAngle(instant, latitude, longitude)
-            val lit = moonLitPath(x, y, discRadius, fraction, brightLimbOnDial(limb, angle, settings.skyHorizon))
+            val lit = moonLitPath(x, y, discRadius, fraction, brightLimbOnDial(limb, angle + rotationDeg, settings.skyHorizon))
             canvas.withClip(band) { drawPath(lit, Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color }) }
         } else {
             drawSkyDot(canvas, x, y, dotRadius, color)
@@ -274,12 +274,13 @@ private val BODY_SPEED_INTERVAL: Duration = Duration.ofMinutes(10)
 
 /**
  * [brightLimbAngle] (from the zenith, counterclockwise, see
- * [SunMoonCalculator.moonBrightLimbAngle]) on a body in the ring at [dialAngleDeg]: the zenith
+ * [SunMoonCalculator.moonBrightLimbAngle]) on a body in the ring at [screenAngleDeg] (0 = top, so
+ * including the dial's rotation): the zenith
  * there points to the far edge, not to the top of the screen. Counted from the top of the
  * screen, counterclockwise, like [drawMoonPhase].
  */
-internal fun brightLimbOnDial(brightLimbAngle: Double, dialAngleDeg: Double, horizon: SkyHorizon): Double {
-    val zenith = -Math.toRadians(dialAngleDeg) + if (horizon == SkyHorizon.OUTER) PI else 0.0
+internal fun brightLimbOnDial(brightLimbAngle: Double, screenAngleDeg: Double, horizon: SkyHorizon): Double {
+    val zenith = -Math.toRadians(screenAngleDeg) + if (horizon == SkyHorizon.OUTER) PI else 0.0
     return (brightLimbAngle + zenith).mod(2 * PI)
 }
 

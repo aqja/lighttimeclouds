@@ -8,7 +8,7 @@ Android home screen widget: an analog sun and moon clock, inspired by [sunclock.
 
 ## Features
 
-- **Sky ring:** the sky of every hour of the day around a 24-hour clock face (12 hours optional), from daylight through sunset and blue hour to night, computed physically as the eye sees it
+- **Sky ring:** the sky of every hour of the day around a 24-hour clock face (midnight or noon at the top; 12 hours optional), from daylight through sunset and blue hour to night, computed physically as the eye sees it
 - **Sun and moon** in the ring at their real height, with their paths over the day, the moon with its phase
 - **Weather** (optional): cloud cover, rain and snow of the coming hours as a ring, temperatures around the edge and the weather in a few words beside the clock
 - **Marks** for sunrise, sunset, solar noon and the next alarm

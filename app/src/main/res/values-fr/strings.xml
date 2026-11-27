@@ -45,6 +45,7 @@
     <string name="show_moon_path_in_ring">Trajectoire de la lune dans l’anneau</string>
     <string name="show_minute_ticks">Graduations des minutes</string>
     <string name="show_odd_hour_ticks">Graduations des heures impaires</string>
+    <string name="noon_at_top">Midi en haut</string>
     <string name="show_solar_marks">Midi et minuit solaires</string>
     <string name="show_sunrise_sunset_marks">Lever et coucher du soleil</string>
     <string name="show_moon">Lune et sa trajectoire</string>

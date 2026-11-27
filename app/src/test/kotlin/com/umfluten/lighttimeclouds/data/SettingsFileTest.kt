@@ -25,6 +25,7 @@ class SettingsFileTest {
         switchTime1Minutes = 300,
         switchTime2Minutes = 1000,
         switchTime24hMinutes = 120,
+        noonAtTop = true,
         ringEndFadeDeg = 25,
         skyHorizon = SkyHorizon.OUTER,
         skyTopElevationDeg = 60,
