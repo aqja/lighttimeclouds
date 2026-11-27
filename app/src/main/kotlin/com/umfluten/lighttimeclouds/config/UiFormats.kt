@@ -1,6 +1,7 @@
 package com.umfluten.lighttimeclouds.config
 
 import android.icu.text.DateFormat
+import android.icu.text.NumberFormat
 import android.icu.util.TimeZone
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -11,6 +12,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.Date
 import java.util.Locale
+import kotlin.math.roundToLong
 
 /**
  * Date, time and coordinate formats of the config UI, following [locale] and the device's 12/24-hour
@@ -21,12 +23,27 @@ internal class UiFormats(val locale: Locale, val is24Hour: Boolean) {
     private val timeFormat = DateFormat.getInstanceForSkeleton(if (is24Hour) "Hmz" else "hmz", locale)
     private val dateFormat = DateFormat.getInstanceForSkeleton("EEEMMMd", locale)
     private val weekdayFormat = DateFormat.getInstanceForSkeleton("EEE", locale)
+    private val dateWithYearFormat = DateFormat.getInstanceForSkeleton("EEEyMMMd", locale)
+    private val monthYearFormat = DateFormat.getInstanceForSkeleton("yMMMM", locale)
+    private val integerFormat = NumberFormat.getIntegerInstance(locale)
 
     /** Time with zone abbreviation, e.g. "07:42 MESZ" or "7:42 AM GMT+2". */
     fun time(dateTime: ZonedDateTime): String = format(timeFormat, dateTime)
 
     /** Short weekday and date, e.g. "Sa., 18. Okt." or "Sat, Oct 18". */
     fun date(dateTime: ZonedDateTime): String = format(dateFormat, dateTime)
+
+    /** Short weekday and date with the year, e.g. "Mi., 12. Jan. 2028" or "Wed, Jan 12, 2028". */
+    fun dateWithYear(dateTime: ZonedDateTime): String = format(dateWithYearFormat, dateTime)
+
+    /** Month and year, e.g. "Mai 2034" or "May 2034". */
+    fun monthYear(dateTime: ZonedDateTime): String = format(monthYearFormat, dateTime)
+
+    /** A distance in whole kilometers with the locale's grouping, e.g. "356.650 km" or "356,650 km". */
+    fun kilometers(value: Double): String = integerFormat.format(value.roundToLong()) + " km"
+
+    /** An angle in whole degrees, e.g. "66°". */
+    fun wholeDegrees(value: Double): String = integerFormat.format(value.roundToLong()) + "°"
 
     /** Short weekday, e.g. "Sa." or "Sat". */
     fun weekday(dateTime: ZonedDateTime): String = format(weekdayFormat, dateTime)
