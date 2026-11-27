@@ -447,6 +447,13 @@ private fun SettingsContent(
             onSelect = { viewModel.update { s -> s.copy(displayMode = it) } },
         )
         RingSwitchSetting(settings, viewModel)
+        if (settings.displayMode == DisplayMode.TWENTY_FOUR_HOUR) {
+            SwitchRow(
+                label = stringResource(R.string.noon_at_top),
+                checked = settings.noonAtTop,
+                onCheckedChange = { viewModel.update { s -> s.copy(noonAtTop = it) } },
+            )
+        }
         SwitchRow(
             label = stringResource(R.string.show_minute_ticks),
             checked = settings.showMinuteTicks,

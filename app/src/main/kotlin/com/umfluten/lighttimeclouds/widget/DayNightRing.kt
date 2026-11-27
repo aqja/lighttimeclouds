@@ -43,12 +43,12 @@ internal fun Dial.withRingEndFade(content: () -> Unit) {
     val mask = Paint().apply {
         xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
         // Positions count clockwise from the seam, where the window starts, round to the seam
-        // again, where it ends. The sweep starts at 3 o'clock, dial angles at 12 o'clock.
+        // again, where it ends. The sweep starts at 3 o'clock, see [canvasAngle].
         shader = SweepGradient(
             cx, cy,
             intArrayOf(Color.BLACK, Color.BLACK, Color.TRANSPARENT),
             floatArrayOf(0f, (1.0 - fade / 360.0).toFloat(), 1f),
-        ).apply { setLocalMatrix(Matrix().apply { setRotate((seamAngle - 90.0).toFloat(), cx, cy) }) }
+        ).apply { setLocalMatrix(Matrix().apply { setRotate(canvasAngle(seamAngle).toFloat(), cx, cy) }) }
     }
     canvas.drawPaint(mask)
     canvas.restoreToCount(layer)
@@ -78,7 +78,7 @@ internal fun Dial.drawDayNightRing() {
         val sky = skyColorsAt(instant, settings, moonFraction)
         val colors = if (settings.skyHorizon == SkyHorizon.OUTER) sky.reversedArray() else sky
         paint.shader = RadialGradient(cx, cy, ringOuter, colors, skyPositions, Shader.TileMode.CLAMP)
-        canvas.drawArc(rect, (a0 - 90.0).toFloat(), (a1 - a0).toFloat() + 0.75f, false, paint)
+        canvas.drawArc(rect, canvasAngle(a0).toFloat(), (a1 - a0).toFloat() + 0.75f, false, paint)
     }
 }
 
