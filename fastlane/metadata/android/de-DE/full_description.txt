@@ -6,7 +6,7 @@
 <li><b>Optionaler Wetterring</b> (Vorhersage von Open-Meteo): Bewölkung als Grau, Niederschlag in Blau (Schnee violett), je dunkler, desto mehr, je deckender, desto wahrscheinlicher. Luft- oder gefühlte Temperatur als Skala um den Rand oder zwischen den Ziffern, und das Wetter in Worten neben oder unter der Uhr („Etwas kühler als gestern um diese Zeit. Ab heute Abend leichter Regen wahrscheinlich.“).</li>
 <li>Markierungen für Sonnenmittag und -mitternacht, Sonnenauf- und -untergang sowie optional den nächsten Wecker.</li>
 <li>Gespeicherte Orte mit eigener Zeitzone: Mehrere Widgets ergeben eine Weltuhr. Orte lassen sich aus Organic Maps, OsmAnd und anderen Karten-Apps teilen.</li>
-<li>Tab „Zeiten“ in der App mit allen Sonnenereignissen des Tages, Mondauf- und -untergang, der Mondphase, die sich zu den Terminen des kommenden Umlaufs aufklappen lässt, und den nächsten Mondereignissen: Erdnähe und Erdferne, Super- und Minimond, am Ort sichtbare Mond- und Sonnenfinsternisse sowie die Mondwenden.</li>
+<li>Tab „Zeiten“ in der App mit allen Sonnenereignissen des Tages, Mondauf- und -untergang, der Mondphase, die sich zu den Terminen des kommenden Umlaufs aufklappen lässt, und den nächsten Mondereignissen: Super- und Minimond, am Ort sichtbare Mond- und Sonnenfinsternisse sowie die Mondwenden.</li>
 <li>Tab „Wetter“ mit der Vorhersage im Himmel jeder Stunde: Wolken, Wind, Regen und Schnee, Luft- und gefühlte Temperatur, 24 Stunden auf einmal zum Weiterwischen, die Details jeder Stunde auf Antippen.</li>
 <li>Farbmodus hell, dunkel oder automatisch, Ziffern und Zeiger in deinen Material-You-Farben. Frei skalierbar, mehrere Widgets mit eigenen Einstellungen.</li>
 </ul>

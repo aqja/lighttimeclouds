@@ -191,8 +191,6 @@ class LunarEventsTest {
         assertEquals(listOf(EclipseKind.PARTIAL, EclipseKind.TOTAL), lunar.map { it.kind })
         val standstills = events.map { it.event }.filterIsInstance<LunarStandstill>()
         assertEquals(listOf(false, true), standstills.map { it.major })
-        assertEquals(1, events.count { (it.event as? Apsis)?.perigee == true })
-        assertEquals(1, events.count { (it.event as? Apsis)?.perigee == false })
     }
 
     @Test

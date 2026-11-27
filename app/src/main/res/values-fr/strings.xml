@@ -409,8 +409,6 @@
     <string name="moon_phase_waning_crescent">Dernier croissant</string>
     <string name="moon_phases_hint">Nouvelle lune, quartiers et pleine lune à l’instant exact ; les phases intermédiaires, dès leur début.</string>
     <string name="moon_events">Événements lunaires</string>
-    <string name="perigee">Périgée</string>
-    <string name="apogee">Apogée</string>
     <string name="supermoon">Super lune</string>
     <string name="micromoon">Mini lune</string>
     <string name="lunar_eclipse_total">Éclipse totale de Lune (lune de sang)</string>

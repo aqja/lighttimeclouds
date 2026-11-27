@@ -408,8 +408,6 @@
     <string name="moon_phase_waning_crescent">Luna menguante</string>
     <string name="moon_phases_hint">Luna nueva, cuartos y luna llena en su momento exacto; las fases intermedias, desde su inicio.</string>
     <string name="moon_events">Eventos lunares</string>
-    <string name="perigee">Perigeo</string>
-    <string name="apogee">Apogeo</string>
     <string name="supermoon">Superluna</string>
     <string name="micromoon">Microluna</string>
     <string name="lunar_eclipse_total">Eclipse lunar total (luna de sangre)</string>
