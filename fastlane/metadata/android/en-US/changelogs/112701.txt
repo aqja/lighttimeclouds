@@ -1,0 +1,1 @@
+Beta: in the “Times” tab, the new moon events show the next perigee and apogee, supermoon and micromoon, lunar and solar eclipses visible at the place (including the blood moon) and the lunar standstills. The 24-hour dial can be turned half a turn with “Noon at the top”: noon up, midnight down, like the sun in the sky.

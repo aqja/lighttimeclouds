@@ -1,0 +1,1 @@
+Bêta : dans l’onglet « Horaires », les nouveaux événements lunaires indiquent les prochains périgée et apogée, super lune et mini lune, éclipses de Lune et de Soleil visibles depuis le lieu (dont la lune de sang) et les arrêts lunaires. Le cadran de 24 heures peut tourner d’un demi-tour avec « Midi en haut » : midi en haut, minuit en bas, comme le soleil dans le ciel.
