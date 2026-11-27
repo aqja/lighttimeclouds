@@ -423,6 +423,27 @@
     <string name="moon_phase_last_quarter">Last quarter</string>
     <string name="moon_phase_waning_crescent">Waning crescent</string>
     <string name="moon_phases_hint">New moon, the quarters and full moon at their exact moment; the phases between them from when they begin.</string>
+    <string name="moon_events">Moon events</string>
+    <string name="perigee">Closest to Earth</string>
+    <string name="apogee">Farthest from Earth</string>
+    <string name="supermoon">Supermoon</string>
+    <string name="micromoon">Micromoon</string>
+    <string name="lunar_eclipse_total">Total lunar eclipse (blood moon)</string>
+    <string name="lunar_eclipse_partial">Partial lunar eclipse</string>
+    <string name="lunar_eclipse_penumbral">Penumbral lunar eclipse</string>
+    <string name="solar_eclipse_total">Total solar eclipse</string>
+    <string name="solar_eclipse_annular">Annular solar eclipse</string>
+    <string name="solar_eclipse_partial">Partial solar eclipse</string>
+    <string name="standstill_major">Major lunar standstill</string>
+    <string name="standstill_minor">Minor lunar standstill</string>
+    <string name="eclipse_totality">totality %1$s–%2$s</string>
+    <string name="eclipse_annularity">ring %1$s–%2$s</string>
+    <string name="lunar_eclipse_in_umbra">%1$d%% in the umbra</string>
+    <string name="solar_eclipse_covered">%1$d%% covered</string>
+    <string name="moon_partly_below_horizon">moon partly below the horizon</string>
+    <string name="sun_partly_below_horizon">sun partly below the horizon</string>
+    <string name="standstill_heights">moon at its highest %1$s to %2$s</string>
+    <string name="moon_events_hint">Each at its next occurrence. Supermoon and micromoon: a full moon at least 90% of the way to perigee or apogee (after Nolle). Eclipses only when they can be seen here; penumbral lunar eclipses, which are hard to notice, are left out. At a lunar standstill the moon’s monthly range of heights is widest (major) or narrowest (minor), for about a year around the date.</string>
 
     <string name="solar_midnight">Solar midnight</string>
     <string name="astronomical_dawn">Astronomical dawn</string>

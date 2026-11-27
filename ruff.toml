@@ -1,0 +1,7 @@
+# Lint and format settings for the Python scripts in tools/. CI checks them with the ruff version
+# pinned in .github/workflows/check.yml; locally:  uvx ruff check tools && uvx ruff format tools
+line-length = 120
+target-version = "py312"
+
+[lint]
+extend-select = ["I", "UP"]

@@ -70,6 +70,8 @@ Beide laden ihre Rohdaten (IMCCE-Reihen, ~32 MB Ephemeride) in `~/.cache/lightti
 uv run tools/store_screenshots.py --apk app/build/outputs/apk/release/app-release.apk --fetch
 ```
 
+Die Skripte werden mit [ruff](https://docs.astral.sh/ruff/) gelintet und formatiert (Einstellungen in `ruff.toml`), was die CI prüft: `uvx ruff check tools && uvx ruff format tools`.
+
 Zum manuellen Testen: Widget auf den Homescreen ziehen, über das Launcher-Icon „LightTimeClouds“ konfigurieren; Logs per `adb logcat`.
 
 ### Übersetzungen

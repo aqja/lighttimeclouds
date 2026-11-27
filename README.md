@@ -70,6 +70,8 @@ Both download their raw data (IMCCE series, ~32 MB ephemeris) to `~/.cache/light
 uv run tools/store_screenshots.py --apk app/build/outputs/apk/release/app-release.apk --fetch
 ```
 
+The scripts are linted and formatted with [ruff](https://docs.astral.sh/ruff/) (settings in `ruff.toml`), which CI checks: `uvx ruff check tools && uvx ruff format tools`.
+
 For manual testing: drag the widget onto the home screen and configure it via the "LightTimeClouds" launcher icon; logs via `adb logcat`.
 
 ### Translations

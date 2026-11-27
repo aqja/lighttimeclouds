@@ -402,6 +402,27 @@
     <string name="moon_phase_last_quarter">Abnehmender Halbmond</string>
     <string name="moon_phase_waning_crescent">Abnehmende Sichel</string>
     <string name="moon_phases_hint">Neumond, Halbmonde und Vollmond zum genauen Zeitpunkt, die Phasen dazwischen ab ihrem Beginn.</string>
+    <string name="moon_events">Mondereignisse</string>
+    <string name="perigee">Erdnähe</string>
+    <string name="apogee">Erdferne</string>
+    <string name="supermoon">Supermond</string>
+    <string name="micromoon">Minimond</string>
+    <string name="lunar_eclipse_total">Totale Mondfinsternis (Blutmond)</string>
+    <string name="lunar_eclipse_partial">Partielle Mondfinsternis</string>
+    <string name="lunar_eclipse_penumbral">Halbschatten-Mondfinsternis</string>
+    <string name="solar_eclipse_total">Totale Sonnenfinsternis</string>
+    <string name="solar_eclipse_annular">Ringförmige Sonnenfinsternis</string>
+    <string name="solar_eclipse_partial">Partielle Sonnenfinsternis</string>
+    <string name="standstill_major">Große Mondwende</string>
+    <string name="standstill_minor">Kleine Mondwende</string>
+    <string name="eclipse_totality">Totalität %1$s–%2$s</string>
+    <string name="eclipse_annularity">Ring %1$s–%2$s</string>
+    <string name="lunar_eclipse_in_umbra">%1$d %% im Kernschatten</string>
+    <string name="solar_eclipse_covered">%1$d %% bedeckt</string>
+    <string name="moon_partly_below_horizon">Mond zeitweise unter dem Horizont</string>
+    <string name="sun_partly_below_horizon">Sonne zeitweise unter dem Horizont</string>
+    <string name="standstill_heights">Mondhöchststand %1$s bis %2$s</string>
+    <string name="moon_events_hint">Jeweils der nächste Termin. Super- und Minimond: ein Vollmond, der mindestens 90 % des Wegs zur Erdnähe bzw. Erdferne zurückgelegt hat (nach Nolle). Finsternisse nur, wenn sie hier zu sehen sind; Halbschatten-Mondfinsternisse, die kaum auffallen, fehlen. Zur Mondwende ist die Spanne der Mondhöhen im Monat am größten (große) oder kleinsten (kleine), etwa ein Jahr um das Datum herum.</string>
 
     <string name="solar_midnight">Sonnenmitternacht</string>
     <string name="astronomical_dawn">Beginn astronomische Dämmerung</string>

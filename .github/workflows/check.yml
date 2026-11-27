@@ -22,6 +22,12 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # The Python scripts in tools/, with the settings in ruff.toml. pipx comes with the runner.
+      - name: Lint and format check of tools/
+        run: |
+          pipx run --spec ruff==0.17.5 ruff check tools
+          pipx run --spec ruff==0.17.5 ruff format --check tools
+
       # JDK 21, as F-Droid builds with.
       - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
