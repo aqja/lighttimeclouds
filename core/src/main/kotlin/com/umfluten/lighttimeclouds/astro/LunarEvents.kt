@@ -17,8 +17,11 @@ sealed interface LunarEvent {
     val instant: Instant
 }
 
-/** The Moon nearest to the Earth in its orbit ([perigee]) or farthest from it (apogee), [distanceKm] center to center. */
-data class Apsis(override val instant: Instant, val perigee: Boolean, val distanceKm: Double) : LunarEvent
+/**
+ * The Moon nearest to the Earth in its orbit ([perigee]) or farthest from it (apogee), [distanceKm]
+ * center to center. Not shown on its own, only the basis of [NotableFullMoon].
+ */
+data class Apsis(val instant: Instant, val perigee: Boolean, val distanceKm: Double)
 
 /** A full moon near perigee ([supermoon]) or near apogee (micromoon), see [LunarEvents.notableFullMoon]. */
 data class NotableFullMoon(override val instant: Instant, val supermoon: Boolean, val distanceKm: Double) : LunarEvent
@@ -85,7 +88,7 @@ enum class Visibility { WHOLE, PART, NONE }
 data class LocalLunarEvent(val event: LunarEvent, val visibility: Visibility?)
 
 /**
- * Perigees and apogees, supermoons and micromoons, lunar and solar eclipses and lunar standstills,
+ * Supermoons and micromoons (from the perigees and apogees), lunar and solar eclipses and lunar standstills,
  * from the positions of [Ephemeris]. Eclipses follow the conventions of the NASA eclipse canons:
  * the Earth's shadow enlarged by its atmosphere after Danjon, the Moon's mean radius for the
  * outer contacts and that of the valleys of its limb for the inner ones of a solar eclipse.
@@ -243,7 +246,7 @@ object LunarEvents {
 
     /**
      * The next of each kind after [after] as seen from [latitude]/[longitude] (degrees), in order of
-     * time: perigee and apogee, supermoon and micromoon, the next lunar eclipse in which the Moon
+     * time: supermoon and micromoon, the next lunar eclipse in which the Moon
      * enters the umbra while it is up at the place, and if that one is partial also the next total
      * one ("blood moon"), the next solar eclipse with the Sun up, and both kinds of standstill. An
      * eclipse under way at [after] counts as the next. Penumbral lunar eclipses, hard to notice,
@@ -252,9 +255,6 @@ object LunarEvents {
     fun upcoming(after: Instant, latitude: Double, longitude: Double): List<LocalLunarEvent> {
         val events = ArrayList<LocalLunarEvent>()
         val apsides = apsides(after.minus(APSIS_MARGIN), after.plus(NOTABLE_FULL_MOON_SEARCH).plus(APSIS_MARGIN))
-        listOf(true, false).forEach { perigee ->
-            apsides.firstOrNull { it.perigee == perigee && it.instant.isAfter(after) }?.let { events += LocalLunarEvent(it, null) }
-        }
         val notable = fullMoons(after, after.plus(NOTABLE_FULL_MOON_SEARCH)).mapNotNull { notableFullMoon(it, apsides) }
         listOf(true, false).forEach { supermoon ->
             notable.firstOrNull { it.supermoon == supermoon }?.let { events += LocalLunarEvent(it, null) }

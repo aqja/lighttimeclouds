@@ -424,8 +424,6 @@
     <string name="moon_phase_waning_crescent">Waning crescent</string>
     <string name="moon_phases_hint">New moon, the quarters and full moon at their exact moment; the phases between them from when they begin.</string>
     <string name="moon_events">Moon events</string>
-    <string name="perigee">Closest to Earth</string>
-    <string name="apogee">Farthest from Earth</string>
     <string name="supermoon">Supermoon</string>
     <string name="micromoon">Micromoon</string>
     <string name="lunar_eclipse_total">Total lunar eclipse (blood moon)</string>

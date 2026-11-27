@@ -403,8 +403,6 @@
     <string name="moon_phase_waning_crescent">Abnehmende Sichel</string>
     <string name="moon_phases_hint">Neumond, Halbmonde und Vollmond zum genauen Zeitpunkt, die Phasen dazwischen ab ihrem Beginn.</string>
     <string name="moon_events">Mondereignisse</string>
-    <string name="perigee">Erdnähe</string>
-    <string name="apogee">Erdferne</string>
     <string name="supermoon">Supermond</string>
     <string name="micromoon">Minimond</string>
     <string name="lunar_eclipse_total">Totale Mondfinsternis (Blutmond)</string>

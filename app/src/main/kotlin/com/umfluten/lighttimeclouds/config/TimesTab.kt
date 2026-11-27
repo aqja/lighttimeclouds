@@ -36,7 +36,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.umfluten.lighttimeclouds.R
-import com.umfluten.lighttimeclouds.astro.Apsis
 import com.umfluten.lighttimeclouds.astro.EclipseKind
 import com.umfluten.lighttimeclouds.astro.LocalLunarEvent
 import com.umfluten.lighttimeclouds.astro.LunarEclipse
@@ -62,7 +61,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * The moon's phase, which opens to the dates of the coming cycle, its rise and set, its coming
- * special events (perigee and apogee, supermoon, eclipses, standstills), then all sun
+ * special events (supermoon and micromoon, eclipses, standstills), then all sun
  * events of the current solar day, at the widget's (possibly not yet saved) place, in that place's
  * time zone. Dates only show where they change. Past events are dimmed, the next one is
  * highlighted; refreshes every minute.
@@ -256,7 +255,6 @@ private fun LunarEventList(events: List<LocalLunarEvent>, now: ZonedDateTime, la
 @Composable
 private fun lunarEventLabel(event: LunarEvent): String = stringResource(
     when (event) {
-        is Apsis -> if (event.perigee) R.string.perigee else R.string.apogee
         is NotableFullMoon -> if (event.supermoon) R.string.supermoon else R.string.micromoon
         is LunarEclipse -> when (event.kind) {
             EclipseKind.TOTAL -> R.string.lunar_eclipse_total
@@ -293,7 +291,6 @@ private fun lunarEventNote(item: LocalLunarEvent, now: ZonedDateTime, latitude: 
     fun span(start: Instant, end: Instant) = "${time(start)}–${time(end)}"
     fun percent(fraction: Double) = (fraction * 100).roundToInt().coerceIn(0, 100)
     val parts = when (val event = item.event) {
-        is Apsis -> listOf(formats.kilometers(event.distanceKm))
         is NotableFullMoon -> listOf(formats.kilometers(event.distanceKm))
         is LunarEclipse -> listOf(
             span(event.start, event.end),
