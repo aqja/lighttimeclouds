@@ -117,7 +117,8 @@ object SettingsFile {
             showMoonPathInRing = s.boolean("showMoonPathInRing") ?: d.showMoonPathInRing,
             showMinuteTicks = s.boolean("showMinuteTicks") ?: d.showMinuteTicks,
             showOddHourTicks = s.boolean("showOddHourTicks") ?: d.showOddHourTicks,
-            noonAtTop = s.boolean("noonAtTop") ?: d.noonAtTop,
+            // Files from before the option had midnight at the top.
+            noonAtTop = s.boolean("noonAtTop") ?: false,
             showSolarMarks = s.boolean("showSolarMarks") ?: d.showSolarMarks,
             showSunriseSunsetMarks = s.boolean("showSunriseSunsetMarks") ?: d.showSunriseSunsetMarks,
             showMoon = s.boolean("showMoon") ?: d.showMoon,

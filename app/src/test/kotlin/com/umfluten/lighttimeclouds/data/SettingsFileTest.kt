@@ -25,7 +25,7 @@ class SettingsFileTest {
         switchTime1Minutes = 300,
         switchTime2Minutes = 1000,
         switchTime24hMinutes = 120,
-        noonAtTop = true,
+        noonAtTop = false,
         ringEndFadeDeg = 25,
         skyHorizon = SkyHorizon.OUTER,
         skyTopElevationDeg = 60,
@@ -86,6 +86,12 @@ class SettingsFileTest {
         assertEquals(WidgetSettings.MIN_SKY_TOP_ELEVATION_DEG, settings.skyTopElevationDeg)
         assertEquals(d.switchTime24hMinutes, settings.switchTime24hMinutes)
         assertEquals(d.showMoon, settings.showMoon)
+    }
+
+    @Test
+    fun `a file from before noon at the top keeps midnight at the top`() {
+        assertEquals(true, WidgetSettings(widgetId = 1).noonAtTop)
+        assertEquals(false, SettingsFile.decode(fileWith(), widgetId = 1).settings.noonAtTop)
     }
 
     @Test

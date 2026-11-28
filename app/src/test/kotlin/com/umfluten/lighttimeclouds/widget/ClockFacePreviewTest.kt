@@ -270,7 +270,7 @@ class ClockFacePreviewTest {
     fun moonPathFollowsTheFarEdgeAboveItsElevation() {
         val top = 20
         val base = WidgetSettings(
-            widgetId = 1, displayMode = DisplayMode.TWENTY_FOUR_HOUR, colorMode = ColorMode.DARK, skyTopElevationDeg = top,
+            widgetId = 1, displayMode = DisplayMode.TWENTY_FOUR_HOUR, noonAtTop = false, colorMode = ColorMode.DARK, skyTopElevationDeg = top,
             showMoonPathInRing = true, showMoon = false, showSunInRing = false, showSolarMarks = false, showSunriseSunsetMarks = false,
         )
         val size = 600
@@ -309,7 +309,7 @@ class ClockFacePreviewTest {
     @Test
     fun ringFadesOutBeforeTheSeamButNotBeforeNow() {
         val settings = WidgetSettings(
-            widgetId = 1, displayMode = DisplayMode.TWENTY_FOUR_HOUR, colorMode = ColorMode.DARK, ringEndFadeDeg = 30,
+            widgetId = 1, displayMode = DisplayMode.TWENTY_FOUR_HOUR, noonAtTop = false, colorMode = ColorMode.DARK, ringEndFadeDeg = 30,
             showMoon = false, showSunInRing = false, showMoonInRing = false, showSolarMarks = false, showSunriseSunsetMarks = false,
         )
         val size = 600
