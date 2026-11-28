@@ -124,18 +124,14 @@ private fun Dial.drawTicksAndNumerals() {
 }
 
 /**
- * Ticks at the odd hours of the 24-hour dial, between the numbered even ones: from the same outer
- * edge as the other ticks, in length and width between an hour and a minute tick, like the
- * half-hour ticks of a watch. The minute ticks lie 3° to either side.
+ * Ticks at the odd hours of the 24-hour dial, between the numbered even ones: as long as an hour
+ * tick and as thin as a minute tick, so they mark the hour without competing with the numbered
+ * ones. The minute ticks lie 3° to either side.
  */
 private fun Dial.drawOddHourTicks() {
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = chromeColor
-        strokeWidth = radius * 0.015f
-        strokeCap = Paint.Cap.ROUND
-    }
+    val paint = thinTickPaint()
     val outer = radius * layout.tickOuter
-    val inner = radius * (layout.hourTickInner + layout.minuteTickInner) / 2f
+    val inner = radius * layout.hourTickInner
     for (hour in 1 until 24 step 2) drawRadialLine(hour * 15.0, inner, outer, paint)
 }
 
@@ -168,13 +164,16 @@ private fun Dial.drawAlarmTick(alarm: Instant) {
     drawRadialLine(angle, radius * layout.hourTickInner, radius * layout.tickOuter, hourTickPaint(ALARM_COLOR))
 }
 
+/** Stroke of the minute ticks and the odd-hour ticks of the 24-hour dial. */
+private fun Dial.thinTickPaint() = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    color = chromeColor
+    strokeWidth = radius * 0.01f
+    strokeCap = Paint.Cap.ROUND
+}
+
 /** 60 short ticks for the minute hand; every fifth is skipped since hour ticks (both modes) sit on multiples of 30°. */
 private fun Dial.drawMinuteTicks() {
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = chromeColor
-        strokeWidth = radius * 0.01f
-        strokeCap = Paint.Cap.ROUND
-    }
+    val paint = thinTickPaint()
     val outer = radius * layout.tickOuter
     val inner = radius * layout.minuteTickInner
     for (minute in 0 until 60) {
