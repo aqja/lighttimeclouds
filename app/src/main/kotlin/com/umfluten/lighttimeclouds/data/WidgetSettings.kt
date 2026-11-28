@@ -55,8 +55,12 @@ data class WidgetSettings(
     val switchTime2Minutes: Int = 18 * 60,
     /** The one fixed switch time of the 24h dial, where its shown day begins. */
     val switchTime24hMinutes: Int = 0,
-    /** On the 24-hour dial, noon at the top and midnight at the bottom, the sun's highest point up like in the sky. */
-    val noonAtTop: Boolean = false,
+    /**
+     * On the 24-hour dial, noon at the top and midnight at the bottom, the sun's highest point up like
+     * in the sky. Settings stored or exported before this option existed had midnight at the top and
+     * keep it.
+     */
+    val noonAtTop: Boolean = true,
     /**
      * Dial degrees (0..[MAX_RING_END_FADE_DEG]) before the end of the shown window over which the
      * day/night ring fades out, so its last stretch is not mistaken for the time right after its

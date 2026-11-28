@@ -66,7 +66,8 @@ class WidgetPrefsRepository(private val context: Context) {
             switchTime1Minutes = prefs[k.switchTime1] ?: d.switchTime1Minutes,
             switchTime2Minutes = prefs[k.switchTime2] ?: d.switchTime2Minutes,
             switchTime24hMinutes = prefs[k.switchTime24h] ?: d.switchTime24hMinutes,
-            noonAtTop = prefs[k.noonAtTop] ?: d.noonAtTop,
+            // A widget saved before the option existed had midnight at the top.
+            noonAtTop = prefs[k.noonAtTop] ?: if (prefs[k.configured] == true) false else d.noonAtTop,
             ringEndFadeDeg = (prefs[k.ringEndFade] ?: d.ringEndFadeDeg).coerceIn(0, WidgetSettings.MAX_RING_END_FADE_DEG),
             skyHorizon = prefs.enumOr(k.skyHorizon, d.skyHorizon),
             skyTopElevationDeg = (prefs[k.skyTopElevation] ?: d.skyTopElevationDeg)
